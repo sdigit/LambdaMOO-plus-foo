@@ -1,0 +1,229 @@
+# Copyright (c) 1992, 1995, 1996 Xerox Corporation.  All rights reserved.
+# Portions of this code were written by Stephen White, aka ghond.
+# Use and copying of this software and preparation of derivative works based
+# upon this software are permitted.  Any distribution of this software or
+# derivative works must comply with all applicable United States export
+# control laws.  This software is made available AS IS, and Xerox Corporation
+# makes no warranty about the software, its performance or its conformity to
+# any specification.  Any person obtaining a copy of this software is requested
+# to send their name and post office or electronic mail address to:
+#   Pavel Curtis
+#   Xerox PARC
+#   3333 Coyote Hill Rd.
+#   Palo Alto, CA 94304
+#   Pavel@Xerox.Com
+
+CC = gcc 
+LIBRARIES = -lcrypt -lm 
+YACC = yacc
+
+CFLAGS = -O2 -Wall -pipe
+
+YFLAGS = -d
+COMPILE.c = $(CC) $(CFLAGS) $(CPPFLAGS) -c
+
+CSRCS = ast.c code_gen.c db_file.c db_io.c db_objects.c db_properties.c \
+	db_verbs.c decompile.c disassemble.c eval_env.c eval_vm.c \
+	exceptions.c execute.c extensions.c functions.c keywords.c list.c \
+	log.c match.c md5.c name_lookup.c network.c numbers.c objects.c \
+	parse_cmd.c pattern.c program.c property.c quota.c regexpr.c server.c \
+	storage.c streams.c str_intern.c sym_table.c tasks.c timers.c \
+	unparse.c utils.c verbs.c version.c foomods.c
+
+OPT_CSRCS = $(OPT_NET_SRCS)
+
+YSRCS = parser.y
+
+HDRS =  ast.h bf_register.h code_gen.h db.h db_io.h db_private.h decompile.h \
+	disassemble.h eval_env.h eval_vm.h exceptions.h execute.h functions.h \
+	getpagesize.h keywords.h list.h log.h match.h md5.h name_lookup.h \
+	network.h numbers.h opcode.h y.tar.h \
+	options.h parse_cmd.h parser.h pattern.h program.h quota.h random.h \
+	ref_count.h regexpr.h server.h storage.h streams.h structures.h  \
+	str_intern.h sym_table.h tasks.h timers.h tokens.h unparse.h utils.h \
+	verbs.h version.h foomods.h
+
+ALL_CSRCS = $(CSRCS) $(OPT_CSRCS)
+
+SRCS = $(ALL_CSRCS) $(YSRCS) $(HDRS)
+
+DISTFILES = $(SRCS) Makefile.in restart restart.sh \
+	Minimal.db README.Minimal \
+	ChangeLog.txt README configure.ac configure config.h.in \
+	MOOCodeSequences.txt AddingNewMOOTypes.txt aclocal.m4
+
+COBJS = $(CSRCS:.c=.o)
+
+YOBJS = $(YSRCS:.y=.o)
+
+OBJS = $(COBJS) $(YOBJS)
+
+moo:	$(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) $(LIBRARIES) -o $@
+
+# This rule gets around some "make"s' desire to `derive' it from `restart.sh'.
+restart:
+	touch restart
+
+Makefile: Makefile.in
+
+config.h: config.h.in
+
+y.tab.h: parser.o
+	touch y.tab.h
+
+keywords.c: keywords.gperf parser.o
+	gperf -aCIptT -k1,3,$$ keywords.gperf > keywords.c
+
+clean:
+	rm -f core y.tab.c y.tab.h y.output makedep eddep moo moo.gdb *.o
+
+distclean:	clean
+	rm -f config.h Makefile config.status config.cache config.log *.o
+	rm -f *.lineno keywords.c Makefile.in.bak
+	rm -rf autom4te.cache
+
+depend: ${ALL_CSRCS}
+	rm -f eddep makedep
+	gcc -MM ${CFLAGS} ${ALL_CSRCS} | sed -e '/:$$/d' > makedep
+	echo '/^# DO NOT DELETE THIS LINE/+1,$$d' >eddep
+	echo '$$r makedep' >>eddep
+	echo 'w' >>eddep
+	cp Makefile.in Makefile.in.bak
+	ed - Makefile.in < eddep
+	rm -f eddep makedep
+
+
+# Have to do this one manually, since make depend cannot hack yacc files.
+parser.o:	ast.h code_gen.h config.h functions.h \
+		keywords.h list.h log.h numbers.h opcode.h parser.h program.h \
+		storage.h streams.h structures.h sym_table.h utils.h version.h
+
+# DO NOT DELETE THIS LINE -- 'make depend' replaces everything below it.
+ast.o: ast.c ast.h config.h parser.h program.h structures.h version.h \
+  sym_table.h list.h log.h storage.h ref_count.h utils.h execute.h db.h \
+  opcode.h options.h parse_cmd.h
+code_gen.o: code_gen.c ast.h config.h parser.h program.h structures.h \
+  version.h sym_table.h exceptions.h opcode.h options.h storage.h \
+  ref_count.h str_intern.h utils.h execute.h db.h parse_cmd.h
+db_file.o: db_file.c config.h db.h program.h structures.h version.h \
+  db_io.h db_private.h exceptions.h list.h log.h options.h server.h \
+  network.h storage.h ref_count.h streams.h str_intern.h tasks.h \
+  execute.h opcode.h parse_cmd.h timers.h
+db_io.o: db_io.c db_io.h program.h structures.h config.h version.h \
+  db_private.h exceptions.h list.h log.h numbers.h parser.h storage.h \
+  ref_count.h streams.h str_intern.h unparse.h
+db_objects.o: db_objects.c config.h db.h program.h structures.h version.h \
+  db_private.h exceptions.h list.h storage.h ref_count.h utils.h \
+  execute.h opcode.h options.h parse_cmd.h
+db_properties.o: db_properties.c config.h db.h program.h structures.h \
+  version.h db_private.h exceptions.h list.h storage.h ref_count.h \
+  utils.h execute.h opcode.h options.h parse_cmd.h
+db_verbs.o: db_verbs.c config.h db.h program.h structures.h version.h \
+  db_private.h exceptions.h db_tune.h list.h log.h parse_cmd.h storage.h \
+  ref_count.h utils.h execute.h opcode.h options.h
+decompile.o: decompile.c ast.h config.h parser.h program.h structures.h \
+  version.h sym_table.h decompile.h exceptions.h opcode.h options.h \
+  storage.h ref_count.h utils.h execute.h db.h parse_cmd.h
+disassemble.o: disassemble.c bf_register.h config.h db.h program.h \
+  structures.h version.h functions.h execute.h opcode.h options.h \
+  parse_cmd.h list.h storage.h ref_count.h streams.h unparse.h utils.h \
+  verbs.h
+eval_env.o: eval_env.c config.h eval_env.h structures.h version.h \
+  storage.h ref_count.h sym_table.h utils.h execute.h db.h program.h \
+  opcode.h options.h parse_cmd.h
+eval_vm.o: eval_vm.c config.h db_io.h program.h structures.h version.h \
+  decompile.h ast.h parser.h sym_table.h eval_vm.h execute.h db.h \
+  opcode.h options.h parse_cmd.h log.h storage.h ref_count.h tasks.h
+exceptions.o: exceptions.c exceptions.h config.h
+execute.o: execute.c config.h db.h program.h structures.h version.h \
+  db_io.h decompile.h ast.h parser.h sym_table.h eval_env.h eval_vm.h \
+  execute.h opcode.h options.h parse_cmd.h exceptions.h functions.h \
+  list.h log.h numbers.h server.h network.h storage.h ref_count.h \
+  streams.h tasks.h timers.h utils.h foomods.h
+extensions.o: extensions.c bf_register.h config.h db_private.h \
+  exceptions.h program.h structures.h version.h functions.h execute.h \
+  db.h opcode.h options.h parse_cmd.h list.h log.h network.h server.h \
+  numbers.h random.h regexpr.h storage.h ref_count.h streams.h tasks.h \
+  unparse.h utils.h
+functions.o: functions.c bf_register.h config.h db_io.h program.h \
+  structures.h version.h functions.h execute.h db.h opcode.h options.h \
+  parse_cmd.h list.h log.h server.h network.h storage.h ref_count.h \
+  streams.h unparse.h utils.h foomods.h
+keywords.o: keywords.c config.h keywords.h structures.h version.h \
+  tokens.h ast.h parser.h program.h sym_table.h y.tab.h utils.h execute.h \
+  db.h opcode.h options.h parse_cmd.h
+list.o: list.c bf_register.h config.h exceptions.h functions.h execute.h \
+  db.h program.h structures.h version.h opcode.h options.h parse_cmd.h \
+  list.h log.h md5.h pattern.h random.h ref_count.h streams.h storage.h \
+  unparse.h utils.h
+log.o: log.c bf_register.h config.h functions.h execute.h db.h program.h \
+  structures.h version.h opcode.h options.h parse_cmd.h log.h storage.h \
+  ref_count.h streams.h utils.h
+match.o: match.c config.h db.h program.h structures.h version.h \
+  exceptions.h match.h parse_cmd.h storage.h ref_count.h unparse.h \
+  utils.h execute.h opcode.h options.h
+md5.o: md5.c md5.h config.h
+name_lookup.o: name_lookup.c options.h config.h log.h structures.h \
+  server.h network.h storage.h ref_count.h timers.h
+network.o: network.c config.h exceptions.h list.h structures.h log.h \
+  name_lookup.h options.h server.h network.h streams.h storage.h \
+  ref_count.h timers.h utils.h execute.h db.h program.h version.h \
+  opcode.h parse_cmd.h
+numbers.o: numbers.c config.h functions.h execute.h db.h program.h \
+  structures.h version.h opcode.h options.h parse_cmd.h log.h random.h \
+  storage.h ref_count.h utils.h misc.h
+objects.o: objects.c db.h config.h program.h structures.h version.h \
+  db_io.h exceptions.h execute.h opcode.h options.h parse_cmd.h \
+  functions.h list.h numbers.h quota.h server.h network.h storage.h \
+  ref_count.h utils.h verbs.h
+parse_cmd.o: parse_cmd.c config.h db.h program.h structures.h version.h \
+  list.h match.h parse_cmd.h storage.h ref_count.h utils.h execute.h \
+  opcode.h options.h
+pattern.o: pattern.c config.h pattern.h regexpr.h storage.h structures.h \
+  ref_count.h streams.h
+program.o: program.c ast.h config.h parser.h program.h structures.h \
+  version.h sym_table.h exceptions.h list.h storage.h ref_count.h utils.h \
+  execute.h db.h opcode.h options.h parse_cmd.h
+property.o: property.c db.h config.h program.h structures.h version.h \
+  functions.h execute.h opcode.h options.h parse_cmd.h list.h storage.h \
+  ref_count.h utils.h
+quota.o: quota.c config.h db.h program.h structures.h version.h quota.h
+regexpr.o: regexpr.c regexpr.h
+server.o: server.c config.h db.h program.h structures.h version.h db_io.h \
+  disassemble.h execute.h opcode.h options.h parse_cmd.h functions.h \
+  list.h log.h network.h server.h parser.h random.h storage.h ref_count.h \
+  streams.h tasks.h timers.h unparse.h utils.h foomods.h
+storage.o: storage.c config.h exceptions.h list.h structures.h options.h \
+  ref_count.h storage.h utils.h execute.h db.h program.h version.h \
+  opcode.h parse_cmd.h
+streams.o: streams.c config.h log.h structures.h storage.h ref_count.h \
+  streams.h
+str_intern.o: str_intern.c log.h config.h structures.h storage.h \
+  ref_count.h str_intern.h utils.h execute.h db.h program.h version.h \
+  opcode.h options.h parse_cmd.h
+sym_table.o: sym_table.c ast.h config.h parser.h program.h structures.h \
+  version.h sym_table.h exceptions.h log.h storage.h ref_count.h utils.h \
+  execute.h db.h opcode.h options.h parse_cmd.h
+tasks.o: tasks.c config.h db.h program.h structures.h version.h db_io.h \
+  decompile.h ast.h parser.h sym_table.h eval_env.h eval_vm.h execute.h \
+  opcode.h options.h parse_cmd.h exceptions.h functions.h list.h log.h \
+  match.h random.h server.h network.h storage.h ref_count.h streams.h \
+  tasks.h utils.h verbs.h foomods.h
+timers.o: timers.c config.h timers.h
+unparse.o: unparse.c ast.h config.h parser.h program.h structures.h \
+  version.h sym_table.h decompile.h exceptions.h functions.h execute.h \
+  db.h opcode.h options.h parse_cmd.h keywords.h list.h log.h unparse.h \
+  storage.h ref_count.h streams.h utils.h
+utils.o: utils.c config.h db.h program.h structures.h version.h db_io.h \
+  exceptions.h list.h log.h match.h numbers.h ref_count.h server.h \
+  network.h options.h storage.h streams.h utils.h execute.h opcode.h \
+  parse_cmd.h
+verbs.o: verbs.c config.h db.h program.h structures.h version.h \
+  exceptions.h execute.h opcode.h options.h parse_cmd.h functions.h \
+  list.h log.h match.h parser.h server.h network.h storage.h ref_count.h \
+  unparse.h utils.h verbs.h
+version.o: version.c config.h version.h
+foomods.o: foomods.c foomods.h options.h config.h structures.h program.h \
+  version.h functions.h execute.h db.h opcode.h parse_cmd.h log.h list.h \
+  bf_register.h utils.h
