@@ -1,5 +1,0 @@
-# $egnet: TODO,v 1.42 2005/04/09 19:24:17 dive Exp $
-01) Fix name-lookup in mooserver so that if an IP resolves to a host that does
-    not resolve back to that same IP, the host is ignored and the server only
-    sees the numeric IP.
-02) Add support for kqueue instead of select on systems that support it.
