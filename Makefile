@@ -13,9 +13,9 @@
 #   Palo Alto, CA 94304
 #   Pavel@Xerox.Com
 
-CC = @CC@
-LIBRARIES = @LIBS@
-YACC = @YACC@
+CC = gcc 
+LIBRARIES = -lcrypt -lm 
+YACC = yacc
 
 CFLAGS = -O2 -Wall -pipe
 

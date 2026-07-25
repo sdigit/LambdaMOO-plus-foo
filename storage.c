@@ -27,18 +27,9 @@
  * SUCH DAMAGE.
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/param.h>
-#ifdef __NETBSD__
-#include <sys/sysctl.h>
-#include <sys/proc.h>
-#endif /* __NETBSD__ */
-#include <unistd.h>
-#ifdef __linux__
-#include <sys/resource.h>
-#endif /* bsd vs linux */
+
 #include "config.h"
 #include "exceptions.h"
 #include "list.h"
@@ -49,59 +40,6 @@
 #include "utils.h"
 
 static unsigned alloc_num[Sizeof_Memory_Type];
-
-typedef struct {
-    long sec;
-    long usec;
-} proc_cpu_time_t;
-
-#ifdef __NETBSD__
-int get_proc_cpu_time(pid_t pid, proc_cpu_time_t *cpu_time) {
-    int mib[6];
-    size_t size;
-    struct kinfo_proc2 p;
-
-    // Setup the sysctl MIB array for a single PID
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC2;
-    mib[2] = KERN_PROC_PID;
-    mib[3] = (int)pid;
-    mib[4] = sizeof(struct kinfo_proc2);
-    mib[5] = 1; // Retrieve exactly 1 structure
-
-    size = sizeof(p);
-
-    // Query the kernel
-    if (sysctl(mib, 6, &p, &size, NULL, 0) < 0) {
-        return -1; // Process not found or permission denied
-    }
-
-    // Extract total CPU time directly from the runtime fields
-    cpu_time->sec  = p.p_rtime_sec;
-    cpu_time->usec = p.p_rtime_usec;
-
-    return 0;
-}
-#elif __linux__
-int get_proc_cpu_time(pid_t pid, proc_cpu_time_t *cpu_time)
-{
-    struct rusage r;
-
-    if (getrusage(RUSAGE_SELF, &r) == 0)
-    {
-        return -1;
-    }
-    else
-    {
-        cpu_time->sec = r.ru_utime.tv_sec + r.ru_stime.tv_sec;
-        cpu_time->usec = r.ru_utime.tv_usec + r.ru_stime.tv_usec;
-        return 0;
-    }
-}
-#else
-#error "Platform not supported"
-#endif
-
 
 static inline int
 refcount_overhead(Memory_Type type)
@@ -203,26 +141,6 @@ Var
 memory_usage(void)
 {
 	Var             r;
-#ifdef __linux__
-    long size, rss;
-    FILE *fp = fopen("/proc/self/statm", "r");
-    r.type = TYPE_INT;
-    if (!fp)
-    {
-        r.v.num = -1;
-    }
-    else {
-        if (fscanf(fp, "%ld %ld", &size, &rss) != 2)
-        {
-           fclose(fp);
-           r.v.num = -2;
-        }
-        else
-        {
-            r.v.num = rss * sysconf(_SC_PAGESIZE);
-        } 
-    }
-    fclose(fp);
-#endif /* __linux__ */
-    return r;
+	r = new_list(0);
+	return r;
 }
