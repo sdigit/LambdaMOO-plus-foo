@@ -31,10 +31,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/param.h>
+#ifdef __NETBSD__
 #include <sys/sysctl.h>
 #include <sys/proc.h>
+#endif /* __NETBSD__ */
 #include <unistd.h>
-
+#ifdef __linux__
+#include <sys/resource.h>
+#endif /* bsd vs linux */
 #include "config.h"
 #include "exceptions.h"
 #include "list.h"
@@ -51,6 +55,7 @@ typedef struct {
     long usec;
 } proc_cpu_time_t;
 
+#ifdef __NETBSD__
 int get_proc_cpu_time(pid_t pid, proc_cpu_time_t *cpu_time) {
     int mib[6];
     size_t size;
@@ -77,6 +82,26 @@ int get_proc_cpu_time(pid_t pid, proc_cpu_time_t *cpu_time) {
 
     return 0;
 }
+#elif __linux__
+int get_proc_cpu_time(pid_t pid, proc_cpu_time_t *cpu_time)
+{
+    struct rusage r;
+
+    if (getrusage(RUSAGE_SELF, &r) == 0)
+    {
+        return -1;
+    }
+    else
+    {
+        cpu_time->sec = r.ru_utime.tv_sec + r.ru_stime.tv_sec;
+        cpu_time->usec = r.ru_utime.tv_usec + r.ru_stime.tv_usec;
+        return 0;
+    }
+}
+#else
+#error "Platform not supported"
+#endif
+
 
 static inline int
 refcount_overhead(Memory_Type type)
@@ -178,19 +203,26 @@ Var
 memory_usage(void)
 {
 	Var             r;
-    pid_t           p;
-    proc_cpu_time_t t;
-    p = getpid();
-    if (get_proc_cpu_time(p, &t) != 0)
+#ifdef __linux__
+    long size, rss;
+    FILE *fp = fopen("/proc/self/statm", "r");
+    r.type = TYPE_INT;
+    if (!fp)
     {
-    	r = new_list(0);
-	    return r;
-    } else {
-        r = new list(2);
-        r.v.list[1] = TYPE_INT;
-        r.v.list[2] = TYPE_INT;
-        r.v.list[1] = t.sec;
-        r.v.list[2] = t.usec;
-        return r;
+        r.v.num = -1;
     }
+    else {
+        if (fscanf(fp, "%ld %ld", &size, &rss) != 2)
+        {
+           fclose(fp);
+           r.v.num = -2;
+        }
+        else
+        {
+            r.v.num = rss * sysconf(_SC_PAGESIZE);
+        } 
+    }
+    fclose(fp);
+#endif /* __linux__ */
+    return r;
 }
