@@ -1,0 +1,62 @@
+# $egnet: ChangeLog,v 1.23 2005/03/18 02:48:07 dive Exp $
+
+* 20030710/dive:
+1) Started a changelog (Hi Trunks!) (everybody please use this format for
+   changelog entries)
+2) Merged in a (supposedly better) str_hash function
+3) Merged in a change to free_activation that makes it take a pointer, not an
+   entire activation structure
+
+* 20030711/dive:
+1) removed some prototypes from extensions.c, since they are properly prototyped
+   in the includes.
+2) have Makefile regen keywords.c from keywords.gperf, as this is still done by
+   the sourceforge LambdaMOO project. Note that we don't include pgperf, so a
+   dependency on gperf now exists. Most systems should have it, however the
+   autoconf stuff needs to be fixed to check for it. Also note that committing
+   from a working directory where we've built the server is no longer
+   recommended, because keywords.c will change every time the server is built.
+   (specifically, the rcsid will change, because its generated from
+   keywords.gperf)
+3) get rid of the Log keyword (and data after it) from configure.ac
+4) remove some remnants of the old network checks from configure.ac.
+   configure.ac could use a looking at anyway, as it has checks for things that
+   have been obsolete for over a decade. (such as NeXT)
+5) regen configure w/ autoconf
+6) ran NetBSD's indent on every .[ch] file. This fixes indentation to how I like
+   it: tabs, not spaces. Solved todo #8, which has thusly been removed.
+
+* 20030715/dive:
+1) added 'configure.lineno' to the list of files removed by 'make distclean' in
+   Makefile.in. This file got leftover by configure on my NetBSD/alpha machine.
+
+* 20040413/dive:
+1) added Luke-Jr's patch for read_activ FUNC_NOT_FOUND (from lambdamoo sf
+   project)
+2) Many todo's solved. See commit logs for more information.
+3) change FUP_version to 1.8p3 in version.c, because of the FUP fixes.
+
+* 20050130/dive:
+1) fixed some more compiler warnings (also remembered that we have a ChangeLog)
+
+* 20050314/dive:
+1) fixed the TODO entry re: function_info showing odd values to non-wizards
+   for cmdlog_status.
+2) Redid a lot of configure.ac; got rid of a ton of bitrot, and added a
+   gperf check. Regen'd configure, in the process of testing now, so far
+   things are going very well.
+2) got rid of the strip step in Makefile.in. Anything with enough RAM for a
+   MOO can handle the overhead.
+3) Fixed configure.ac (and regen'd configure again) so that it will bomb if
+   it can't find a yaccer or gperf.
+4) Fixed a bug I accidentally introduced with change #1 from today.
+
+* 20050315/dive
+1) removed ref_count.c, malloc.c
+2) regen'd Makefile.in
+3) regen'd configure
+4) removed char rcsid_foo[] from all C files (no need for the extra bloat)
+
+* 20050317/dive
+1) fixed improper usage of AC_CHECK_PROGS(... yacc ...) in configure.ac
+2) regen'd configure
