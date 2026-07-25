@@ -1,0 +1,4 @@
+*.o
+keywords.c
+build/
+moo
