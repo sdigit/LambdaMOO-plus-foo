@@ -1,3 +1,5 @@
+# diff cruft
+*.orig
 # Prerequisites
 *.d
 
