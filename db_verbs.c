@@ -185,12 +185,16 @@ db_match_prep(const char *prepname)
 	int             argc;
 	char           *ptr;
 	char          **argv;
-	char           *s, first;
+	char           first;
 
-	s = str_dup(prepname);
-	first = s[0];
-	if (first == '#')
-		first = (++s)[0];
+    char *copy = str_dup(prepname);
+    char *s = copy;
+
+    first = s[0];
+    if (first == '#') {
+        s++;
+        first = s[0];
+    }
 	prep = strtol(s, &ptr, 10);
 	if (*ptr == '\0') {
 		free_str(s);
@@ -199,12 +203,11 @@ db_match_prep(const char *prepname)
 		else
 			return prep;
 	}
-	if ((ptr = strchr(s, '/')) != '\0')
-		*ptr = '\0';
-
+    if ((ptr = strchr(s, '/')) != NULL)
+        *ptr = '\0';
 	argv = parse_into_words(s, &argc);
 	prep = db_find_prep(argc, argv, 0, 0);
-	free_str(s);
+	free_str(copy);
 	return prep;
 }
 
