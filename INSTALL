@@ -14,15 +14,12 @@ code. In addition, you will require the following be installed on that system:
 
 Part 2: Compiling the server
 
-* In the same directory in which this file resides, there is a file called
-  'configure'. Type ./configure at your shell prompt and hit enter, this will
-  check your build environment, and setup the MOO server to be compiled.
+* In the same directory in which this file resides, create a directory named:
+  build */
 
-* Open options.h in a text editor (NOT A WINDOWS TEXT EDITOR, A UNIX ONE!), and
-  tweak any values that need changing.
-
-* Type 'make' (without the quotes) to build the server. This should result in
-  you ending up with, eventually, a file called 'moo'. That is the MOO server.
+* Type 'cd build && cmake .. && make' (without the quotes) to build the server.
+  This should result in you ending up with, eventually, a file called 'moo'.
+  That is the MOO server. */
 
 Part 3: Making the proper installation directories
 
