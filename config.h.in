@@ -16,13 +16,6 @@
     Pavel@Xerox.Com
  *****************************************************************************/
 
-/* If you're looking at this as `config.h.in', then this file is full of
- * `#undef' preprocessor directives.  The `configure' command, which generates
- * `config.h' from `config.h.in', replaces appropriate ones of those `#undef's
- * with `#define's, depending upon characteristics of the operating system,
- * and comments out all of the others.
- */
-
 #ifndef Config_H
 #define Config_H 1
 
@@ -33,21 +26,6 @@
 
 #undef _ALL_SOURCE
 #undef _POSIX_SOURCE
-
-/* The following symbols describe whether or not certain functions are declared
- * in header files on your system and, if so, where.  If, on your system, the
- * functions `memcmp', `memcpy', etc. are not declared in <string.h>, but are
- * instead in <memory.h>, then NEED_MEMORY_H will be defined.  Similarly, if
- * `malloc', `free', etc. are not declared in <stdlib.h>, but are instead in
- * <malloc.h>, then NEED_MALLOC_H will be defined.  If your system has the file
- * </sys/bsdtypes.h>, then NEED_BSDTYPES_H will be defined.
- *
- * The various NDECL_* symbols are defined if the named function or variable is
- * not declared in its standard place, which is given in a comment after each
- * symbol.  In several of the cases below, the absence of a declaration for the
- * named function or variable is taken in the server code to imply the similar
- * absence of declarations for several other related functions or variables.
- */
 
 #undef NEED_MEMORY_H
 #undef NEED_MALLOC_H
@@ -130,16 +108,6 @@
 #undef HAVE_TM_ZONE
 #undef HAVE_TZNAME
 
-/* Some compilers `almost' conform to the ANSI C standard, in that they provide
- * the vast majority of the features and constructs used by the server code,
- * but one common failing with which the code can cope is the lack of support
- * for the `const' keyword.  If your compiler doesn't support `const', then
- * this symbol will be defined as a macro that expands into nothing, thus
- * eliding all uses of the keyword in the code.
- */
-
-#undef const
-
 /* Some sites have installed GCC improperly or incompletely, thereby requiring
  * the server to be compiled with the `-traditional' switch.  That disables the
  * `const', `volatile' or `signed' keywords, which we need.  Thus, for GCC, we
@@ -204,13 +172,6 @@
  */
 
 #undef USE_OWN_STRING_H
-
-/* On some systems, notably AIX, both <sys/ioctl.h> and <stropts.h> define the
- * internal macro `_IO' in compatible but different ways.  This means that no
- * program can #include both files without getting an error.  If this is so on
- * your machine, then the following symbol will be defined and the server code
- * will carefully #undef _IO between inclusions of the two files.
- */
 
 #undef UNDEF_IO_IN_STROPTS_H
 
