@@ -448,12 +448,16 @@ network_unregister_fd(fd)
 		reg_fds = ptr->next;
 		free(ptr);
 	} else {
+        if (ptr->next == NULL)
+        {
+            return; /* no need to free the next one */
+        }
 		while (ptr->next != NULL) {
 			lastptr = ptr;
 			ptr = ptr->next;
 			if (ptr->fd == fd) {
 				lastptr->next = ptr->next;
-				free(ptr);
+                free(ptr);
 			}
 		}
 	}
