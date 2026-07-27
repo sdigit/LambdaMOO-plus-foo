@@ -1214,7 +1214,7 @@ write_forked_task(forked_task ft)
 static void
 write_suspended_task(suspended_task st)
 {
-	dbio_printf("%d %d ", (int)(st.start_time, st.the_vm->task_id));
+	dbio_printf("%d %d ", (int)st.start_time, st.the_vm->task_id);
 	dbio_write_var(st.value);
 	write_vm(st.the_vm);
 }
