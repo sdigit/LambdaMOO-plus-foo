@@ -45,6 +45,7 @@
  *****************************************************************************/
 
 #include <ctype.h>
+#include <crypt.h>
 #include <string.h>
 
 #include "bf_register.h"
@@ -635,7 +636,6 @@ bf_crypt(Var arglist, Byte next, void *vdata, Objid progr)
 	const char     *saltp;
 	static char     saltstuff[] =
 	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./";
-	extern const char *crypt(const char *, const char *);
 
 	if (arglist.v.list[0].v.num == 1 || strlen(arglist.v.list[2].v.str) < 2) {
 		/*

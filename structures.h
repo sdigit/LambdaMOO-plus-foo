@@ -48,10 +48,11 @@
 #define Structures_h 1
 
 #include <stdio.h>
+#include <stdint.h>
 
 #include "config.h"
 
-typedef int32   Objid;
+typedef int32_t   Objid;
 
 /*
  * Special Objid's
@@ -126,7 +127,7 @@ typedef struct Var Var;
 struct Var {
 	union {
 		const char     *str;	/* STR */
-		int32           num;	/* NUM, CATCH, FINALLY */
+		int32_t           num;	/* NUM, CATCH, FINALLY */
 		Objid           obj;	/* OBJ */
 		enum error      err;	/* ERR */
 		Var            *list;	/* LIST */

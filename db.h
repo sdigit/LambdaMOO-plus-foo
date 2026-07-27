@@ -89,7 +89,7 @@ extern int      db_flush(enum db_flush_type);
  * indicated by the argument.  Returns true on success.
  */
 
-extern int32    db_disk_size(void);
+extern int32_t    db_disk_size(void);
 /*
  * Return the total size, in bytes, of the most recent full representation of
  * the database as one or more disk files.  Returns -1 if, for some reason,
