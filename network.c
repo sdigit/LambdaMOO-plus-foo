@@ -448,9 +448,9 @@ network_unregister_fd(fd)
 		reg_fds = ptr->next;
 		free(ptr);
 	} else {
-        if (ptr->next == NULL)
-        {
-            return; /* no need to free the next one */
+        if (ptr->next == NULL) {
+            free(ptr);
+            return;
         }
 		while (ptr->next != NULL) {
 			lastptr = ptr;
