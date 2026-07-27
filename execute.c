@@ -2868,7 +2868,7 @@ write_activ(activation a)
 	write_rt_env(a.prog->var_names, a.rt_env, a.prog->num_var_names);
 
 	dbio_printf("%d rt_stack slots in use\n",
-		    a.top_rt_stack - a.base_rt_stack);
+		    (int)(a.top_rt_stack - a.base_rt_stack));
 
 	for (v = a.base_rt_stack; v != a.top_rt_stack; v++)
 		dbio_write_var(*v);

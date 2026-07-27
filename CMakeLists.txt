@@ -146,3 +146,9 @@ target_link_libraries(moo PUBLIC m)
 if(MOO_CRYPT_LIBRARY)
     target_link_libraries(moo PUBLIC ${MOO_CRYPT_LIBRARY})
 endif()
+
+target_compile_options(moo PUBLIC
+    -Wall
+    -Wextra
+    -O3
+)
