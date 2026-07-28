@@ -113,7 +113,7 @@ dbpriv_build_prep_table(void)
 	char           *t;
 	pt_entry       *current_alias, **prev;
 
-	for (i = 0; i < NPREPS; i++) {
+	for (i = 0; i < (int) NPREPS; i++) {
 		p = prep_list[i];
 		prev = &prep_table[i];
 		while (*p) {
@@ -154,7 +154,7 @@ db_find_prep(int argc, char *argv[], int *first, int *last)
 	int             exact_match = (first == 0 || last == 0);
 
 	for (i = 0; i < argc; i++) {
-		for (j = 0; j < NPREPS; j++) {
+		for (j = 0; j < (int) NPREPS; j++) {
 			for (alias = prep_table[j]; alias; alias = alias->next) {
 				if (i + alias->nwords <= argc) {
 					for (k = 0; k < alias->nwords; k++) {
@@ -198,13 +198,14 @@ db_match_prep(const char *prepname)
 	prep = strtol(s, &ptr, 10);
 	if (*ptr == '\0') {
 		free_str(s);
-		if (!isdigit((int)first) || prep >= NPREPS)
+		if (!isdigit((int)first) || prep >= (db_prep_spec) NPREPS)
 			return PREP_NONE;
 		else
 			return prep;
 	}
-    if ((ptr = strchr(s, '/')) != NULL)
-        *ptr = '\0';
+	if ((ptr = strchr(s, '/')) != NULL) {
+		*ptr = '\0';
+	}
 	argv = parse_into_words(s, &argc);
 	prep = db_find_prep(argc, argv, 0, 0);
 	free_str(copy);
@@ -347,7 +348,7 @@ db_find_command_verb(Objid oid, const char *verb,
 
 			if (verbcasecmp(v->name, verb)
 			    && (vdobj == ASPEC_ANY || vdobj == dobj)
-			    && (v->prep == PREP_ANY || v->prep == prep)
+			    && (v->prep == PREP_ANY || (unsigned) v->prep == prep)
 			    && (viobj == ASPEC_ANY || viobj == iobj)) {
 				h.definer = o->id;
 				h.verbdef = v;
