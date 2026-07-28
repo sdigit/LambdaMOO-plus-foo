@@ -227,10 +227,10 @@ size_t get_server_rss(void) {
 Var
 memory_usage(void)
 {
-	Var     r;
-    size_t  rss;
-    rss = get_server_rss();
-    r.type = TYPE_INT;
-    r.v.num = (int)rss;
+	Var		r;
+	size_t	rss = get_server_rss();
+	r.type = TYPE_FLOAT;
+	r.v.fnum = mymalloc(sizeof(double), M_FLOAT);
+	*r.v.fnum = (double) rss;
 	return r;
 }
