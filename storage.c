@@ -52,7 +52,7 @@
 #include <sys/proc.h>
 #include <unistd.h>
 #else
-#error "Unsupported platform"
+/* No per-platform RSS implementation; get_server_rss() will return 0. */
 #endif
 
 #include "config.h"
