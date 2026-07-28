@@ -229,7 +229,7 @@ memory_usage(void)
 {
 	Var		r;
 	size_t	rss = get_server_rss();
-	r.type = TYPE_FLOAT;
-	r.v.fnum = (float)rss; /* yes I know this does not work on > 2GB */
+	r.type = TYPE_INT;
+	r.v.fnum = (int)rss; /* yes yes I know */
 	return r;
 }
