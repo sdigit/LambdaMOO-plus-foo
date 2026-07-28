@@ -168,8 +168,10 @@ static size_t get_server_rss(void) {
     FILE *f = fopen("/proc/self/statm", "r");
     if (!f) return 0;
     if (fscanf(f, "%ld %ld", &size_pages, &rss_pages) != 2) rss_pages = 0;
+    long page_size = sysconf(_SC_PAGESIZE);
     fclose(f);
-    return (size_t)rss_pages * (size_t)sysconf(_SC_PAGESIZE);
+    if (page_size <= 0) return 0;
+    return (size_t)rss_pages * (size_t)page_size;
 }
 
 #elif defined(__FreeBSD__)
