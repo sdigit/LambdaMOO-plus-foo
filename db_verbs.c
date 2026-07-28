@@ -185,19 +185,19 @@ db_match_prep(const char *prepname)
 	int             argc;
 	char           *ptr;
 	char          **argv;
-	char           first;
+	long           first;
 
     char *copy = str_dup(prepname);
     char *s = copy;
 
-    first = s[0];
-    if (first == '#') {
+    first = (long)s[0];
+    if ((char)first == '#' && (unsigned long)(s - copy) < (NPREPS-1)) {
         s++;
-        first = s[0];
+        first = (long)s[0];
     }
 	prep = strtol(s, &ptr, 10);
 	if (*ptr == '\0') {
-		free_str(s);
+		free_str(copy);
 		if (!isdigit((int)first) || prep >= (db_prep_spec) NPREPS)
 			return PREP_NONE;
 		else

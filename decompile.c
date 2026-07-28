@@ -318,7 +318,7 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 				Expr           *time = pop_expr();
 
 				fbc = READ_FORK();
-				id = (op == OP_FORK ? -1 : READ_ID());
+				id = (op == OP_FORK ? -1 : (int)READ_ID());
 				s = alloc_stmt(STMT_FORK);
 				s->s.fork.id = id;
 				s->s.fork.time = time;
@@ -883,16 +883,16 @@ program_to_tree(Program * prog, int vector, int pc_vector, int pc)
 
 	if (pc < 0)
 		hot_byte = 0;
-	else if (pc < bc.size)
+	else if ((size_t)pc < bc.size)
 		hot_byte = bc.vector + pc;
 	else
 		panic("Illegal PC in FIND_LINE_NUMBER!");
 
 	hot_node = 0;
-	hot_position = (pc == bc.size - 1 ? DONE : TOP);
+	hot_position = ((size_t)pc == bc.size - 1 ? DONE : TOP);
 
 	sum = program->main_vector.max_stack;
-	for (i = 0; i < program->fork_vectors_size; i++)
+	for (i = 0; (size_t)i < program->fork_vectors_size; i++)
 		sum += program->fork_vectors[i].max_stack;
 	expr_stack = mymalloc(sum * sizeof(Expr *), M_DECOMPILE);
 	top_expr_stack = 0;
@@ -1032,7 +1032,7 @@ find_line_number(Program * prog, int vector, int pc)
 {
 	Stmt           *tree;
 
-	if (prog->cached_lineno_pc == pc && prog->cached_lineno_vec == vector)
+	if (prog->cached_lineno_pc == (unsigned int)pc && prog->cached_lineno_vec == (unsigned int)vector)
 		return prog->cached_lineno;
 
 	tree = program_to_tree(prog, MAIN_VECTOR, vector, pc);

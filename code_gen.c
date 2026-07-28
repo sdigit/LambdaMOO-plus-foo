@@ -232,7 +232,7 @@ add_known_fixup(Fixup f, State * state)
 		Fixup          *new_fixups = mymalloc(sizeof(Fixup) * new_max,
 						      M_CODE_GEN);
 
-		for (i = 0; i < state->num_fixups; i++)
+		for (i = 0; i < (int) state->num_fixups; i++)
 			new_fixups[i] = state->fixups[i];
 
 		myfree(state->fixups, M_CODE_GEN);
@@ -486,7 +486,7 @@ enter_loop(int id, Fixup top_label, unsigned top_stack,
 		Loop           *new_loops = mymalloc(sizeof(Loop) * new_max,
 						     M_CODE_GEN);
 
-		for (i = 0; i < state->num_loops; i++)
+		for (i = 0; i < (int) state->num_loops; i++)
 			new_loops[i] = state->loops[i];
 
 		myfree(state->loops, M_CODE_GEN);
@@ -1291,8 +1291,8 @@ stmt_to_code(Stmt * stmt, GState * gstate)
 
 	fixup = state.fixups;
 	fix_i = 0;
-	for (old_i = new_i = 0; old_i < state.num_bytes; old_i++) {
-		if (fix_i < state.num_fixups && fixup->pc == old_i) {
+	for (old_i = new_i = 0; old_i < (int) state.num_bytes; old_i++) {
+		if (fix_i < (int) state.num_fixups && fixup->pc == (unsigned) old_i) {
 			unsigned        value, size = 0;	/* initialized to
 								 * silence warning */
 
