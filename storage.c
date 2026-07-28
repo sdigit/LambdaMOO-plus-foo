@@ -163,7 +163,7 @@ myfree(void *ptr, Memory_Type type)
 }
 
 #if defined(__linux__)
-size_t get_server_rss(void) {
+static size_t get_server_rss(void) {
     long size_pages = 0, rss_pages = 0;
     FILE *f = fopen("/proc/self/statm", "r");
     if (!f) return 0;
