@@ -191,7 +191,7 @@ db_match_prep(const char *prepname)
     char *s = copy;
 
     first = (long)s[0];
-    if (first == '#' && (s - copy) < (NPREPS-1)) {
+    if ((char)first == '#' && (unsigned long)(s - copy) < (NPREPS-1)) {
         s++;
         first = (long)s[0];
     }

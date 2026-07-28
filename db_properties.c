@@ -439,11 +439,11 @@ db_find_property(Objid oid, const char *name, Var * value)
 
 	h.definer = NOTHING;
 	if (!ptable_init) {
-		for (i = 0; i < Arraysize(ptable); i++)
+		for (i = 0; (size_t)i < Arraysize(ptable); i++)
 			ptable[i].hash = str_hash(ptable[i].name);
 		ptable_init = 1;
 	}
-	for (i = 0; i < Arraysize(ptable); i++) {
+	for (i = 0; (size_t)i < Arraysize(ptable); i++) {
 		if (ptable[i].hash == hash && !mystrcasecmp(name, ptable[i].name)) {
 			static Objid    ret;
 
