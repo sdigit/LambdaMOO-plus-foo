@@ -1,3 +1,6 @@
 *.o
 build/
 moo
+build.log
+make.log
+cmake.log
