@@ -175,7 +175,7 @@ static size_t get_server_rss(void) {
 }
 
 #elif defined(__FreeBSD__)
-size_t get_server_rss(void) {
+static size_t get_server_rss(void) {
     struct kinfo_proc kp;
     size_t len = sizeof(kp);
     int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid() };
@@ -185,7 +185,7 @@ size_t get_server_rss(void) {
 }
 
 #elif defined(__NetBSD__)
-size_t get_server_rss(void) {
+static size_t get_server_rss(void) {
     struct kinfo_proc2 kp;
     size_t len = sizeof(kp);
     int mib[6] = { CTL_KERN, KERN_PROC2, KERN_PROC_PID, getpid(),
@@ -196,7 +196,7 @@ size_t get_server_rss(void) {
 }
 
 #elif defined(__APPLE__)
-size_t get_server_rss(void) {
+static size_t get_server_rss(void) {
     struct task_basic_info info;
     mach_msg_type_number_t count = TASK_BASIC_INFO_COUNT;
 
@@ -208,7 +208,7 @@ size_t get_server_rss(void) {
 }
 
 #elif defined(__OpenBSD__)
-size_t get_server_rss(void) {
+static size_t get_server_rss(void) {
     struct kinfo_proc kp;
     size_t len = sizeof(kp);
     int mib[6] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid(),
@@ -229,7 +229,8 @@ memory_usage(void)
 {
 	Var		r;
 	size_t	rss = get_server_rss();
-	r.type = TYPE_INT;
-	r.v.fnum = (int)rss; /* yes yes I know */
+	r.type = TYPE_FLOAT;
+	r.v.fnum = mymalloc(sizeof(double), M_FLOAT);
+	*r.v.fnum = (double)rss;
 	return r;
 }
