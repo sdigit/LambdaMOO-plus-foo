@@ -230,7 +230,6 @@ memory_usage(void)
 	Var		r;
 	size_t	rss = get_server_rss();
 	r.type = TYPE_FLOAT;
-	r.v.fnum = mymalloc(sizeof(double), M_FLOAT);
-	*r.v.fnum = (double) rss;
+	r.v.fnum = (float)rss; /* yes I know this does not work on > 2GB */
 	return r;
 }
