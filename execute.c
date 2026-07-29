@@ -154,7 +154,7 @@ print_error_backtrace(const char *msg, void (*output) (const char *))
 		return;
 	str = new_stream(100);
 	for (t = top_activ_stack; t >= 0; t--) {
-		if (t != top_activ_stack)
+		if ((unsigned int)t != top_activ_stack)
 			stream_printf(str, "... called from ");
 		stream_printf(str, "#%d:%s", activ_stack[t].vloc,
 			      activ_stack[t].verbname);
@@ -166,7 +166,7 @@ print_error_backtrace(const char *msg, void (*output) (const char *))
 					       (t == 0 ? root_activ_vector
 						: MAIN_VECTOR),
 					       activ_stack[t].error_pc));
-		if (t == top_activ_stack)
+		if ((unsigned int)t == top_activ_stack)
 			stream_printf(str, ":  %s", msg);
 		output(reset_stream(str));
 		if (t > 0 && activ_stack[t].bi_func_pc) {
@@ -216,7 +216,7 @@ suspend_task(package p)
 	the_vm->top_activ_stack = top_activ_stack;
 	the_vm->root_activ_vector = root_activ_vector;
 	the_vm->func_id = 0;	/* shouldn't need func_id; */
-	for (i = 0; i <= top_activ_stack; i++)
+	for (i = 0; (unsigned int)i <= top_activ_stack; i++)
 		the_vm->activ_stack[i] = activ_stack[i];
 
 	e = (*p.u.susp.proc) (the_vm, p.u.susp.data);
@@ -544,7 +544,7 @@ abort_task(int is_ticks)
 static int
 push_activation(void)
 {
-	if (top_activ_stack < max_stack_size - 1) {
+	if (top_activ_stack < (unsigned int)max_stack_size - 1) {
 		top_activ_stack++;
 		return 1;
 	} else
@@ -1376,7 +1376,7 @@ next_opcode:
 					free_var(from);
 					PUSH_ERROR(E_TYPE);
 				} else {
-					int             len = (base.type == TYPE_STR ? strlen(base.v.str)
+					int             len = (base.type == TYPE_STR ? (int)strlen(base.v.str)
 						    : base.v.list[0].v.num);
 					if (from.v.num <= to.v.num
 					    && (from.v.num <= 0 || from.v.num > len
@@ -1613,7 +1613,7 @@ next_opcode:
 					enum error      e;
 
 					e = enqueue_forked_task2(RUN_ACTIV, f_index, time.v.num,
-					   op == OP_FORK_WITH_ID ? id : -1);
+					   op == OP_FORK_WITH_ID ? (int)id : -1);
 					if (e != E_NONE)
 						RAISE_ERROR(e);
 				}
@@ -2324,7 +2324,7 @@ resume_from_previous_vm(vm the_vm, Var v, task_kind kind, Var * result)
 	check_activ_stack_size(the_vm->max_stack_size);
 	top_activ_stack = the_vm->top_activ_stack;
 	root_activ_vector = the_vm->root_activ_vector;
-	for (i = 0; i <= top_activ_stack; i++)
+	for (i = 0; (unsigned int)i <= top_activ_stack; i++)
 		activ_stack[i] = the_vm->activ_stack[i];
 
 	free_vm(the_vm, 0);
@@ -2816,7 +2816,7 @@ read_rt_env(const char ***old_names, Var ** rt_env, int *old_size)
 					      M_NAMES);
 	*rt_env = new_rt_env(*old_size);
 
-	for (i = 0; i < *old_size; i++) {
+	for (i = 0; i < (unsigned int)*old_size; i++) {
 		(*old_names)[i] = dbio_read_string_intern();
 		(*rt_env)[i] = dbio_read_var();
 	}
@@ -2851,7 +2851,7 @@ reorder_rt_env(Var * old_rt_env, const char **old_names,
 	}
 
 	free_rt_env(old_rt_env, old_size);
-	for (i = 0; i < old_size; i++)
+	for (i = 0; i < (unsigned int)old_size; i++)
 		free_str(old_names[i]);
 	myfree((void *) old_names, M_NAMES);
 
@@ -2942,7 +2942,7 @@ read_activ(activation * a, int which_vector)
 		return 0;
 	}
 	a->top_rt_stack = a->base_rt_stack;
-	for (i = 0; i < stack_in_use; i++)
+	for (i = 0; i < (unsigned int)stack_in_use; i++)
 		*(a->top_rt_stack++) = dbio_read_var();
 
 	if (!read_activ_as_pi(a)) {
