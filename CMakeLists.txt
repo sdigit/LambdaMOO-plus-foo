@@ -147,8 +147,8 @@ if(MOO_CRYPT_LIBRARY)
     target_link_libraries(moo PUBLIC ${MOO_CRYPT_LIBRARY})
 endif()
 
-target_compile_options(moo PUBLIC
-    -Wall
-    -Wextra
-    -O3
+target_compile_options(moo PRIVATE
+    $<$<CONFIG:Debug>: -O0 -g -DDEBUG -Wall -Wextra >
+    $<$<CONFIG:Build>: -O3 >
+    $<$<CONFIG:Release>: -O3 >
 )
