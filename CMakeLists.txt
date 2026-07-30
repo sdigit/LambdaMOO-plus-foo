@@ -148,7 +148,7 @@ if(MOO_CRYPT_LIBRARY)
 endif()
 
 target_compile_options(moo PRIVATE
-    $<$<CONFIG:Debug>: -O0 -g -DDEBUG -Wall -Wextra >
+    $<$<CONFIG:Debug>: -O0 -g -Wall -Wextra >
     $<$<CONFIG:Build>: -O3 >
     $<$<CONFIG:Release>: -O3 >
 )
