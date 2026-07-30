@@ -1257,7 +1257,8 @@ try_again:
 			stream_add_string(str, buffer);
 			rv = reset_stream(str);
 		} else {
-			rv = buffer;
+            stream_add_string(str, buffer); /* not 100% this is right -dive@20260730 */
+            rv = reset_stream(str);
 		}
 	}
 	*count = total_len - 1;

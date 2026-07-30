@@ -86,7 +86,7 @@ add_custom_command(
     VERBATIM
 )
 add_executable(moo
-    ast.h
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/ast.h"
     ast.c
     code_gen.c
     db_file.c
@@ -139,7 +139,7 @@ add_executable(moo
 target_sources(moo PRIVATE ${GENERATED_YTAB_H})
 
 target_include_directories(moo PRIVATE
-    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
     "${CMAKE_CURRENT_BINARY_DIR}"
 )
 target_link_libraries(moo PUBLIC m)
