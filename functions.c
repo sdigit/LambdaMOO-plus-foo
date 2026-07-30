@@ -459,7 +459,7 @@ bf_function_info(Var arglist, Byte next, void *vdata, Objid progr)
 		r = function_description(i);
 	} else {
 		r = new_list(top_bf_table);
-		for (i = 0; i < top_bf_table; i++)
+		for (i = 0; (unsigned int)i < top_bf_table; i++)
 			r.v.list[i + 1] = function_description(i);
 	}
 
@@ -472,7 +472,7 @@ load_server_protect_flags(void)
 {
 	int             i;
 
-	for (i = 0; i < top_bf_table; i++) {
+	for (i = 0; (unsigned int)i < top_bf_table; i++) {
 		bf_table[i].protected = server_flag_option(bf_table[i].protect_str);
 	}
 	oklog("Loaded protect cache for %d builtins\n", i);

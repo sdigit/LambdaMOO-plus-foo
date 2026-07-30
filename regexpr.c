@@ -892,7 +892,7 @@ re_do_compile_fastmap(buffer, used, pos, can_be_null, fastmap)
 {
 	char            small_visited[512], *visited;
 
-	if (used <= sizeof(small_visited))
+	if ((size_t)used <= sizeof(small_visited))
 		visited = small_visited;
 	else {
 		visited = malloc(used);

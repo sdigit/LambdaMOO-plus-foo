@@ -1497,7 +1497,7 @@ activation_bytes(activation * ap)
 	 * though it will be shared unless the verb was reprogrammed.
 	 */
 	total += program_bytes(ap->prog);
-	for (i = 0; i < ap->prog->num_var_names; ++i)
+	for (i = 0; (unsigned int)i < ap->prog->num_var_names; ++i)
 		total += value_bytes(ap->rt_env[i]);
 	if (ap->top_rt_stack) {
 		for (v = ap->top_rt_stack - 1; v >= ap->base_rt_stack; v--)
@@ -1559,7 +1559,7 @@ suspended_task_bytes(vm the_vm)
 	int             total = sizeof(vmstruct);
 	int             i;
 
-	for (i = 0; i <= the_vm->top_activ_stack; i++)
+	for (i = 0; (unsigned int)i <= the_vm->top_activ_stack; i++)
 		total += activation_bytes(the_vm->activ_stack + i);
 
 	return total;

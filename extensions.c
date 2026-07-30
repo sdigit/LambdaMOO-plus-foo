@@ -1519,7 +1519,7 @@ bf_file_read(Var arglist, Byte next, void *vdata, Objid progr)
 
 	FILE           *f;
 
-	read_length = (record_length > sizeof(buffer)) ? sizeof(buffer) : record_length;
+	read_length = ((size_t)record_length > sizeof(buffer)) ? (int32)sizeof(buffer) : record_length;
 
 	if (str == 0)
 		str = new_stream(FILE_IO_BUFFER_LENGTH);
