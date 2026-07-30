@@ -424,7 +424,7 @@ dbio_write_var(Var v)
 }
 
 static void
-receiver(void *data, const char *line)
+receiver([[maybe_unused]] void *data, const char *line)
 {
 	dbio_printf("%s\n", line);
 }
