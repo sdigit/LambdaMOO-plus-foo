@@ -242,7 +242,6 @@ unwind_stack(Finally_Reason why, Var value, enum outcome * outcome)
 		void           *bi_func_data = 0;
 		int             bi_func_pc;
 		unsigned        bi_func_id = 0;
-		Objid           player;
 		Var             v, *goal = a->base_rt_stack;
 
 		if (why == FIN_EXIT)
@@ -294,7 +293,6 @@ unwind_stack(Finally_Reason why, Var value, enum outcome * outcome)
 			bi_func_id = a->bi_func_id;
 			bi_func_data = a->bi_func_data;
 		}
-		player = a->player;
 		free_activation(a, 0);	/* 0 == don't free bi_func_data */
 
 		if (top_activ_stack == 0) {	/* done */
