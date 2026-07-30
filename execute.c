@@ -154,7 +154,7 @@ print_error_backtrace(const char *msg, void (*output) (const char *))
 		return;
 	str = new_stream(100);
 	for (t = top_activ_stack; t >= 0; t--) {
-		if (t != top_activ_stack)
+		if ((unsigned int)t != top_activ_stack)
 			stream_printf(str, "... called from ");
 		stream_printf(str, "#%d:%s", activ_stack[t].vloc,
 			      activ_stack[t].verbname);
@@ -166,7 +166,7 @@ print_error_backtrace(const char *msg, void (*output) (const char *))
 					       (t == 0 ? root_activ_vector
 						: MAIN_VECTOR),
 					       activ_stack[t].error_pc));
-		if (t == top_activ_stack)
+		if ((unsigned int)t == top_activ_stack)
 			stream_printf(str, ":  %s", msg);
 		output(reset_stream(str));
 		if (t > 0 && activ_stack[t].bi_func_pc) {
@@ -216,7 +216,7 @@ suspend_task(package p)
 	the_vm->top_activ_stack = top_activ_stack;
 	the_vm->root_activ_vector = root_activ_vector;
 	the_vm->func_id = 0;	/* shouldn't need func_id; */
-	for (i = 0; i <= top_activ_stack; i++)
+	for (i = 0; (unsigned int)i <= top_activ_stack; i++)
 		the_vm->activ_stack[i] = activ_stack[i];
 
 	e = (*p.u.susp.proc) (the_vm, p.u.susp.data);
@@ -242,7 +242,6 @@ unwind_stack(Finally_Reason why, Var value, enum outcome * outcome)
 		void           *bi_func_data = 0;
 		int             bi_func_pc;
 		unsigned        bi_func_id = 0;
-		Objid           player;
 		Var             v, *goal = a->base_rt_stack;
 
 		if (why == FIN_EXIT)
@@ -294,7 +293,6 @@ unwind_stack(Finally_Reason why, Var value, enum outcome * outcome)
 			bi_func_id = a->bi_func_id;
 			bi_func_data = a->bi_func_data;
 		}
-		player = a->player;
 		free_activation(a, 0);	/* 0 == don't free bi_func_data */
 
 		if (top_activ_stack == 0) {	/* done */
@@ -544,7 +542,7 @@ abort_task(int is_ticks)
 static int
 push_activation(void)
 {
-	if (top_activ_stack < max_stack_size - 1) {
+	if (top_activ_stack < (unsigned int)max_stack_size - 1) {
 		top_activ_stack++;
 		return 1;
 	} else
@@ -1376,7 +1374,7 @@ next_opcode:
 					free_var(from);
 					PUSH_ERROR(E_TYPE);
 				} else {
-					int             len = (base.type == TYPE_STR ? strlen(base.v.str)
+					int             len = (base.type == TYPE_STR ? (int)strlen(base.v.str)
 						    : base.v.list[0].v.num);
 					if (from.v.num <= to.v.num
 					    && (from.v.num <= 0 || from.v.num > len
@@ -1613,7 +1611,7 @@ next_opcode:
 					enum error      e;
 
 					e = enqueue_forked_task2(RUN_ACTIV, f_index, time.v.num,
-					   op == OP_FORK_WITH_ID ? id : -1);
+					   op == OP_FORK_WITH_ID ? (int)id : -1);
 					if (e != E_NONE)
 						RAISE_ERROR(e);
 				}
@@ -1758,6 +1756,7 @@ next_opcode:
 					{
 						Var             base, from,
 						                to, value;
+                        size_t          len;
 
 						value = POP();	/* rhs value (list or
 								 * string) */
@@ -1766,6 +1765,9 @@ next_opcode:
 						from = POP();	/* start of range
 								 * (integer) */
 						base = POP();	/* lhs (list or string) */
+
+                        /* get the length safely */
+                        len = strlen(base.v.str);
 						/* base[from..to] = value */
 						if (to.type != TYPE_INT || from.type != TYPE_INT
 						    || (base.type != TYPE_LIST && base.type != TYPE_STR)
@@ -1776,10 +1778,7 @@ next_opcode:
 							free_var(from);
 							free_var(value);
 							PUSH_ERROR(E_TYPE);
-						} else if (rangeset_check(base.type == TYPE_STR
-							? strlen(base.v.str)
-									  : base.v.list[0].v.num,
-						    from.v.num, to.v.num)) {
+						} else if (rangeset_check(base.type == TYPE_STR	? (len > INT_MAX ? INT_MAX : (int)len) : base.v.list[0].v.num, from.v.num, to.v.num)) {
 							free_var(base);
 							free_var(to);
 							free_var(from);
@@ -2180,7 +2179,7 @@ static int      timeouts_enabled = 1;	/* set to 0 in debugger to disable
 					 * timeouts */
 
 static void
-task_timeout(Timer_ID id, Timer_Data data)
+task_timeout([[maybe_unused]]Timer_ID id, [[maybe_unused]]Timer_Data data)
 {
 	task_timed_out = timeouts_enabled;
 }
@@ -2324,7 +2323,7 @@ resume_from_previous_vm(vm the_vm, Var v, task_kind kind, Var * result)
 	check_activ_stack_size(the_vm->max_stack_size);
 	top_activ_stack = the_vm->top_activ_stack;
 	root_activ_vector = the_vm->root_activ_vector;
-	for (i = 0; i <= top_activ_stack; i++)
+	for (i = 0; (unsigned int)i <= top_activ_stack; i++)
 		activ_stack[i] = the_vm->activ_stack[i];
 
 	free_vm(the_vm, 0);
@@ -2548,7 +2547,7 @@ bf_call_function_read(void)
 }
 
 static          package
-bf_raise(Var arglist, Byte next, void *vdata, Objid progr)
+bf_raise(Var arglist, [[maybe_unused]]Byte next, [[maybe_unused]]void *vdata, [[maybe_unused]]Objid progr)
 {
 	package         p;
 	int             nargs = arglist.v.list[0].v.num;
@@ -2569,7 +2568,7 @@ bf_raise(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_suspend(Var arglist, Byte next, void *vdata, Objid progr)
+bf_suspend(Var arglist, [[maybe_unused]]Byte next, [[maybe_unused]]void *vdata, [[maybe_unused]]Objid progr)
 {
 	static int      seconds;
 	int             nargs = arglist.v.list[0].v.num;
@@ -2587,7 +2586,7 @@ bf_suspend(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_read(Var arglist, Byte next, void *vdata, Objid progr)
+bf_read(Var arglist, [[maybe_unused]]Byte next, [[maybe_unused]]void *vdata, Objid progr)
 {
 	int             argc = arglist.v.list[0].v.num;
 	static Objid    connection;
@@ -2626,7 +2625,7 @@ bf_read(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_seconds_left(Var arglist, Byte next, void *vdata, Objid progr)
+bf_seconds_left(Var arglist, [[maybe_unused]]Byte next, [[maybe_unused]]void *vdata, [[maybe_unused]]Objid progr)
 {
 	Var             r;
 	r.type = TYPE_INT;
@@ -2636,7 +2635,7 @@ bf_seconds_left(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_ticks_left(Var arglist, Byte next, void *vdata, Objid progr)
+bf_ticks_left(Var arglist, [[maybe_unused]]Byte next, [[maybe_unused]]void *vdata, [[maybe_unused]]Objid progr)
 {
 	Var             r;
 	r.type = TYPE_INT;
@@ -2646,7 +2645,7 @@ bf_ticks_left(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_pass(Var arglist, Byte next, void *vdata, Objid progr)
+bf_pass(Var arglist, [[maybe_unused]]Byte next, [[maybe_unused]]void *vdata, [[maybe_unused]]Objid progr)
 {
 	enum error      e = call_verb2(RUN_ACTIV.this, RUN_ACTIV.verb, arglist, 1);
 
@@ -2658,7 +2657,7 @@ bf_pass(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_set_task_perms(Var arglist, Byte next, void *vdata, Objid progr)
+bf_set_task_perms(Var arglist, [[maybe_unused]]Byte next, [[maybe_unused]]void *vdata, Objid progr)
 {				/* (player) */
 	/* warning!!  modifies top activation */
 	Objid           oid = arglist.v.list[1].v.obj;
@@ -2673,7 +2672,7 @@ bf_set_task_perms(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_caller_perms(Var arglist, Byte next, void *vdata, Objid progr)
+bf_caller_perms(Var arglist, [[maybe_unused]]Byte next, [[maybe_unused]]void *vdata, [[maybe_unused]]Objid progr)
 {				/* () */
 	Var             r;
 	r.type = TYPE_OBJ;
@@ -2686,7 +2685,7 @@ bf_caller_perms(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_callers(Var arglist, Byte next, void *vdata, Objid progr)
+bf_callers(Var arglist, [[maybe_unused]]Byte next, [[maybe_unused]]void *vdata, [[maybe_unused]]Objid progr)
 {
 	int             line_numbers_too = 0;
 
@@ -2699,7 +2698,7 @@ bf_callers(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_task_stack(Var arglist, Byte next, void *vdata, Objid progr)
+bf_task_stack(Var arglist, [[maybe_unused]]Byte next, [[maybe_unused]]void *vdata, Objid progr)
 {
 	int             nargs = arglist.v.list[0].v.num;
 	int             id = arglist.v.list[1].v.num;
@@ -2816,7 +2815,7 @@ read_rt_env(const char ***old_names, Var ** rt_env, int *old_size)
 					      M_NAMES);
 	*rt_env = new_rt_env(*old_size);
 
-	for (i = 0; i < *old_size; i++) {
+	for (i = 0; i < (unsigned int)*old_size; i++) {
 		(*old_names)[i] = dbio_read_string_intern();
 		(*rt_env)[i] = dbio_read_var();
 	}
@@ -2851,7 +2850,7 @@ reorder_rt_env(Var * old_rt_env, const char **old_names,
 	}
 
 	free_rt_env(old_rt_env, old_size);
-	for (i = 0; i < old_size; i++)
+	for (i = 0; i < (unsigned int)old_size; i++)
 		free_str(old_names[i]);
 	myfree((void *) old_names, M_NAMES);
 
@@ -2942,7 +2941,7 @@ read_activ(activation * a, int which_vector)
 		return 0;
 	}
 	a->top_rt_stack = a->base_rt_stack;
-	for (i = 0; i < stack_in_use; i++)
+	for (i = 0; i < (unsigned int)stack_in_use; i++)
 		*(a->top_rt_stack++) = dbio_read_var();
 
 	if (!read_activ_as_pi(a)) {

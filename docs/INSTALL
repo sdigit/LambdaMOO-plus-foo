@@ -1,4 +1,3 @@
-$egnet: INSTALL,v 1.2 2005/04/11 17:32:41 dive Exp $
 -------------------------------------
 How to build the LambdaMOO+foo server
 -------------------------------------
@@ -14,26 +13,27 @@ code. In addition, you will require the following be installed on that system:
 
 Part 2: Compiling the server
 
-* In the same directory in which this file resides, create a directory named:
-  build */
-
-* Type 'cd build && cmake .. && make' (without the quotes) to build the server.
-  This should result in you ending up with, eventually, a file called 'moo'.
-  That is the MOO server. */
+* 'cd' to the directory you put the source code (example: /tmp/LambdaMOO-plus-foo)
+* Create the build directory with 'mkdir build'
+* Go to the build directory with 'cd build'
+* Configure the build with 'cmake ..'
+* Build it with 'make'
+* This should result in a file called 'moo', which is the MOO server binary.
 
 Part 3: Making the proper installation directories
 
 * Create a directory outside of the mooserver source directory where you
   want your MOO to reside.
-* Copy the 'moo' binary from the source directory into that directory, along
+* Copy the 'moo' binary from the build directory into that directory, along
   with restart.sh.
-* Create directories called: files-FUP, files-FIO, and cmdlog, as parts of
-  the server need these directories.
+* Create subdirectories there called files-FUP and files-FIOs
+  (parts of the server need these directories)
 
 Part 4: Making it work
 
 * Grab whatever core you want to start with (or use Minimal.db if you're truly
   adventurous), and copy it to the directory you created in Part 3.
+
 * Once you've got a .db file ready to use, you can start the MOO running in the
   background with 'sh restart.sh <dbname> <port>' (note: do not include the
  ".db" in dbname)
