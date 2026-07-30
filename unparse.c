@@ -229,10 +229,10 @@ init_expr_tables()
 {
 	int             i;
 
-	for (i = 0; i < Arraysize(prec_table); i++)
+	for (i = 0; (size_t)i < Arraysize(prec_table); i++)
 		expr_prec[prec_table[i].kind] = prec_table[i].precedence;
 
-	for (i = 0; i < Arraysize(binop_table); i++)
+	for (i = 0; (size_t)i < Arraysize(binop_table); i++)
 		binop_string[binop_table[i].kind] = binop_table[i].string;
 
 	expr_tables_initialized = 1;

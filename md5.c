@@ -156,7 +156,7 @@ md5_Encode(uint8 * output, uint32 * input, int len)
 {
 	unsigned int    i, j;
 
-	for (i = 0, j = 0; j < len; i++, j += 4) {
+	for (i = 0, j = 0; (int)j < len; i++, j += 4) {
 		output[j] = (uint8) (input[i] & 0xff);
 		output[j + 1] = (uint8) ((input[i] >> 8) & 0xff);
 		output[j + 2] = (uint8) ((input[i] >> 16) & 0xff);
@@ -172,7 +172,7 @@ md5_Decode(uint32 * output, uint8 * input, int len)
 {
 	unsigned int    i, j;
 
-	for (i = 0, j = 0; j < len; i++, j += 4) {
+	for (i = 0, j = 0; (int)j < len; i++, j += 4) {
 		output[i] = ((uint32) input[j]) |
 			(((uint32) input[j + 1]) << 8) |
 			(((uint32) input[j + 2]) << 16) |
@@ -307,7 +307,7 @@ md5_Update(md5ctx_t * context, uint8 * buf, int len)
 	partLen = 64 - index;
 
 	/* Transform as many times as possible */
-	if (len >= partLen) {
+	if ((unsigned int)len >= partLen) {
 		memcpy((char *) &context->buffer[index], (char *) buf, partLen);
 		md5_Transform(context->state, context->buffer);
 

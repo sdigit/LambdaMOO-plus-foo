@@ -100,15 +100,15 @@ program_bytes(Program * p)
 	count = sizeof(Program);
 	count += p->main_vector.size;
 
-	for (i = 0; i < p->num_literals; i++)
+	for (i = 0; (unsigned int)i < p->num_literals; i++)
 		count += value_bytes(p->literals[i]);
 
 	count += sizeof(Bytecodes) * p->fork_vectors_size;
-	for (i = 0; i < p->fork_vectors_size; i++)
+	for (i = 0; (unsigned int)i < p->fork_vectors_size; i++)
 		count += p->fork_vectors[i].size;
 
 	count += sizeof(const char *) * p->num_var_names;
-	for (i = 0; i < p->num_var_names; i++)
+	for (i = 0; (unsigned int)i < p->num_var_names; i++)
 		count += strlen(p->var_names[i]) + 1;
 
 	return count;
