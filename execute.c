@@ -1756,6 +1756,7 @@ next_opcode:
 					{
 						Var             base, from,
 						                to, value;
+                        size_t          len;
 
 						value = POP();	/* rhs value (list or
 								 * string) */
@@ -1764,6 +1765,9 @@ next_opcode:
 						from = POP();	/* start of range
 								 * (integer) */
 						base = POP();	/* lhs (list or string) */
+
+                        /* get the length safely */
+                        len = strlen(base.v.str);
 						/* base[from..to] = value */
 						if (to.type != TYPE_INT || from.type != TYPE_INT
 						    || (base.type != TYPE_LIST && base.type != TYPE_STR)
@@ -1774,10 +1778,7 @@ next_opcode:
 							free_var(from);
 							free_var(value);
 							PUSH_ERROR(E_TYPE);
-						} else if (rangeset_check(base.type == TYPE_STR
-							? strlen(base.v.str)
-									  : base.v.list[0].v.num,
-						    from.v.num, to.v.num)) {
+						} else if (rangeset_check(base.type == TYPE_STR	? (len > INT_MAX ? INT_MAX : (int)len) : base.v.list[0].v.num, from.v.num, to.v.num)) {
 							free_var(base);
 							free_var(to);
 							free_var(from);
