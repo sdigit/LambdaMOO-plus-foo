@@ -419,7 +419,7 @@ set_checkpoint_timer(int first_time)
 	static Timer_ID last_checkpoint_timer;
 
 	v = get_system_property("dump_interval");
-	if (v.type != TYPE_INT || v.v.num < 60 || ((now+v.v.num) < (sizeof(unsigned short) - v.v.num)))
+	if (v.type != TYPE_INT || v.v.num < 60 || ((unsigned int)(now+v.v.num) < (sizeof(unsigned short) - v.v.num)))
     {
 		free_var(v);
 		interval = 3600;/* Once per hour */
