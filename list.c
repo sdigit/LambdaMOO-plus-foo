@@ -930,7 +930,7 @@ check_subs_list(Var subs)
 static          package
 bf_substitute(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
-	int             template_length, subject_length;
+	int             template_length;
 	const char     *template, *subject;
 	Var             subs, ans;
 	int             invarg = 0;
@@ -946,7 +946,6 @@ bf_substitute(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vd
 		return make_error_pack(E_INVARG);
 	}
 	subject = subs.v.list[4].v.str;
-	subject_length = strlen(subject);
 
 	s = new_stream(template_length);
 	ans.type = TYPE_STR;
