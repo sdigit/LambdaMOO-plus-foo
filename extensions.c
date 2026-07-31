@@ -114,7 +114,7 @@ InitListToZero(Var list)
 }
 
 static          package
-bf_make(Var arglist, Byte next, void *vdata, Objid progr)
+bf_make(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	Var             ret, elt;
 	int             n = arglist.v.list[1].v.num, i;
@@ -145,7 +145,7 @@ bf_make(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_slice(Var arglist, Byte next, void *vdata, Objid progr)
+bf_slice(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	Var             ret, list = arglist.v.list[1];
 	int             n = list.v.list[0].v.num, c, i;
@@ -176,7 +176,7 @@ bf_slice(Var arglist, Byte next, void *vdata, Objid progr)
 
 /* Remove_Duplicates - from Access_Denied@LambdaMOO. */
 static          package
-bf_remove_duplicates(Var arglist, Byte next, void *vdata, Objid progr)
+bf_remove_duplicates(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	Var             r;
 	int             i;
@@ -224,7 +224,7 @@ list_iassoc(Var vtarget, Var vlist, int vindex)
 
 
 static          package
-bf_iassoc(Var arglist, Byte next, void *vdata, Objid progr)
+bf_iassoc(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {				/* (ANY, LIST[, INT]) */
 	Var             r;
 	int             index = 1;
@@ -244,7 +244,7 @@ bf_iassoc(Var arglist, Byte next, void *vdata, Objid progr)
 }				/* end bf_listiassoc() */
 
 static          package
-bf_assoc(Var arglist, Byte next, void *vdata, Objid progr)
+bf_assoc(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {				/* (ANY, LIST[, INT]) */
 	Var             r;
 	int             index = 1;
@@ -263,7 +263,7 @@ bf_assoc(Var arglist, Byte next, void *vdata, Objid progr)
 }				/* end bf_listassoc() */
 
 static          package
-bf_sort(Var arglist, Byte next, void *vdata, Objid progr)
+bf_sort(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	/*
 	 * sort(list) => sorts and returns list. sort({1,3,2}) => {1,2,3}
@@ -373,7 +373,7 @@ makelowercase(char *string)
  * system seconds, system microseconds}
  */
 static          package
-bf_clock(Var arglist, Byte next, void *vdata, Objid progr)
+bf_clock(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 
 	static struct rusage ru;
@@ -395,7 +395,7 @@ bf_clock(Var arglist, Byte next, void *vdata, Objid progr)
 
 
 static          package
-bf_gettimeofday(Var arglist, Byte next, void *vdata, Objid progr)
+bf_gettimeofday(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	/** gettimeofday()
             return {tv_sec, tv_usec}
@@ -418,7 +418,7 @@ bf_gettimeofday(Var arglist, Byte next, void *vdata, Objid progr)
 
 
 static          package
-bf_find_verb(Var arglist, Byte next, void *vdata, Objid progr)
+bf_find_verb(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 
 	/** find_verb(OBJ where, STR verbspec[, ANY executable])
@@ -476,7 +476,7 @@ bf_find_verb_done:
 */
 
 static          package
-bf_verbname_match(Var arglist, Byte next, void *vdata, Objid progr)
+bf_verbname_match(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	/** match_verbname(STR pattern, STR string)
             True if string would match a MOO verb with name 'pattern'.
@@ -491,7 +491,7 @@ bf_verbname_match(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_strhash(Var arglist, Byte next, void *vdata, Objid progr)
+bf_strhash(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	/** string_hash_as_int(STR string)
             Return a (probably unique) integer describing the given string.
@@ -510,7 +510,7 @@ bf_strhash(Var arglist, Byte next, void *vdata, Objid progr)
  * of its string argument.
  */
 static          package
-bf_asc(Var arglist, Byte next, void *vdata, Objid progr)
+bf_asc(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	Var             v;
 
@@ -531,7 +531,7 @@ bf_asc(Var arglist, Byte next, void *vdata, Objid progr)
  * the ASCII representation of its integer argument.
  */
 static          package
-bf_chr(Var arglist, Byte next, void *vdata, Objid progr)
+bf_chr(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	Var             v;
 
@@ -551,7 +551,7 @@ bf_chr(Var arglist, Byte next, void *vdata, Objid progr)
 
 /* Logical XOR - one and only one of args[1] and args[2] can be true. */
 static          package
-bf_xor(Var arglist, Byte next, void *vdata, Objid progr)
+bf_xor(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	Var             r;
 	r.type = TYPE_INT;
@@ -561,7 +561,7 @@ bf_xor(Var arglist, Byte next, void *vdata, Objid progr)
 }
 /* End XOR */
 static          package
-bf_nprogs(Var arglist, Byte next, void *vdata, Objid progr)
+bf_nprogs(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	Objid           oid, max_oid = db_last_used_objid();
 	int             nprogs = 0;
@@ -585,7 +585,7 @@ bf_nprogs(Var arglist, Byte next, void *vdata, Objid progr)
 
 /* Random_Of - Random item of a list. */
 static          package
-bf_random_of(Var arglist, Byte next, void *vdata, Objid progr)
+bf_random_of(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	Var             r;
 	int             n;
@@ -607,7 +607,7 @@ bf_random_of(Var arglist, Byte next, void *vdata, Objid progr)
 
 /* Enlist - Make args[1] into a list, if it isn't. */
 static          package
-bf_enlist(Var arglist, Byte next, void *vdata, Objid progr)
+bf_enlist(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	Var             r;
 
@@ -623,7 +623,7 @@ bf_enlist(Var arglist, Byte next, void *vdata, Objid progr)
 
 
 static          package
-bf_isa(Var arglist, Byte next, void *vdata, Objid progr)
+bf_isa(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	Objid           what = arglist.v.list[1].v.obj, targ = arglist.v.list[2].v.obj;
 	Var             r;
@@ -952,13 +952,13 @@ file_raise_errno(const char *value_str)
 }
 
 package 
-file_raise_notokcall(const char *funcid, Objid progr)
+file_raise_notokcall([[maybe_unused]] const char *funcid, [[maybe_unused]] Objid progr)
 {
 	return make_error_pack(E_PERM);
 }
 
 package 
-file_raise_notokfilename(const char *funcid, const char *pathname)
+file_raise_notokfilename([[maybe_unused]] const char *funcid, const char *pathname)
 {
 	Var             p;
 
@@ -1050,7 +1050,7 @@ file_resolve_path(const char *pathname)
  ***************************************************************/
 
 static          package
-bf_file_version(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_version([[maybe_unused]] Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	char            tmpbuffer[50];
 	Var             rv;
@@ -1075,7 +1075,7 @@ bf_file_version(Var arglist, Byte next, void *vdata, Objid progr)
  */
 
 static          package
-bf_file_open(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_open(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	Var             fhandle;
@@ -1112,7 +1112,7 @@ bf_file_open(Var arglist, Byte next, void *vdata, Objid progr)
  */
 
 static          package
-bf_file_close(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_close(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	Var             fhandle = arglist.v.list[1];
@@ -1136,7 +1136,7 @@ bf_file_close(Var arglist, Byte next, void *vdata, Objid progr)
  */
 
 static          package
-bf_file_name(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_name(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	Var             fhandle = arglist.v.list[1];
@@ -1157,7 +1157,7 @@ bf_file_name(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_file_openmode(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_openmode(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	Var             fhandle = arglist.v.list[1];
@@ -1271,7 +1271,7 @@ try_again:
  */
 
 static          package
-bf_file_readline(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_readline(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	Var             fhandle = arglist.v.list[1];
@@ -1333,7 +1333,7 @@ new_line_buffer(char *line)
 }
 
 static          package
-bf_file_readlines(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_readlines(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	Var             fhandle = arglist.v.list[1];
@@ -1419,7 +1419,7 @@ bf_file_readlines(Var arglist, Byte next, void *vdata, Objid progr)
  */
 
 static          package
-bf_file_writeline(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_writeline(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	Var             fhandle = arglist.v.list[1];
@@ -1500,7 +1500,7 @@ bf_file_send(Var arglist, Byte next, void *vdata, Objid progr)
  */
 
 static          package
-bf_file_read(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_read(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 
@@ -1573,7 +1573,7 @@ try_again:
  */
 
 static          package
-bf_file_flush(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_flush(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	Var             fhandle = arglist.v.list[1];
@@ -1599,7 +1599,7 @@ bf_file_flush(Var arglist, Byte next, void *vdata, Objid progr)
  */
 
 static          package
-bf_file_write(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_write(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	Var             fhandle = arglist.v.list[1], rv;
@@ -1646,7 +1646,7 @@ bf_file_write(Var arglist, Byte next, void *vdata, Objid progr)
  */
 
 static          package
-bf_file_seek(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_seek(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	Var             fhandle = arglist.v.list[1];
@@ -1685,7 +1685,7 @@ bf_file_seek(Var arglist, Byte next, void *vdata, Objid progr)
  */
 
 static          package
-bf_file_tell(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_tell(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	Var             fhandle = arglist.v.list[1];
@@ -1712,7 +1712,7 @@ bf_file_tell(Var arglist, Byte next, void *vdata, Objid progr)
  */
 
 static          package
-bf_file_eof(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_eof(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	Var             fhandle = arglist.v.list[1];
@@ -1808,7 +1808,7 @@ file_mode_string(umode_t st_mode)
  */
 
 static          package
-bf_file_size(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_size(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	Var             rv;
@@ -1830,7 +1830,7 @@ bf_file_size(Var arglist, Byte next, void *vdata, Objid progr)
  */
 
 static          package
-bf_file_mode(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_mode(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	Var             rv;
@@ -1852,7 +1852,7 @@ bf_file_mode(Var arglist, Byte next, void *vdata, Objid progr)
  */
 
 static          package
-bf_file_type(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_type(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	Var             rv;
@@ -1874,7 +1874,7 @@ bf_file_type(Var arglist, Byte next, void *vdata, Objid progr)
  */
 
 static          package
-bf_file_last_access(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_last_access(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	Var             rv;
@@ -1896,7 +1896,7 @@ bf_file_last_access(Var arglist, Byte next, void *vdata, Objid progr)
  */
 
 static          package
-bf_file_last_modify(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_last_modify(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	Var             rv;
@@ -1918,7 +1918,7 @@ bf_file_last_modify(Var arglist, Byte next, void *vdata, Objid progr)
  */
 
 static          package
-bf_file_last_change(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_last_change(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	Var             rv;
@@ -1940,7 +1940,7 @@ bf_file_last_change(Var arglist, Byte next, void *vdata, Objid progr)
  */
 
 static          package
-bf_file_stat(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_stat(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	Var             rv;
@@ -1993,7 +1993,7 @@ file_list_select(const struct dirent * d)
 }
 
 static          package
-bf_file_list(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_list(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	/*
 	 * modified to use opendir/readdir which is slightly more "standard"
@@ -2068,7 +2068,7 @@ bf_file_list(Var arglist, Byte next, void *vdata, Objid progr)
  */
 
 static          package
-bf_file_mkdir(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_mkdir(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	const char     *pathspec = arglist.v.list[1].v.str;
@@ -2094,7 +2094,7 @@ bf_file_mkdir(Var arglist, Byte next, void *vdata, Objid progr)
  */
 
 static          package
-bf_file_rmdir(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_rmdir(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	const char     *pathspec = arglist.v.list[1].v.str;
@@ -2120,7 +2120,7 @@ bf_file_rmdir(Var arglist, Byte next, void *vdata, Objid progr)
  */
 
 static          package
-bf_file_remove(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_remove(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	const char     *pathspec = arglist.v.list[1].v.str;
@@ -2145,7 +2145,7 @@ bf_file_remove(Var arglist, Byte next, void *vdata, Objid progr)
  */
 
 static          package
-bf_file_rename(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_rename(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	const char     *fromspec = arglist.v.list[1].v.str;
@@ -2202,7 +2202,7 @@ file_chmodstr_to_mode(const char *modespec, mode_t * newmode)
 }
 
 static          package
-bf_file_chmod(Var arglist, Byte next, void *vdata, Objid progr)
+bf_file_chmod(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {
 	package         r;
 	const char     *pathspec = arglist.v.list[1].v.str;
@@ -2399,7 +2399,7 @@ char spec;
 }
 
 static package
-bf_fileexists(Var arglist, Byte next, void *vdata, Objid progr)
+bf_fileexists(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 { /* (directory, filename) */
         char infileName[BUF_LEN];
         Var ret;
@@ -2416,7 +2416,7 @@ bf_fileexists(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static package
-bf_filelength(Var arglist, Byte next, void *vdata, Objid progr)
+bf_filelength(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 { /* (directory, filename) */
         FILE *f ;
         char infileName[BUF_LEN];
@@ -2442,7 +2442,7 @@ bf_filelength(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static package
-bf_filesize(Var arglist, Byte next, void *vdata, Objid progr)
+bf_filesize(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 { /* (directory, filename) */
         char infileName[BUF_LEN];
         struct stat st;
@@ -2467,7 +2467,7 @@ bf_filesize(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static package
-bf_filewrite(Var arglist, Byte next, void *vdata, Objid progr)
+bf_filewrite(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 { /* (directory, filename, list, [start, end]) */
 
         FILE *inFile = NULL;
@@ -2566,7 +2566,7 @@ bf_filewrite(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static package
-bf_fileread(Var arglist, Byte next, void *vdata, Objid progr)
+bf_fileread(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 { /* (directory, filename [start, end]) */
 
         FILE *f;
@@ -2623,7 +2623,7 @@ bf_fileread(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static package
-bf_fileappend(Var arglist, Byte next, void *vdata, Objid progr)
+bf_fileappend(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 { /* (directory, filename, list) */
 
         FILE *outFile = NULL;
@@ -2683,7 +2683,7 @@ bf_fileappend(Var arglist, Byte next, void *vdata, Objid progr)
 
 /* new option for inserting lines */
 static package
-bf_fileinsert(Var arglist, Byte next, void *vdata, Objid progr)
+bf_fileinsert(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 { /* (directory, filename, list, start, end) */
  
         FILE *inFile = NULL;
@@ -2781,7 +2781,7 @@ bf_fileinsert(Var arglist, Byte next, void *vdata, Objid progr)
 
 
 static package
-bf_filecut(Var arglist, Byte next, void *vdata, Objid progr)
+bf_filecut(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 { /* (directory, filename, [start, end]) */
 
         FILE *inFile = NULL;
@@ -2853,7 +2853,7 @@ bf_filecut(Var arglist, Byte next, void *vdata, Objid progr)
 
 
 static package
-bf_filedelete(Var arglist, Byte next, void *vdata, Objid progr)
+bf_filedelete(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 { /* (directory, filename) */
         char infileName[BUF_LEN];
         Var ret;
@@ -2880,7 +2880,7 @@ bf_filedelete(Var arglist, Byte next, void *vdata, Objid progr)
 
 
 static package
-bf_filelist(Var arglist, Byte next, void *vdata, Objid progr)
+bf_filelist(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 { /* (directory) */
 
         typedef struct dirent MYDIRENT ;
@@ -2941,7 +2941,7 @@ bf_filelist(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static package
-bf_filegrep(Var arglist, Byte next, void *vdata, Objid progr)
+bf_filegrep(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 { /* (directory, filename, pattern, [option]) */
 
         FILE *f;
@@ -3009,7 +3009,7 @@ bf_filegrep(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static package
-bf_fileextract(Var arglist, Byte next, void *vdata, Objid progr)
+bf_fileextract(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 { /* (directory, filename, start_pattern, end_pattern [,extra_pattern]) */
 
         FILE *f;
@@ -3098,7 +3098,7 @@ bf_fileextract(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static package
-bf_fileversion(Var arglist, Byte next, void *vdata, Objid progr)
+bf_fileversion(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
     Var ret;
     ret.type = TYPE_STR;
@@ -3108,7 +3108,7 @@ bf_fileversion(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static package
-bf_filerename(Var arglist, Byte next, void *vdata, Objid progr)
+bf_filerename(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 { /* (directory, oldFilename, newFilename) */
         char oldFilename[BUF_LEN];
         char newFilename[BUF_LEN];
@@ -3202,7 +3202,7 @@ bf_filechmod(Var arglist, Byte next, void *vdata, Objid progr)
 #endif
 
 static package
-bf_fileinfo(Var arglist, Byte next, void *vdata, Objid progr)
+bf_fileinfo(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 { /* (directory, filename) */
         char filename[BUF_LEN];
         Var ret, atime, mtime, ctime, fsize, ftype, fmode, fuid, fgid;
@@ -3402,7 +3402,7 @@ bf_filerun(Var arglist, Byte next, void *vdata, Objid progr)
 #endif
 
 static package
-bf_filemkdir(Var arglist, Byte next, void *vdata, Objid progr)
+bf_filemkdir(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {  /* filemkdir(base-directory-name, new-directory-name) */
       char newdirName[BUF_LEN];
       mode_t create_mode = CREATE_NEW_DIR_MODE;
@@ -3428,7 +3428,7 @@ bf_filemkdir(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static package
-bf_filermdir(Var arglist, Byte next, void *vdata, Objid prog)
+bf_filermdir(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid prog)
 {  /* filermdir(base-directory-name, directory-name) */
         char rmDirName[BUF_LEN];
         Var  ret;
@@ -3453,7 +3453,7 @@ bf_filermdir(Var arglist, Byte next, void *vdata, Objid prog)
 }
 
 static package
-bf_fileerror(Var arglist, Byte next, void *vdata, Objid progr)
+bf_fileerror(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
     Var ret;
     ret.type = TYPE_STR;

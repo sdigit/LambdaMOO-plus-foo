@@ -424,7 +424,7 @@ type_error:
 /**** built in functions ****/
 
 static          package
-bf_toint(Var arglist, Byte next, void *vdata, Objid progr)
+bf_toint(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	Var             r;
 	enum error      e;
@@ -440,7 +440,7 @@ bf_toint(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_tofloat(Var arglist, Byte next, void *vdata, Objid progr)
+bf_tofloat(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	Var             r;
 	enum error      e;
@@ -457,7 +457,7 @@ bf_tofloat(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_min(Var arglist, Byte next, void *vdata, Objid progr)
+bf_min(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	Var             r;
 	int             i, nargs = arglist.v.list[0].v.num;
@@ -487,7 +487,7 @@ bf_min(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_max(Var arglist, Byte next, void *vdata, Objid progr)
+bf_max(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	Var             r;
 	int             i, nargs = arglist.v.list[0].v.num;
@@ -517,7 +517,7 @@ bf_max(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_abs(Var arglist, Byte next, void *vdata, Objid progr)
+bf_abs(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	Var             r;
 
@@ -534,7 +534,7 @@ bf_abs(Var arglist, Byte next, void *vdata, Objid progr)
 
 #define MATH_FUNC(name)							      \
 		static package						      \
-		bf_ ## name(Var arglist, Byte next, void *vdata, Objid progr) \
+		bf_ ## name(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr) \
 		{							      \
 		    double	d;					      \
 									      \
@@ -565,7 +565,7 @@ MATH_FUNC(log10)
 MATH_FUNC(ceil)
 MATH_FUNC(floor)
 	static          package
-	                bf_trunc(Var arglist, Byte next, void *vdata, Objid progr)
+	                bf_trunc(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	double          d;
 
@@ -585,7 +585,7 @@ MATH_FUNC(floor)
 }
 
 static          package
-bf_atan(Var arglist, Byte next, void *vdata, Objid progr)
+bf_atan(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	double          d, dd;
 
@@ -606,7 +606,7 @@ bf_atan(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_time(Var arglist, Byte next, void *vdata, Objid progr)
+bf_time(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	Var             r;
 	r.type = TYPE_INT;
@@ -616,7 +616,7 @@ bf_time(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_ctime(Var arglist, Byte next, void *vdata, Objid progr)
+bf_ctime(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	Var             r;
 	time_t          c;
@@ -658,7 +658,7 @@ bf_ctime(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_random(Var arglist, Byte next, void *vdata, Objid progr)
+bf_random(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	int             nargs = arglist.v.list[0].v.num;
 	int             num = (nargs >= 1 ? arglist.v.list[1].v.num : 1);
@@ -680,7 +680,7 @@ bf_random(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_floatstr(Var arglist, Byte next, void *vdata, Objid progr)
+bf_floatstr(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {				/* (float, precision [, sci-notation]) */
 	double          d = *arglist.v.list[1].v.fnum;
 	int             prec = arglist.v.list[2].v.num;

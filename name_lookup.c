@@ -178,7 +178,7 @@ struct request {
  *****************************************************************************/
 
 static void
-timeout_proc(Timer_ID id, Timer_Data data)
+timeout_proc([[maybe_unused]] Timer_ID id, [[maybe_unused]] Timer_Data data)
 {
 	_exit(1);
 }
