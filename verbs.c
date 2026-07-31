@@ -80,7 +80,7 @@ add_to_list(void *data, const char *verb_name)
 }
 
 static          package
-bf_verbs(Var arglist, Byte next, void *vdata, Objid progr)
+bf_verbs(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {				/* (object) */
 	Objid           oid = arglist.v.list[1].v.obj;
 
@@ -432,7 +432,7 @@ check_verbs_before_chparent(void *new_parent, Objid oid)
 /*** end -o_Verbs Patch ***/
 
 static          package
-bf_add_verb(Var arglist, Byte next, void *vdata, Objid progr)
+bf_add_verb(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {				/* (object, info, args) */
 	Objid           oid = arglist.v.list[1].v.obj;
 	Var             info = arglist.v.list[2];
@@ -505,7 +505,7 @@ find_described_verb(Objid oid, Var desc)
 }
 
 static          package
-bf_delete_verb(Var arglist, Byte next, void *vdata, Objid progr)
+bf_delete_verb(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {				/* (object, verb-desc) */
 	Objid           oid = arglist.v.list[1].v.obj;
 	Var             desc = arglist.v.list[2];
@@ -534,7 +534,7 @@ bf_delete_verb(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_verb_info(Var arglist, Byte next, void *vdata, Objid progr)
+bf_verb_info(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {				/* (object, verb-desc) */
 	Objid           oid = arglist.v.list[1].v.obj;
 	Var             desc = arglist.v.list[2];
@@ -586,7 +586,7 @@ bf_verb_info(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_set_verb_info(Var arglist, Byte next, void *vdata, Objid progr)
+bf_set_verb_info(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {				/* (object, verb-desc, {owner, flags, names}) */
 	Objid           oid = arglist.v.list[1].v.obj;
 	Var             desc = arglist.v.list[2];
@@ -666,7 +666,7 @@ unparse_arg_spec(db_arg_spec spec)
 }
 
 static          package
-bf_verb_args(Var arglist, Byte next, void *vdata, Objid progr)
+bf_verb_args(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {				/* (object, verb-desc) */
 	Objid           oid = arglist.v.list[1].v.obj;
 	Var             desc = arglist.v.list[2];
@@ -702,7 +702,7 @@ bf_verb_args(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_set_verb_args(Var arglist, Byte next, void *vdata, Objid progr)
+bf_set_verb_args(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {				/* (object, verb-desc, {dobj, prep, iobj}) */
 	Objid           oid = arglist.v.list[1].v.obj;
 	Var             desc = arglist.v.list[2];
@@ -748,7 +748,7 @@ lister(void *data, const char *line)
 }
 
 static          package
-bf_verb_code(Var arglist, Byte next, void *vdata, Objid progr)
+bf_verb_code(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {				/* (object, verb-desc [, fully-paren [,
 				 * indent]]) */
 	int             nargs = arglist.v.list[0].v.num;
@@ -781,7 +781,7 @@ bf_verb_code(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_set_verb_code(Var arglist, Byte next, void *vdata, Objid progr)
+bf_set_verb_code(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, Objid progr)
 {				/* (object, verb-desc, code) */
 	Objid           oid = arglist.v.list[1].v.obj;
 	Var             desc = arglist.v.list[2];
@@ -822,7 +822,7 @@ bf_set_verb_code(Var arglist, Byte next, void *vdata, Objid progr)
 }
 
 static          package
-bf_eval(Var arglist, Byte next, void *data, Objid progr)
+bf_eval(Var arglist, Byte next, [[maybe_unused]] void *data, Objid progr)
 {
 	package         p;
 	if (next == 1) {

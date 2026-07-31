@@ -93,7 +93,7 @@ free_timer(Timer_Entry * this)
 static void     restart_timers(void);
 
 static void
-wakeup_call(int signo)
+wakeup_call([[maybe_unused]] int signo)
 {
 	Timer_Entry    *this = active_timers;
 	Timer_Proc      proc = this->proc;
@@ -110,7 +110,7 @@ wakeup_call(int signo)
 
 #ifdef ITIMER_VIRTUAL
 static void
-virtual_wakeup_call(int signo)
+virtual_wakeup_call([[maybe_unused]] int signo)
 {
 	Timer_Entry    *this = virtual_timer;
 	Timer_Proc      proc = this->proc;

@@ -303,9 +303,7 @@ tcp_accept(listener_fd, read_fd, write_fd, name, name_lookup)
 static Exception timeout_exception;
 
 static void
-timeout_proc(id, data)
-	Timer_ID        id;
-	Timer_Data      data;
+timeout_proc([[maybe_unused]] Timer_ID id, [[maybe_unused]] Timer_Data data)
 {
 	RAISE(timeout_exception, 0);
 }
@@ -394,9 +392,7 @@ tcp_open(arglist, read_fd, write_fd, local_name, remote_name)
 #endif				/* OUTBOUND_NETWORK */
 
 void
-close_connection(read_fd, write_fd)
-	int             read_fd;
-	int             write_fd;
+close_connection(int read_fd, [[maybe_unused]] int write_fd)
 {
 	close(read_fd);
 }
