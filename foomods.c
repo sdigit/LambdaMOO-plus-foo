@@ -363,7 +363,7 @@ writepidfile()
 		oklog("WARNING: unable to open PID file %s: %s\n",
 		      PIDFILE, strerror(errno));
 	} else {
-		if (write(fd, mypid, strlen(mypid)) != strlen(mypid)) {
+		if (write(fd, mypid, strlen(mypid)) != (ssize_t)strlen(mypid)) {
 			oklog("WARNING: write didn't return the correct length?");
 		} else {
 			oklog("Wrote PID (%d) to PID file %s\n", pid, PIDFILE);

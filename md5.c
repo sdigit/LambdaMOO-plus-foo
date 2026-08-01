@@ -311,7 +311,7 @@ md5_Update(md5ctx_t * context, uint8 * buf, int len)
 		memcpy((char *) &context->buffer[index], (char *) buf, partLen);
 		md5_Transform(context->state, context->buffer);
 
-		for (i = partLen; i + 63 < len; i += 64)
+		for (i = partLen; i + 63 < (unsigned int)len; i += 64)
 			md5_Transform(context->state, &buf[i]);
 
 		index = 0;

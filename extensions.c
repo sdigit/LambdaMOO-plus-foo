@@ -70,7 +70,7 @@
 #define FILE_IO_BUFFER_LENGTH 4096
 
 #define OneK 1024
-#define BUF_LEN OneK * 2
+#define BUF_LEN (2*OneK)
 #define MAX_INT 32760
 #define TRUE    1
 #define FALSE   0
@@ -2473,13 +2473,13 @@ bf_filewrite(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vda
         FILE *inFile = NULL;
         FILE *outFile = NULL;
         char infileName[BUF_LEN];
-        char outfileName[BUF_LEN];
+        char outfileName[BUF_LEN*2];
         int i, thelength;
         int index;
         int start_line = 1;
         int end_line   = MAX_INT;
         char buffer[BUF_LEN];
-        Var ret, theline;
+        Var ret;
         int result;
         result = build_file_name(arglist.v.list[1].v.str,
                             arglist.v.list[2].v.str,
@@ -2492,9 +2492,8 @@ bf_filewrite(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vda
 
         ret.type = TYPE_INT;
         ret.v.num = 1;
-        theline.type = TYPE_STR;
 
-        sprintf(outfileName,"%s.%li", infileName,time(0));
+        snprintf(outfileName,BUF_LEN*2,"%s.%li", infileName,time(0));
 
         if (arglist.v.list[0].v.num > 3) 
            start_line = arglist.v.list[4].v.num;
@@ -2629,7 +2628,7 @@ bf_fileappend(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vd
         FILE *outFile = NULL;
         char outfileName[BUF_LEN];
         int i, thelength;
-        Var ret, theline;
+        Var ret;
         int result;
         result = build_file_name(arglist.v.list[1].v.str,
                             arglist.v.list[2].v.str,
@@ -2642,7 +2641,6 @@ bf_fileappend(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vd
 
         ret.type = TYPE_INT;
         ret.v.num = 1;
-        theline.type = TYPE_STR;
 
         if ((outFile = fopen(outfileName, "a")) == 0) {
             free_var(arglist);
@@ -2689,13 +2687,12 @@ bf_fileinsert(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vd
         FILE *inFile = NULL;
         FILE *outFile = NULL;
         char infileName[BUF_LEN];
-        char outfileName[BUF_LEN];
+        char outfileName[BUF_LEN*2];
         int i, thelength;
         int index;
         int start_line = 1;
-        int end_line   = MAX_INT;
         char buffer[BUF_LEN];
-        Var ret, theline;
+        Var ret;
         int result;
 
         result = build_file_name(arglist.v.list[1].v.str,
@@ -2709,20 +2706,13 @@ bf_fileinsert(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vd
 
         ret.type = TYPE_INT;
         ret.v.num = 1;
-        theline.type = TYPE_STR;
 
-        sprintf(outfileName,"%s.%li", infileName,time(0));
+        snprintf(outfileName,BUF_LEN*2,"%s.%li", infileName,time(0));
 
         if (arglist.v.list[0].v.num > 3) 
            start_line = arglist.v.list[4].v.num;
 
        thelength = arglist.v.list[3].v.list[0].v.num;
-
-        if (arglist.v.list[0].v.num > 4) {
-              end_line = arglist.v.list[5].v.num;
-           } else {
-              end_line = arglist.v.list[4].v.num + thelength - 1;
-           }
 
 
         if ((outFile = fopen(outfileName, "w")) == 0) {
@@ -2787,12 +2777,12 @@ bf_filecut(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata
         FILE *inFile = NULL;
         FILE *outFile = NULL;
         char infileName[BUF_LEN];
-        char outfileName[BUF_LEN];
+        char outfileName[BUF_LEN*2];
         int index;
         int start_line = 1;
         int end_line   = MAX_INT;
         char buffer[BUF_LEN];
-        Var ret, theline;
+        Var ret;
         int result;
         result = build_file_name(arglist.v.list[1].v.str,
                             arglist.v.list[2].v.str,
@@ -2805,9 +2795,8 @@ bf_filecut(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata
 
         ret.type = TYPE_INT;
         ret.v.num = 1;
-        theline.type = TYPE_STR;
 
-        sprintf(outfileName,"%s.%li", infileName,time(0));
+        snprintf(outfileName,BUF_LEN*2,"%s.%li", infileName,time(0));
 
         if (arglist.v.list[0].v.num > 2)
            start_line = arglist.v.list[3].v.num;
@@ -2888,7 +2877,7 @@ bf_filelist(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdat
         DIR *subdir;
         MYDIRENT *dp;
         char rootDir [BUF_LEN];
-        char dirName [BUF_LEN];
+        char dirName [BUF_LEN*2];
         Var ret, listOfDirs, listOfFiles, theline;
         int srchlen = 0;
         int result;
@@ -2918,7 +2907,7 @@ bf_filelist(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdat
 
         while ((dp = readdir (dirp)) != 0) {
            if (strncmp(dp->d_name,".",1)) {
-               sprintf(dirName,"%s/%s", rootDir,dp->d_name);
+               snprintf(dirName,BUF_LEN*2,"%s/%s", rootDir,dp->d_name);
                if ((subdir = opendir(dirName))) {
                     closedir(subdir);
                     theline.v.str = str_dup(dp->d_name);
@@ -3015,7 +3004,7 @@ bf_fileextract(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *v
         FILE *f;
         char infileName[BUF_LEN];
         char buffer[BUF_LEN];
-        Var ret, theline;
+        Var ret;
         Var startList, endList;
         Var startLine, endLine;
         int numOfLine = 0;
@@ -3047,7 +3036,6 @@ bf_fileextract(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *v
 
        ret.type = TYPE_LIST;
         ret = new_list(0);
-        theline.type = TYPE_STR;
 
         startList = new_list(0);
         startList.type = TYPE_LIST;
@@ -3210,7 +3198,7 @@ bf_fileinfo(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdat
         struct passwd *pw;
         struct group *grp;
         mode_t  mode;
-        int r0, r1, r2; 
+        int r1, r2;
         char filemode[BUF_LEN];
         int result;
         result = build_file_name(arglist.v.list[1].v.str,
@@ -3266,7 +3254,6 @@ bf_fileinfo(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdat
         fmode.type = TYPE_STR;
         fmode.v.str = str_dup("????");
         if (mode != st.st_mode) {
-           r0 = mode / 512;
            r1 = mode / 8;
            r1 = r1 - ((r1 / 8) * 8);
            r2 = mode - ((mode/8) * 8);
