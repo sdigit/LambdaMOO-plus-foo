@@ -83,7 +83,7 @@ ES_RaiseException(Exception * exception, int value)
 
 doneSearching:
 	if (!xb)
-		panic("Unhandled exception!");
+		server_panic("Unhandled exception!");
 
 	for (cb = ES_exceptionStack; cb != xb && !cb->finally; cb = cb->link);
 	ES_exceptionStack = cb;

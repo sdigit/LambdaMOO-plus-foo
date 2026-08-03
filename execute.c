@@ -269,7 +269,7 @@ unwind_stack(Finally_Reason why, Var value, enum outcome * outcome)
 						found = 1;
 						v = *(vv + 1);
 						if (v.type != TYPE_INT)
-							panic("Non-numeric PC value on stack!");
+							server_panic("Non-numeric PC value on stack!");
 						a->pc = v.v.num;
 					}
 					free_var(*vv);
@@ -727,7 +727,7 @@ bi_prop_protected(enum bi_prop prop, Objid progr)
 		pname = "protect_contents";
 		break;
 	default:
-		panic("Can't happen in BI_PROP_PROTECTED!");
+		server_panic("Can't happen in BI_PROP_PROTECTED!");
 	}
 
 	return server_flag_option(pname);
@@ -1574,7 +1574,7 @@ next_opcode:
 							err = E_PERM;
 							break;
 						default:
-							panic("Unknown built-in property in OP_PUT_PROP!");
+							server_panic("Unknown built-in property in OP_PUT_PROP!");
 						}
 					}
 
@@ -1929,7 +1929,7 @@ next_opcode:
 
 						marker = POP();
 						if (marker.type != TYPE_CATCH)
-							panic("Stack marker is not TYPE_CATCH!");
+							server_panic("Stack marker is not TYPE_CATCH!");
 						for (i = 0; i < marker.v.num; i++) {
 							(void) POP();	/* handler PC */
 							free_var(POP());	/* code list */
@@ -1949,7 +1949,7 @@ next_opcode:
 
 						v = POP();
 						if (v.type != TYPE_FINALLY)
-							panic("Stack marker is not TYPE_FINALLY!");
+							server_panic("Stack marker is not TYPE_FINALLY!");
 						why.type = TYPE_INT;
 						why.v.num = FIN_FALL_THRU;
 						PUSH(why);
@@ -1980,7 +1980,7 @@ next_opcode:
 							LOAD_STATE_VARIABLES();
 							break;
 						default:
-							panic("Unknown FINALLY reason!");
+							server_panic("Unknown FINALLY reason!");
 						}
 					}
 					break;
@@ -2012,7 +2012,7 @@ next_opcode:
 					break;
 
 				default:
-					panic("Unknown extended opcode!");
+					server_panic("Unknown extended opcode!");
 				}
 			}
 			break;
@@ -2167,7 +2167,7 @@ next_opcode:
 				value.v.num = OPCODE_TO_OPTIM_NUM(op);
 				PUSH(value);
 			} else
-				panic("Unknown opcode!");
+				server_panic("Unknown opcode!");
 			break;
 		}
 	}

@@ -297,7 +297,7 @@ equality(Var lhs, Var rhs, int case_matters)
 				return 1;
 			}
 		default:
-			panic("EQUALITY: Unknown value type");
+			server_panic("EQUALITY: Unknown value type");
 		}
 	}
 	return 0;

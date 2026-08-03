@@ -439,7 +439,7 @@ network_unregister_fd(fd)
 
 	ptr = reg_fds;
 	if (ptr == NULL)
-		panic("[unregister_fd] reg_fds is NULL!");
+		server_panic("[unregister_fd] reg_fds is NULL!");
 	if (ptr->fd == fd) {
 		reg_fds = ptr->next;
 		free(ptr);

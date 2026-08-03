@@ -92,7 +92,7 @@ cmdlog_add(player)
 		if (c == NULL) {
 			errlog("malloc %d: %s\n",
 				sizeof(struct cl_ent), strerror(errno));
-			panic("cmdlog malloc fail\n");
+			server_panic("cmdlog malloc fail\n");
 		}
 		memset(c,0,sizeof(struct cl_ent));
 		cl_top = c;
@@ -101,7 +101,7 @@ cmdlog_add(player)
 			c = c->next;
 		c->next = (struct cl_ent *)malloc(sizeof(struct cl_ent));
 		if (c->next == NULL) {
-			panic("cmdlog malloc fail\n");
+			server_panic("cmdlog malloc fail\n");
 			return;
 		}
 
@@ -389,7 +389,7 @@ unlinkpidfile()
 }
 
 void
-unlinkpidfile_panic()
+unlinkpidfile_server_panic()
 {
 	unlink(PIDFILE);
 }

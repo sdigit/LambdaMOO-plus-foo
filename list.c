@@ -283,7 +283,7 @@ list2str(Var * args)
 			stream_add_string(str, "{list}");
 			break;
 		default:
-			panic("LIST2STR: Impossible var type.\n");
+			server_panic("LIST2STR: Impossible var type.\n");
 		}
 	}
 

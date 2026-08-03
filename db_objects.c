@@ -232,11 +232,11 @@ db_destroy_object(Objid oid)
 	db_priv_affected_callable_verb_lookup();
 
 	if (!o)
-		panic("DB_DESTROY_OBJECT: Invalid object!");
+		server_panic("DB_DESTROY_OBJECT: Invalid object!");
 
 	if (o->location != NOTHING || o->contents != NOTHING
 	    || o->parent != NOTHING || o->child != NOTHING)
-		panic("DB_DESTROY_OBJECT: Not a barren orphan!");
+		server_panic("DB_DESTROY_OBJECT: Not a barren orphan!");
 
 	if (is_user(oid)) {
 		Var             t;
@@ -282,7 +282,7 @@ db_set_object_number(Objid old, Objid new)
 
 	/* make sure the requested objnum isn't used */
 	if (valid(new))
-		panic("Trying to re-use a valid object!");
+		server_panic("Trying to re-use a valid object!");
 
 	/* Change the identity of the object */
 	o = objects[new] = objects[old];
@@ -298,7 +298,7 @@ db_set_object_number(Objid old, Objid new)
 			while (*oidp != old && *oidp != NOTHING)
 				oidp = &objects[*oidp]->sibling;
 			if (*oidp == NOTHING)
-				panic("Object not in parent's children list");
+				server_panic("Object not in parent's children list");
 			*oidp = new;
 		}
 		for (oid = o->child;
@@ -316,7 +316,7 @@ db_set_object_number(Objid old, Objid new)
 			while (*oidp != old && *oidp != NOTHING)
 				oidp = &objects[*oidp]->next;
 			if (*oidp == NOTHING)
-				panic("Object not in location's contents list");
+				server_panic("Object not in location's contents list");
 			*oidp = new;
 		}
 		for (oid = o->contents;

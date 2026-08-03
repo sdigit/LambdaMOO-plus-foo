@@ -171,7 +171,7 @@ accepts_decided:
 		return no_var_pack();
 
 	default:
-		panic("Unknown PC in DO_MOVE");
+		server_panic("Unknown PC in DO_MOVE");
 		return no_var_pack();	/* Dead code to eliminate compiler
 					 * warning */
 	}
@@ -665,7 +665,7 @@ moving_contents:
 		return no_var_pack();
 	}
 
-	panic("Can't happen in BF_RECYCLE");
+	server_panic("Can't happen in BF_RECYCLE");
 	return no_var_pack();
 }
 

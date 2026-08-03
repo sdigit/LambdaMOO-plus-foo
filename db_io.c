@@ -148,7 +148,7 @@ dbio_scanf(const char *format,...)
 					return count ? count : EOF;
 				break;
 			default:
-				panic("DBIO_SCANF: Unsupported directive!");
+				server_panic("DBIO_SCANF: Unsupported directive!");
 			}
 	}
 

@@ -1791,7 +1791,7 @@ find_suspended_task(int id)
 			/* Do nothing; continue searching other queues */
 			break;
 		case TEA_KILL:
-			panic("Can't happen in FIND_SUSPENDED_TASK!");
+			server_panic("Can't happen in FIND_SUSPENDED_TASK!");
 		case TEA_STOP:
 			return fdata.the_vm;
 		}

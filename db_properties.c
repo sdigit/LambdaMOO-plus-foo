@@ -391,7 +391,7 @@ get_bi_value(db_prop_handle h, Var * value)
 		}
 		break;
 	default:
-		panic("Unknown built-in property in GET_BI_VALUE!");
+		server_panic("Unknown built-in property in GET_BI_VALUE!");
 	}
 }
 
@@ -553,10 +553,10 @@ db_set_property_value(db_prop_handle h, Var value)
 		case BP_LOCATION:
 		case BP_CONTENTS:
 	complain:
-			panic("Inappropriate value in DB_SET_PROPERTY_VALUE!");
+			server_panic("Inappropriate value in DB_SET_PROPERTY_VALUE!");
 			break;
 		default:
-			panic("Unknown built-in property in DB_SET_PROPERTY_VALUE!");
+			server_panic("Unknown built-in property in DB_SET_PROPERTY_VALUE!");
 		}
 	}
 }
@@ -565,7 +565,7 @@ Objid
 db_property_owner(db_prop_handle h)
 {
 	if (h.built_in) {
-		panic("Built-in property in DB_PROPERTY_OWNER!");
+		server_panic("Built-in property in DB_PROPERTY_OWNER!");
 		return NOTHING;
 	} else {
 		Pval           *prop = h.ptr;
@@ -578,7 +578,7 @@ void
 db_set_property_owner(db_prop_handle h, Objid oid)
 {
 	if (h.built_in)
-		panic("Built-in property in DB_SET_PROPERTY_OWNER!");
+		server_panic("Built-in property in DB_SET_PROPERTY_OWNER!");
 	else {
 		Pval           *prop = h.ptr;
 
@@ -590,7 +590,7 @@ unsigned
 db_property_flags(db_prop_handle h)
 {
 	if (h.built_in) {
-		panic("Built-in property in DB_PROPERTY_FLAGS!");
+		server_panic("Built-in property in DB_PROPERTY_FLAGS!");
 		return 0;
 	} else {
 		Pval           *prop = h.ptr;
@@ -603,7 +603,7 @@ void
 db_set_property_flags(db_prop_handle h, unsigned flags)
 {
 	if (h.built_in)
-		panic("Built-in property in DB_SET_PROPERTY_FLAGS!");
+		server_panic("Built-in property in DB_SET_PROPERTY_FLAGS!");
 	else {
 		Pval           *prop = h.ptr;
 

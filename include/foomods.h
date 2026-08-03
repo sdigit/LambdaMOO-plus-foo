@@ -55,7 +55,7 @@ void	cmdlog_clear();
 int	checkpidfile();
 void	writepidfile();
 void	unlinkpidfile();
-void	unlinkpidfile_panic();
+void	unlinkpidfile_server_panic();
 #endif				/* WRITEPIDFILE */
 
 void	register_foomods(void);

@@ -267,13 +267,13 @@ abort_server(void)
 	signal(SIGCHLD, SIG_DFL);
 
 #ifdef WRITEPIDFILE
-	unlinkpidfile_panic();
+	unlinkpidfile_server_panic();
 #endif				/* WRITEPIDFILE */
 	abort();
 }
 
 void
-panic(const char *message)
+server_panic(const char *message)
 {
 	static int      in_panic = 0;
 
@@ -326,7 +326,7 @@ panic_signal(int sig)
 	char            message[100];
 
 	sprintf(message, "Caught signal %d", sig);
-	panic(message);
+	server_panic(message);
 }
 
 static void
@@ -1147,7 +1147,7 @@ player_connected(Objid old_id, Objid new_id, int is_newly_created)
 	shandle        *new_h = find_shandle(old_id);
 
 	if (!new_h)
-		panic("Non-existent shandle connected");
+		server_panic("Non-existent shandle connected");
 
 	new_h->player = new_id;
 	new_h->connection_time = time(0);
