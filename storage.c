@@ -42,7 +42,6 @@
 #elif defined(__NetBSD__)
 #include <sys/param.h>
 #include <sys/sysctl.h>
-#include <sys/user.h>
 #include <unistd.h>
 #elif defined(__APPLE__)
 #include <mach/mach.h>

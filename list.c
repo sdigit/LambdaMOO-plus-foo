@@ -45,7 +45,10 @@
  *****************************************************************************/
 
 #include <ctype.h>
+#include <unistd.h>
+#ifdef __linux__
 #include <crypt.h>
+#endif
 #include <string.h>
 
 #include "bf_register.h"
