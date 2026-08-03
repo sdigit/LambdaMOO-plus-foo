@@ -33,24 +33,6 @@
 #include "functions.h"
 #include "exceptions.h"
 
-#ifdef CMDLOG
-
-struct cl_ent {
-	void *next;
-	int player;
-	int logging;
-};
-
-char	*cmdlog_time();
-void	cmdlog_add(int);
-void	cmdlog_del(int);
-int	cmdlog_logging(int);
-void	cmdlog_activate(int);
-void	cmdlog_deactivate(int);
-void	print_cmdlog(int, const char *);
-void	cmdlog_clear();
-#endif				/* CMDLOG */
-
 #ifdef WRITEPIDFILE
 int	checkpidfile();
 void	writepidfile();

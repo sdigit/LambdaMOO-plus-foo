@@ -598,11 +598,6 @@ main_loop(void)
 				} else if (h->disconnect_me) {
 					call_notifier(h->player, h->listener,
 						      "user_disconnected");
-#ifdef CMDLOG
-					if (cmdlog_logging(h->player))
-						cmdlog_deactivate(h->player);
-					cmdlog_del(h->player);
-#endif /* CMDLOG */
 					oklog("DISCONNECTED: %s on %s\n",
 					      object_name(h->player),
 					network_connection_name(h->nhandle));
@@ -1096,14 +1091,6 @@ server_receive_line(server_handle sh, const char *line)
 
 	h->last_activity_time = time(0);
 	new_input_task(h->tasks, line);
-#ifdef CMDLOG
-	if (h->player >= 0 && cmdlog_logging(h->player))
-		print_cmdlog(h->player, line);
-#ifdef CMDLOG_LOG_NEGATIVE
-	if (h->player < 0)
-		print_cmdlog(h->player, line);
-#endif /* CMDLOG_LOG_NEGATIVE */
-#endif /* CMDLOG */
 }
 
 void
@@ -1115,11 +1102,6 @@ server_close(server_handle sh)
 	      object_name(h->player),
 	      network_connection_name(h->nhandle));
 	h->disconnect_me = 1;
-#ifdef CMDLOG
-	if (cmdlog_logging(h->player))
-		cmdlog_deactivate(h->player);
-	cmdlog_del(h->player);
-#endif /* CMDLOG */
 	call_notifier(h->player, h->listener, "user_client_disconnected");
 	free_shandle(h);
 }
@@ -1195,12 +1177,6 @@ player_connected(Objid old_id, Objid new_id, int is_newly_created)
 		}
 		call_notifier(new_id, new_h->listener,
 		      is_newly_created ? "user_created" : "user_connected");
-#ifdef CMDLOG
-			cmdlog_add(new_h->player);
-#ifdef CMDLOG_DEFAULT_ON
-			cmdlog_activate(new_h->player);
-#endif /* CMDLOG_DEFAULT_ON */
-#endif /* CMDLOG */
 	}
 }
 
@@ -1411,9 +1387,6 @@ main(int argc, char **argv)
 #ifdef WRITEPIDFILE
 		unlinkpidfile();
 #endif		/* WRITEPIDFILE */
-#ifdef CMDLOG
-		cmdlog_clear();
-#endif /* CMDLOG */
 	}
 	db_shutdown();
 	free_str(this_program);

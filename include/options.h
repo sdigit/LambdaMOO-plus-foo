@@ -48,34 +48,6 @@
 #define Options_h 1
 
 /*
- * if CMDLOG is defined, build the command logging functionality into the
- * server.
- * You must also define CMDLOG_DIR to a directory that the MOO server can write
- * to, as it will create a file for each object it's logging.
- *
- * if CMDLOG_DEFAULT_ON is defined, command logging will be turned on for all 
- * players by default. If not, if must be turned on and off by
- * cmdlog_activate(player) and cmdlog_deactivate(player)
- *
- * If CMDLOG_LOG_NEGATIVE is defined, log all negative player objects (network
- * connections that are not associated with a player)
- *
- * Only enable this if you're willing to deal with the ethical issues involved
- * with the ability to see everything your players enter into the MOO.
- *
- * This feature should be usable now. However, use at your own risk - there may
- * still be dragons.
- */
-
-#undef CMDLOG
-
-#ifdef CMDLOG
-# define CMDLOG_DIR "cmdlog/"
-# define CMDLOG_DEFAULT_ON	/* don't log by default */
-# define CMDLOG_LOG_NEGATIVE	/* log negative objects as well */
-#endif				/* CMDLOG */
-
-/*
  * If WRITEPIDFILE is defined, write the PID of the main MOO process to PIDFILE.
  *
  * NOTE: If you use this option, do not run multiple MOOs in the same directory,
@@ -95,9 +67,6 @@
  * successfully begun and is dumped into the server log when and if the server
  * panics.  Define LOG_COMMANDS to enable this logging.
  *
- * NOTE: This is very different from CMDLOG. CMDLOG writes all commands to a
- * file, regardless of whether the MOO crashes or not. This option only stores
- * them in memory and flushes them on checkpoints.
  */
 
 #undef LOG_COMMANDS
