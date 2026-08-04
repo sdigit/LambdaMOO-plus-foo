@@ -117,7 +117,7 @@ unlinkpidfile_server_panic()
 int
 read_urandom(void *buf, size_t len)
 {
-    char *p = buf;
+    uint8_t *p = buf;
     int fd;
 
     fd = open("/dev/urandom", O_RDONLY);
@@ -155,14 +155,14 @@ bf_urandom(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata
     Var ret;
     int n = arglist.v.list[1].v.num;
     int i,idx;
-    char *buf;
+    uint8_t *buf;
 
     if (n < 1 || n > 4096) /* why do you need > 4096 bytes this is MOO lol just do multiple calls */
     {
         return make_error_pack(E_INVARG);
     }
 
-    buf = malloc(sizeof(char)*n);
+    buf = malloc(sizeof(uint8_t)*n);
     if (read_urandom(buf,n) != 0)
     {
         free(buf);
