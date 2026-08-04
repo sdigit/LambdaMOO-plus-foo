@@ -1,5 +1,13 @@
 cmake_minimum_required(VERSION 3.23)
 project(LambdaMOO-plus-foo C)
+set(GENERATED_GIT_HEADER "${CMAKE_CURRENT_BINARY_DIR}/gitinfo.h")
+
+add_custom_target(UpdateGitHeader ALL
+    COMMAND ${CMAKE_COMMAND}
+        -DTARGET_HEADER_PATH=${GENERATED_GIT_HEADER}
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/githeader.cmake"
+    BYPRODUCTS ${GENERATED_GIT_HEADER}
+)
 
 include(CheckIncludeFile)
 include(CheckSymbolExists)
@@ -85,6 +93,9 @@ add_custom_command(
     COMMENT "Generating keywords.c"
     VERBATIM
 )
+
+string(TIMESTAMP BUILT_AT "%Y%m%d-%H:%M:%S")
+
 add_executable(moo
     "${CMAKE_CURRENT_SOURCE_DIR}/include/ast.h"
     ast.c
@@ -131,6 +142,9 @@ add_executable(moo
     verbs.c
     version.c 
 )
+
+add_dependencies(moo UpdateGitHeader)
+
 # Listing GENERATED_YTAB_H as an (otherwise-unused) source is the standard
 # CMake trick to force a target-level dependency on a generated header that
 # no .c file lists as an explicit input -- it's only ever reached via the
@@ -151,4 +165,11 @@ target_compile_options(moo PRIVATE
     $<$<CONFIG:Debug>: -O0 -g -Wall -Wextra >
     $<$<CONFIG:Build>: -O3 >
     $<$<CONFIG:Release>: -O3 >
+)
+target_compile_definitions(moo PRIVATE
+    BUILT_AT="${BUILT_AT}"
+    BUILD_HOST_SYSTEM="${CMAKE_HOST_SYSTEM}"
+    BUILD_HOST_SYSTEM_PROCESSOR="${CMAKE_HOST_SYSTEM_PROCESSOR}"
+    C_COMPILER_ID="${CMAKE_C_COMPILER_ID}"
+    C_COMPILER_VERSION="${CMAKE_C_COMPILER_VERSION}"
 )
