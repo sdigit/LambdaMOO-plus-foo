@@ -59,7 +59,7 @@ configure_file(
 # from the -o basename (parser.c -> parser.h), NOT y.tab.h. Force the
 # header name explicitly with --defines so this doesn't silently break
 # on a bison invoked as "yacc".
-find_program(YACC_EXECUTABLE NAMES bison yacc REQUIRED)
+find_program(YACC_EXECUTABLE NAMES bison REQUIRED)
 find_program(GPERF_EXECUTABLE NAMES gperf REQUIRED)
 
 set(GENERATED_PARSER_C  "${CMAKE_CURRENT_BINARY_DIR}/parser.c")

@@ -25,7 +25,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#if (defined(__APPLE__) && defined(__ppc__) && defined(__MACH__))
+#if (defined(__APPLE__) && defined(__MACH__))
 #include <float.h>   /* DBL_MAX */
 #endif
 

@@ -192,7 +192,7 @@ lookup(int to_intermediary, int from_intermediary)
 	Timer_ID        id;
 	struct hostent *e;
 
-	set_server_cmdline("(MOO name-lookup slave)");
+	set_server_cmdline("(MOO name-lookup worker)");
 	/*
 	 * Read requests and do them.  Before each, we set a timer.  If it
 	 * expires, we exit (in timeout_proc, above).  The intermediary will
@@ -276,7 +276,7 @@ intermediary(int to_server, int from_server)
 	int             len;
 	unsigned32      addr;
 
-	set_server_cmdline("(MOO name-lookup master)");
+	set_server_cmdline("(MOO name-lookup)");
 	signal(SIGPIPE, SIG_IGN);
 	restart_lookup();
 	for (;;) {

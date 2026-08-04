@@ -42,7 +42,6 @@
 #elif defined(__NetBSD__)
 #include <sys/param.h>
 #include <sys/sysctl.h>
-#include <sys/user.h>
 #include <unistd.h>
 #elif defined(__APPLE__)
 #include <mach/mach.h>
@@ -102,7 +101,7 @@ mymalloc(unsigned size, Memory_Type type)
 	memptr = (char *) malloc(size + offs);
 	if (!memptr) {
 		sprintf(msg, "memory allocation (size %u) failed!", size);
-		panic(msg);
+		server_panic(msg);
 	}
 	alloc_num[type]++;
 
@@ -150,7 +149,7 @@ myrealloc(void *ptr, unsigned size, Memory_Type type)
 	ptr = realloc((char *) ptr - offs, size + offs);
 	if (!ptr) {
 		sprintf(msg, "memory re-allocation (size %u) failed!", size);
-		panic(msg);
+		server_panic(msg);
 	}
 	return (char *) ptr + offs;
 }

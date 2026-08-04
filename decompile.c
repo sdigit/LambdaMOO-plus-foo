@@ -74,7 +74,7 @@ static Expr    *
 pop_expr(void)
 {
 	if (!top_expr_stack)
-		panic("Empty expr stack in DECOMPILE!");
+		server_panic("Empty expr stack in DECOMPILE!");
 	return expr_stack[--top_expr_stack];
 }
 
@@ -123,7 +123,7 @@ read_jump(unsigned numbytes_label, Byte ** p, int *is_hot)
 
 	*is_hot = (ptr == hot_byte);
 	if (*ptr++ != OP_JUMP)
-		panic("Missing JUMP in DECOMPILE!");
+		server_panic("Missing JUMP in DECOMPILE!");
 
 	label = READ_BYTES(numbytes_label);
 	*p = ptr;
@@ -240,7 +240,7 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 				done = READ_JUMP(jump_hot);
 				HOT_BOTTOM(jump_hot, arm);
 				if (bc.vector + done != end)
-					panic("ELSEIF jumps to wrong place in DECOMPILE!");
+					server_panic("ELSEIF jumps to wrong place in DECOMPILE!");
 				stmt_start = ptr - bc.vector;
 			}
 			break;
@@ -256,7 +256,7 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 				if (one->kind != EXPR_VAR
 				    || one->e.var.type != TYPE_INT
 				    || one->e.var.v.num != 1)
-					panic("Not a literal one in DECOMPILE!");
+					server_panic("Not a literal one in DECOMPILE!");
 				else
 					dealloc_node(one);
 				s = alloc_stmt(STMT_LIST);
@@ -265,7 +265,7 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 				DECOMPILE(bc, ptr, bc.vector + done - jump_len,
 					  &(s->s.list.body), 0);
 				if (top != READ_JUMP(jump_hot))
-					panic("FOR_LIST jumps to wrong place in DECOMPILE!");
+					server_panic("FOR_LIST jumps to wrong place in DECOMPILE!");
 				HOT_BOTTOM(jump_hot, s);
 				ADD_STMT(HOT_OP2(one, list, s));
 			}
@@ -286,7 +286,7 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 				DECOMPILE(bc, ptr, bc.vector + done - jump_len,
 					  &(s->s.range.body), 0);
 				if (top != READ_JUMP(jump_hot))
-					panic("FOR_RANGE jumps to wrong place in DECOMPILE!");
+					server_panic("FOR_RANGE jumps to wrong place in DECOMPILE!");
 				HOT_BOTTOM(jump_hot, s);
 				ADD_STMT(HOT_OP2(from, to, s));
 			}
@@ -305,7 +305,7 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 				DECOMPILE(bc, ptr, bc.vector + done - jump_len,
 					  &(s->s.loop.body), 0);
 				if (top != READ_JUMP(jump_hot))
-					panic("WHILE jumps to wrong place in DECOMPILE!");
+					server_panic("WHILE jumps to wrong place in DECOMPILE!");
 				HOT_BOTTOM(jump_hot, s);
 				ADD_STMT(HOT_OP1(condition, s));
 			}
@@ -341,7 +341,7 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 			break;
 		case OP_DONE:
 			if (ptr != end)
-				panic("DONE not at end in DECOMPILE!");
+				server_panic("DONE not at end in DECOMPILE!");
 			break;
 		case OP_IMM:
 			e = alloc_expr(EXPR_VAR);
@@ -361,7 +361,7 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 				e = pop_expr();
 				DECOMPILE(bc, ptr, bc.vector + done, 0, 0);
 				if (ptr != bc.vector + done)
-					panic("AND/OR jumps to wrong place in DECOMPILE!");
+					server_panic("AND/OR jumps to wrong place in DECOMPILE!");
 				e = alloc_binary(op == OP_AND ? EXPR_AND : EXPR_OR,
 						 e, pop_expr());
 				push_expr(HOT_OP2(e->e.bin.lhs, e->e.bin.rhs, e));
@@ -438,7 +438,7 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 				Expr           *a = pop_expr();
 
 				if (a->kind != EXPR_LIST)
-					panic("Missing arglist for BI_FUNC_CALL in DECOMPILE!");
+					server_panic("Missing arglist for BI_FUNC_CALL in DECOMPILE!");
 				e = alloc_expr(EXPR_CALL);
 				e->e.call.args = a->e.list;
 				dealloc_node(a);
@@ -452,7 +452,7 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 				Expr           *e2 = pop_expr();
 
 				if (a->kind != EXPR_LIST)
-					panic("Missing arglist for CALL_VERB in DECOMPILE!");
+					server_panic("Missing arglist for CALL_VERB in DECOMPILE!");
 				e = alloc_verb(pop_expr(), e2, a->e.list);
 				dealloc_node(a);
 				push_expr(HOT_OP3(e->e.verb.obj, a, e2, e));
@@ -470,7 +470,7 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 				e->e.cond.consequent = pop_expr();
 				DECOMPILE(bc, ptr, bc.vector + label, 0, 0);
 				if (ptr != bc.vector + label)
-					panic("THEN jumps to wrong place in DECOMPILE!");
+					server_panic("THEN jumps to wrong place in DECOMPILE!");
 				e->e.cond.alternate = pop_expr();
 				push_expr(HOT3(op_hot || jump_hot, e->e.cond.condition,
 				  e->e.cond.consequent, e->e.cond.alternate,
@@ -554,7 +554,7 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 				e = pop_expr();
 				list = pop_expr();
 				if (list->kind != EXPR_LIST)
-					panic("Missing list expression in DECOMPILE!");
+					server_panic("Missing list expression in DECOMPILE!");
 				for (a = list->e.list; a->next; a = a->next);
 				a->next = alloc_arg_list(op == OP_LIST_APPEND ? ARG_SPLICE
 							 : ARG_NORMAL, e);
@@ -563,7 +563,7 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 			break;
 		case OP_PUSH_TEMP:
 		case OP_JUMP:
-			panic("Unexpected opcode in DECOMPILE!");
+			server_panic("Unexpected opcode in DECOMPILE!");
 			break;
 		case OP_EXTENDED:
 			{
@@ -634,7 +634,7 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 								Expr           *defallt;
 
 								if (ptr != bc.vector + sc->label)
-									panic("Misplaced default in DECOMPILE!");
+									server_panic("Misplaced default in DECOMPILE!");
 								DECOMPILE(bc, ptr,
 									  bc.vector + sc->next_label - 1,
 								      0, 0);
@@ -643,18 +643,18 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 								if (defallt->kind != EXPR_ASGN
 								    || defallt->e.bin.lhs->kind != EXPR_ID
 								    || defallt->e.bin.lhs->e.id != sc->id)
-									panic("Wrong variable in DECOMPILE!");
+									server_panic("Wrong variable in DECOMPILE!");
 								sc->expr = defallt->e.bin.rhs;
 								dealloc_node(defallt->e.bin.lhs);
 								dealloc_node(defallt);
 								is_hot = (is_hot || ptr == hot_byte);
 								if (*ptr++ != OP_POP)
-									panic("Missing default POP in DECOMPILE!");
+									server_panic("Missing default POP in DECOMPILE!");
 							}
 						e = alloc_binary(EXPR_ASGN, e, pop_expr());
 						push_expr(HOT2(is_hot, e->e.bin.lhs, e->e.bin.rhs, e));
 						if (ptr != bc.vector + done)
-							panic("Not at end of scatter in DECOMPILE!");
+							server_panic("Not at end of scatter in DECOMPILE!");
 					}
 					break;
 				case EOP_PUSH_LABEL:
@@ -675,7 +675,7 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 
 						if (label_expr->kind != EXPR_VAR
 						    || label_expr->e.var.type != TYPE_INT)
-							panic("Not a catch label in DECOMPILE!");
+							server_panic("Not a catch label in DECOMPILE!");
 						label = label_expr->e.var.v.num;
 						dealloc_node(label_expr);
 						if (codes->kind == EXPR_LIST)
@@ -685,16 +685,16 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 						 && codes->e.var.v.num == 0)
 							a = 0;
 						else
-							panic("Not a codes expression in DECOMPILE!");
+							server_panic("Not a codes expression in DECOMPILE!");
 						dealloc_node(codes);
 						DECOMPILE(bc, ptr, end, 0, 0);
 						is_hot = (is_hot || ptr++ == hot_byte);
 						if (*ptr++ != EOP_END_CATCH)
-							panic("Missing END_CATCH in DECOMPILE!");
+							server_panic("Missing END_CATCH in DECOMPILE!");
 						done = READ_LABEL();
 						try_expr = pop_expr();
 						if (ptr != bc.vector + label)
-							panic("Misplaced handler in DECOMPILE!");
+							server_panic("Misplaced handler in DECOMPILE!");
 						is_hot = (is_hot || ptr == hot_byte);
 						op = *ptr++;
 						if (op == OPTIM_NUM_TO_OPCODE(1)) {
@@ -704,7 +704,7 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 							 */
 							is_hot = (is_hot || ptr == hot_byte);
 							if (*ptr++ != OP_REF)
-								panic("Missing REF in DECOMPILE!");
+								server_panic("Missing REF in DECOMPILE!");
 							default_expr = 0;
 						} else if (op == OP_POP) {
 							/*
@@ -714,9 +714,9 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 							DECOMPILE(bc, ptr, bc.vector + done, 0, 0);
 							default_expr = pop_expr();
 						} else
-							panic("Bad default expression in DECOMPILE!");
+							server_panic("Bad default expression in DECOMPILE!");
 						if (ptr != bc.vector + done)
-							panic("CATCH ends in wrong place in DECOMPILE!");
+							server_panic("CATCH ends in wrong place in DECOMPILE!");
 						e = alloc_expr(EXPR_CATCH);
 						e->e.catch.try = try_expr;
 						e->e.catch.codes = a;
@@ -748,7 +748,7 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 							label_expr = pop_expr();
 							if (label_expr->kind != EXPR_VAR
 							    || label_expr->e.var.type != TYPE_INT)
-								panic("Not an except label in DECOMPILE!");
+								server_panic("Not an except label in DECOMPILE!");
 							label = label_expr->e.var.v.num;
 							dealloc_node(label_expr);
 							e = pop_expr();
@@ -759,7 +759,7 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 								 && e->e.var.v.num == 0)
 								a = 0;
 							else
-								panic("Not a codes expression in DECOMPILE!");
+								server_panic("Not a codes expression in DECOMPILE!");
 							dealloc_node(e);
 							ex = alloc_except(-1, a, 0);
 							ex->label = label;
@@ -770,14 +770,14 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 						DECOMPILE(bc, ptr, end, &(s->s.catch.body), 0);
 						HOT_POS(ptr++ == hot_byte, s, ENDBODY);
 						if (*ptr++ != EOP_END_EXCEPT)
-							panic("Missing END_EXCEPT in DECOMPILE!");
+							server_panic("Missing END_EXCEPT in DECOMPILE!");
 						done = READ_LABEL();
 						for (ex = s->s.catch.excepts; ex; ex = ex->next) {
 							Byte           *stop;
 							int             jump_hot = 0;
 
 							if (ex->label != ptr - bc.vector)
-								panic("Not at start of handler in DECOMPILE!");
+								server_panic("Not at start of handler in DECOMPILE!");
 							op_hot = (ptr == hot_byte);
 							op = *ptr++;
 							if (op == OP_G_PUT) {
@@ -789,19 +789,19 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 							}
 							HOT(op_hot || ptr - 1 == hot_byte, ex);
 							if (op != OP_POP)
-								panic("Missing POP in DECOMPILE!");
+								server_panic("Missing POP in DECOMPILE!");
 							if (ex->next)
 								stop = bc.vector + ex->next->label - jump_len;
 							else
 								stop = bc.vector + done;
 							DECOMPILE(bc, ptr, stop, &(ex->stmt), 0);
 							if (ex->next && READ_JUMP(jump_hot) != done)
-								panic("EXCEPT jumps to wrong place in "
+								server_panic("EXCEPT jumps to wrong place in "
 								      "DECOMPILE!");
 							HOT_BOTTOM(jump_hot, ex);
 						}
 						if (ptr - bc.vector != done)
-							panic("EXCEPTS end in wrong place in DECOMPILE!");
+							server_panic("EXCEPTS end in wrong place in DECOMPILE!");
 						ADD_STMT(s);
 					}
 					break;
@@ -819,14 +819,14 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 						DECOMPILE(bc, ptr, end, &(s->s.finally.body), 0);
 						HOT_POS(ptr++ == hot_byte, s, ENDBODY);
 						if (*ptr++ != EOP_END_FINALLY)
-							panic("Missing END_FINALLY in DECOMPILE!");
+							server_panic("Missing END_FINALLY in DECOMPILE!");
 						if (ptr - bc.vector != label)
-							panic("FINALLY handler in wrong place in "
+							server_panic("FINALLY handler in wrong place in "
 							      "DECOMPILE!");
 						DECOMPILE(bc, ptr, end, &(s->s.finally.handler), 0);
 						HOT_BOTTOM(ptr++ == hot_byte, s);
 						if (*ptr++ != EOP_CONTINUE)
-							panic("Missing CONTINUE in DECOMPILE!");
+							server_panic("Missing CONTINUE in DECOMPILE!");
 						ADD_STMT(s);
 					}
 					break;
@@ -854,17 +854,17 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 					ADD_STMT(HOT_OP(s));
 					break;
 				default:
-					panic("Unknown extended opcode in DECOMPILE!");
+					server_panic("Unknown extended opcode in DECOMPILE!");
 				}
 			}
 			break;
 		default:
-			panic("Unknown opcode in DECOMPILE!");
+			server_panic("Unknown opcode in DECOMPILE!");
 		}
 	}
 
 	if (ptr != end)
-		panic("Overshot end in DECOMPILE!");
+		server_panic("Overshot end in DECOMPILE!");
 
 	return ptr;
 }
@@ -886,7 +886,7 @@ program_to_tree(Program * prog, int vector, int pc_vector, int pc)
 	else if ((size_t)pc < bc.size)
 		hot_byte = bc.vector + pc;
 	else
-		panic("Illegal PC in FIND_LINE_NUMBER!");
+		server_panic("Illegal PC in FIND_LINE_NUMBER!");
 
 	hot_node = 0;
 	hot_position = ((size_t)pc == bc.size - 1 ? DONE : TOP);
@@ -1015,7 +1015,7 @@ find_hot_node(Stmt * stmt)
 				return 1;
 			break;
 		default:
-			panic("Unknown statement kind in FIND_HOT_NODE!");
+			server_panic("Unknown statement kind in FIND_HOT_NODE!");
 		}
 
 		if (stmt == hot_node && hot_position == BOTTOM)
@@ -1042,7 +1042,7 @@ find_line_number(Program * prog, int vector, int pc)
 	free_stmt(tree);
 
 	if (!hot_node && hot_position != DONE)
-		panic("Can't do job in FIND_LINE_NUMBER!");
+		server_panic("Can't do job in FIND_LINE_NUMBER!");
 
 	prog->cached_lineno_vec = vector;
 	prog->cached_lineno_pc = pc;

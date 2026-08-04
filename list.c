@@ -45,7 +45,10 @@
  *****************************************************************************/
 
 #include <ctype.h>
+#include <unistd.h>
+#ifdef __linux__
 #include <crypt.h>
+#endif
 #include <string.h>
 
 #include "bf_register.h"
@@ -280,7 +283,7 @@ list2str(Var * args)
 			stream_add_string(str, "{list}");
 			break;
 		default:
-			panic("LIST2STR: Impossible var type.\n");
+			server_panic("LIST2STR: Impossible var type.\n");
 		}
 	}
 

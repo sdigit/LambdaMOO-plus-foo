@@ -137,7 +137,7 @@ extern void     ES_RaiseException(Exception * exception, int value);
 		}						\
 		if (ES_es == ES_Initialize) {			\
 		    if (ES_ctx.nx >= ES_MaxExceptionsPerScope)	\
-			panic("Too many EXCEPT clauses!");	\
+			server_panic("Too many EXCEPT clauses!");	\
 		    ES_ctx.array[ES_ctx.nx++] = &e;		\
 		} else if (ES_ctx.id == &e  ||  &e == &ANY) {	\
 		    int	exception_value = ES_ctx.value;		\
@@ -175,6 +175,6 @@ extern void     ES_RaiseException(Exception * exception, int value);
 /* 1) Too many EXCEPT clauses in a single TRY construct.            */
 /* 2) An unhandled exception is RAISEd.                             */
 
-extern void     panic(const char *message);
+extern void     server_panic(const char *message);
 
 #endif				/* !Exceptions_H */
