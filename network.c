@@ -1,7 +1,7 @@
 /* $egnet: network.c,v 1.20 2009/01/18 09:38:39 dive Exp $ */
 
 /*
- * Copyright (c) 2002, 2003, 2004, 2005, 2006, 2007
+ * Copyright (c) 2002-2026
  *               Sean Davis <dive@endersgame.net>
  * All rights reserved.
  *

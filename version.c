@@ -1,7 +1,7 @@
 /* $egnet: version.c,v 1.48 2010/07/11 22:08:59 dive Exp $ */
 
 /*
- * Copyright (c) 2002, 2003, 2004, 2005, 2006, 2007
+ * Copyright (c) 2002-2026
  *               Sean Davis <dive@endersgame.net>
  * All rights reserved.
  *
@@ -72,7 +72,7 @@
 const char     *lists_version = "1.5";
 const char     *file_package_version = "1.5p1";
 const char     *FUP_version = "1.9";
-const char     *server_version = "1.8.1+foo-20260804-01";
+const char     *server_version = "1.8.1+foo-20260804-02";
 
 int
 check_version(DB_Version version)

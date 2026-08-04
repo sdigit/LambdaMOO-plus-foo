@@ -1,7 +1,7 @@
 /* $egnet: unparse.h,v 1.7 2007/09/23 16:27:22 dive Exp $ */
 
 /*
- * Copyright (c) 2002, 2003, 2004, 2005, 2006, 2007
+ * Copyright (c) 2002-2026
  *               Sean Davis <dive@endersgame.net>
  * All rights reserved.
  *

@@ -1,7 +1,7 @@
 /* $egnet: extensions.c,v 1.32 2010/07/11 22:08:59 dive Exp $ */
 
 /*
- * Copyright (c) 2002, 2003, 2004, 2005, 2006, 2007
+ * Copyright (c) 2002-2026
  *               Sean Davis <dive@endersgame.net>
  * All rights reserved.
  *
