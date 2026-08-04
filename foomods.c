@@ -157,7 +157,7 @@ bf_urandom(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata
     int i,idx;
     char *buf;
 
-    if (n < 1 && n > 4096) /* why do you need > 4096 bytes this is MOO lol just do multiple calls */
+    if (n < 1 || n > 4096) /* why do you need > 4096 bytes this is MOO lol just do multiple calls */
     {
         return make_error_pack(E_INVARG);
     }
