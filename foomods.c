@@ -157,18 +157,19 @@ bf_urandom(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata
     int i,idx;
     char *buf;
 
-    if (n < 1)
+    if (n < 1 && n > 4096) /* why do you need > 4096 bytes this is MOO lol just do multiple calls */
     {
         return make_error_pack(E_INVARG);
     }
 
-    ret = new_list(n);
     buf = malloc(sizeof(char)*n);
-    idx = 0;
     if (read_urandom(buf,n) != 0)
     {
+        free(buf);
         return make_error_pack(E_RANGE);
     }
+    ret = new_list(n);
+    idx = 0;
     for (i=1;i<=n;i++)
     {
         ret.v.list[i].type = TYPE_INT;
