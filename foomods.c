@@ -114,8 +114,75 @@ unlinkpidfile_server_panic()
 
 #endif				/* WRITEPIDFILE */
 
+int
+read_urandom(void *buf, size_t len)
+{
+    char *p = buf;
+    int fd;
+
+    fd = open("/dev/urandom", O_RDONLY);
+    if (fd < 0)
+        return -1;
+
+    while (len > 0) {
+        ssize_t n = read(fd, p, len);
+
+        if (n < 0) {
+            if (errno == EINTR)
+                continue;
+
+            close(fd);
+            return -1;
+        }
+
+        if (n == 0) {      /* Should never happen */
+            close(fd);
+            errno = EIO;
+            return -1;
+        }
+
+        p += n;
+        len -= (size_t)n;
+    }
+
+    close(fd);
+    return 0;
+}
+
+static package
+bf_urandom(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
+{
+    Var ret;
+    int n = arglist.v.list[1].v.num;
+    int i,idx;
+    char *buf;
+
+    if (n < 1)
+    {
+        return make_error_pack(E_INVARG);
+    }
+
+    ret = new_list(n);
+    buf = malloc(sizeof(char)*n);
+    idx = 0;
+    if (read_urandom(buf,n) != 0)
+    {
+        return make_error_pack(E_RANGE);
+    }
+    for (i=1;i<=n;i++)
+    {
+        ret.v.list[i].type = TYPE_INT;
+        ret.v.list[i].v.num = buf[idx++];
+    }
+    free(buf);
+    free_var(arglist);
+    return make_var_pack(ret);
+}
+
+
 void
 register_foomods()
 {
+	register_function("urandom",1,1,bf_urandom,TYPE_INT);
 }
 
