@@ -38,11 +38,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "config.h"
+#include "gitinfo.h"
 #include "foomods.h"
 
 #include "execute.h"
 #include "log.h"
 #include "options.h"
+#include "storage.h"
 #include "structures.h"
 #include "list.h"
 #include "program.h"
@@ -117,7 +120,7 @@ unlinkpidfile_server_panic()
 int
 read_urandom(void *buf, size_t len)
 {
-    char *p = buf;
+    uint8_t *p = buf;
     int fd;
 
     fd = open("/dev/urandom", O_RDONLY);
@@ -155,14 +158,14 @@ bf_urandom(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata
     Var ret;
     int n = arglist.v.list[1].v.num;
     int i,idx;
-    char *buf;
+    uint8_t *buf;
 
-    if (n < 1 && n > 4096) /* why do you need > 4096 bytes this is MOO lol just do multiple calls */
+    if (n < 1 || n > 4096) /* why do you need > 4096 bytes this is MOO lol just do multiple calls */
     {
         return make_error_pack(E_INVARG);
     }
 
-    buf = malloc(sizeof(char)*n);
+    buf = malloc(sizeof(uint8_t)*n);
     if (read_urandom(buf,n) != 0)
     {
         free(buf);
@@ -180,10 +183,38 @@ bf_urandom(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata
     return make_var_pack(ret);
 }
 
+static package
+bf_build_info(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
+{
+    Var ret;
+
+    ret = new_list(7);
+
+    ret.v.list[1].type = TYPE_STR;
+    ret.v.list[1].v.str = str_dup(BUILT_AT);
+    ret.v.list[2].type = TYPE_STR;
+    ret.v.list[2].v.str = str_dup(BUILD_HOST_SYSTEM);
+    ret.v.list[3].type = TYPE_STR;
+    ret.v.list[3].v.str = str_dup(BUILD_HOST_SYSTEM_PROCESSOR);
+    ret.v.list[4].type = TYPE_STR;
+    ret.v.list[4].v.str = str_dup(C_COMPILER_ID);
+    ret.v.list[5].type = TYPE_STR;
+    ret.v.list[5].v.str = str_dup(C_COMPILER_VERSION);
+    ret.v.list[6].type = TYPE_STR;
+    ret.v.list[6].v.str = str_dup(GIT_COMMIT_HASH);
+    ret.v.list[7].type = TYPE_STR;
+    ret.v.list[7].v.str = str_dup(GIT_BRANCH);
+
+    free_var(arglist);
+
+    return make_var_pack(ret);
+}
+
 
 void
 register_foomods()
 {
 	register_function("urandom",1,1,bf_urandom,TYPE_INT);
+	register_function("build_info",0,0,bf_build_info);
 }
 
