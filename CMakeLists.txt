@@ -131,6 +131,8 @@ add_executable(moo
     quota.c
     regexpr.c
     server.c
+    sha256.c
+    sha384-512.c
     storage.c
     streams.c
     str_intern.c
