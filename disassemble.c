@@ -372,7 +372,7 @@ disassemble(Program * prog, Printer p, void *data)
 						Var             v;
 
 						v = literals[ADD_BYTES(bc.numbytes_literal)];
-						switch (v.type) {
+						switch ((int)v.type) {
 						case TYPE_OBJ:
 							stream_printf(insn, " #%d", v.v.obj);
 							break;

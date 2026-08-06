@@ -845,7 +845,7 @@ next_opcode:
 				return OUTCOME_ABORTED;
 			}
 		}
-		switch (op) {
+		switch ((int)op) {
 
 		case OP_IF_QUES:
 		case OP_IF:
@@ -1119,7 +1119,7 @@ next_opcode:
 					free_var(lhs);
 					PUSH_ERROR(E_TYPE);
 				} else {
-					switch (rhs.type) {
+					switch ((int)rhs.type) {
 					case TYPE_INT:
 						comparison = compare_integers(lhs.v.num, rhs.v.num);
 						break;

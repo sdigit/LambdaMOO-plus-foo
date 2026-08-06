@@ -127,7 +127,7 @@ parse_float(const char *str, double *result)
 enum error
 become_integer(Var in, int *ret, int called_from_tonum)
 {
-	switch (in.type) {
+	switch ((int)in.type) {
 	case TYPE_INT:
 		*ret = in.v.num;
 		break;
@@ -159,7 +159,7 @@ become_integer(Var in, int *ret, int called_from_tonum)
 static enum error
 become_float(Var in, double *ret)
 {
-	switch (in.type) {
+	switch ((int)in.type) {
 	case TYPE_INT:
 		*ret = (double) in.v.num;
 		break;
@@ -393,7 +393,7 @@ do_power(Var lhs, Var rhs)
 						 * exponentiation */
 		double          d;
 
-		switch (rhs.type) {
+		switch ((int)rhs.type) {
 		case TYPE_INT:
 			d = (double) rhs.v.num;
 			break;
