@@ -1243,10 +1243,12 @@ continue_matching:
 			code[0] = a & 0xff;
 			code[1] = a >> 8;
 			/* fall to next case */
+			[[fallthrough]];
 		case Cupdate_failure_jump:
 			failure_sp[-1].text = text;
 			failure_sp[-1].partend = partend;
 			/* fall to next case */
+			[[fallthrough]];
 		case Cjump:
 			a = (unsigned char) *code++;
 			a |= (unsigned char) *code++ << 8;

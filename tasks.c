@@ -1792,6 +1792,7 @@ find_suspended_task(int id)
 			break;
 		case TEA_KILL:
 			server_panic("Can't happen in FIND_SUSPENDED_TASK!");
+			[[fallthrough]];
 		case TEA_STOP:
 			return fdata.the_vm;
 		}

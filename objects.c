@@ -151,6 +151,7 @@ accepts_decided:
 		}
 		/* e == E_INVIND or E_VERBNF, in both cases fall through */
 
+		[[fallthrough]];
 	case 3:		/* Returned from exitfunc call */
 		if (valid(where) && valid(what)
 		    && db_object_location(what) == where) {
@@ -167,6 +168,7 @@ accepts_decided:
 				/* else e == E_VERBNF, fall through */
 			}
 		}
+		[[fallthrough]];
 	case 4:		/* Returned from enterfunc call */
 		return no_var_pack();
 

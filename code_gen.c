@@ -1326,8 +1326,10 @@ stmt_to_code(Stmt * stmt, GState * gstate)
 			case 4:
 				bc.vector[new_i++] = value >> 24;
 				bc.vector[new_i++] = value >> 16;
+				[[fallthrough]];
 			case 2:
 				bc.vector[new_i++] = value >> 8;
+				[[fallthrough]];
 			case 1:
 				bc.vector[new_i++] = value;
 				break;

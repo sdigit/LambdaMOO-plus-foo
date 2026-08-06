@@ -196,6 +196,7 @@ stream_printf(Stream * s, const char *fmt,...)
 						pad = '0';
 						continue;
 					}
+					[[fallthrough]];
 				case '1':
 				case '2':
 				case '3':
