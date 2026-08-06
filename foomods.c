@@ -272,11 +272,46 @@ bf_string_hash_sha256(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] 
     return make_var_pack(r);
 }
 
+static const char *
+hash_bytes_sha384(const char *input, int length)
+{
+    uint8_t        *result;
+    char           *hex_str;
+    SHA384Context  ctx;
+
+    result = malloc(48);
+
+    SHA384Reset(&ctx);
+    SHA384Input(&ctx, (uint8_t *)input, (unsigned int)length);
+    SHA384Result(&ctx, result);
+    SHA384Reset(&ctx);
+
+    hex_str = hex(result, 48);
+    free(result);
+    return hex_str;
+}
+
+static          package
+bf_string_hash_sha384(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
+{
+    Var             r;
+    const char     *str = arglist.v.list[1].v.str;
+    char           *hexresult;
+
+    r.type = TYPE_STR;
+    hexresult = (char *)hash_bytes_sha384(str, strlen(str));
+    r.v.str = str_dup(hexresult);
+    free(hexresult);
+    free_var(arglist);
+    return make_var_pack(r);
+}
+
 void
 register_foomods()
 {
 	register_function("urandom",1,1,bf_urandom,TYPE_INT);
 	register_function("build_info",0,0,bf_build_info);
 	register_function("string_hash_sha256",1,1,bf_string_hash_sha256,TYPE_STR);
+	register_function("string_hash_sha384",1,1,bf_string_hash_sha384,TYPE_STR);
 }
 
