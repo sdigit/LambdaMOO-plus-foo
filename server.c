@@ -249,7 +249,7 @@ send_shutdown_message(const char *msg)
 	free_stream(s);
 }
 
-static void
+[[noreturn]] static void
 abort_server(void)
 {
 	signal(SIGINT, SIG_DFL);

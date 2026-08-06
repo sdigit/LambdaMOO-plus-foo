@@ -269,7 +269,7 @@ equality(Var lhs, Var rhs, int case_matters)
 	else if (lhs.type != rhs.type)
 		return 0;
 	else {
-		switch (lhs.type) {
+		switch ((int)lhs.type) {
 		case TYPE_INT:
 			return lhs.v.num == rhs.v.num;
 		case TYPE_OBJ:
@@ -392,7 +392,7 @@ value_bytes(Var v)
 {
 	int             i, len, size = sizeof(Var);
 
-	switch (v.type) {
+	switch ((int)v.type) {
 	case TYPE_STR:
 		size += strlen(v.v.str) + 1;
 		break;

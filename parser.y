@@ -542,7 +542,7 @@ expr:
 		    if ($2->kind == EXPR_VAR
 			&& ($2->e.var.type == TYPE_INT
 			    || $2->e.var.type == TYPE_FLOAT)) {
-			switch ($2->e.var.type) {
+			switch ((int)$2->e.var.type) {
 			  case TYPE_INT:
 			    $2->e.var.v.num = -$2->e.var.v.num;
 			    break;

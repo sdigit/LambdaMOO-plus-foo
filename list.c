@@ -263,7 +263,7 @@ list2str(Var * args)
 		str = new_stream(100);
 
 	for (i = 1; i <= args[0].v.num; i++) {
-		switch (args[i].type) {
+		switch ((int)args[i].type) {
 		case TYPE_INT:
 			stream_printf(str, "%d", args[i].v.num);
 			break;
@@ -306,7 +306,7 @@ value2str(Var value)
 static void
 print_to_stream(Var v, Stream * s)
 {
-	switch (v.type) {
+	switch ((int)v.type) {
 	case TYPE_INT:
 		stream_printf(s, "%d", v.v.num);
 		break;
@@ -485,7 +485,7 @@ static          package
 bf_length(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
 {
 	Var             r;
-	switch (arglist.v.list[1].type) {
+	switch ((int)arglist.v.list[1].type) {
 	case TYPE_LIST:
 		r.type = TYPE_INT;
 		r.v.num = arglist.v.list[1].v.list[0].v.num;
@@ -1140,7 +1140,7 @@ encode_binary(Stream * s, Var v)
 {
 	int             i;
 
-	switch (v.type) {
+	switch ((int)v.type) {
 	case TYPE_INT:
 		if (v.v.num < 0 || v.v.num >= 256)
 			return 0;

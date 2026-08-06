@@ -333,7 +333,7 @@ value_compare(Var a, Var b)
 		r.v.err = E_TYPE;
 		return r;
 	}
-	switch (a.type) {
+	switch ((int)a.type) {
 	case TYPE_STR:
 		sa = str_dup(a.v.str);
 		sb = str_dup(b.v.str);
@@ -2526,7 +2526,7 @@ bf_filewrite(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vda
          }
 
     for (i = 1; i <= thelength; i++) {
-        switch (arglist.v.list[3].v.list[i].type) {
+        switch ((int)arglist.v.list[3].v.list[i].type) {
           case TYPE_INT:
             fprintf (outFile, "%d\n",  arglist.v.list[3].v.list[i].v.num);
             break;
@@ -2650,7 +2650,7 @@ bf_fileappend(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vd
       thelength = arglist.v.list[3].v.list[0].v.num;
 
     for (i = 1; i <= thelength; i++) {
-        switch (arglist.v.list[3].v.list[i].type) {
+        switch ((int)arglist.v.list[3].v.list[i].type) {
           case TYPE_INT:
             fprintf (outFile, "%d\n",  arglist.v.list[3].v.list[i].v.num);
             break;
@@ -2731,7 +2731,7 @@ bf_fileinsert(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vd
         }
 
     for (i = 1; i <= thelength; i++) {
-        switch (arglist.v.list[3].v.list[i].type) {
+        switch ((int)arglist.v.list[3].v.list[i].type) {
           case TYPE_INT:
             fprintf (outFile, "%d\n",  arglist.v.list[3].v.list[i].v.num);
             break;
