@@ -150,12 +150,14 @@ static package bf_urandom(Var arglist, [[maybe_unused]] Byte next,
     if (n < 1 || n > 4096) /* why do you need > 4096 bytes this is MOO lol just
                               do multiple calls */
     {
+        free_var(arglist);
         return make_error_pack(E_INVARG);
     }
 
     buf = malloc(sizeof(uint8_t) * n);
     if (read_urandom(buf, n) != 0) {
         free(buf);
+        free_var(arglist);
         return make_error_pack(E_RANGE);
     }
     ret = new_list(n);
