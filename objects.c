@@ -418,7 +418,6 @@ bf_create_with_id(Var arglist, Byte next, void *vdata, Objid progr)
 			Var             args;
 
 			if (oid == -1) {
-				free_var(args);
 				return make_error_pack(E_NACC);
 			}
 			db_set_object_name(oid, str_dup(""));
@@ -432,7 +431,10 @@ bf_create_with_id(Var arglist, Byte next, void *vdata, Objid progr)
 			/* e will not be E_INVIND */
 
 			if (e == E_NONE)
+            {
+                free_var(args);
 				return make_call_pack(2, data);
+            }
 
 			free_data(data);
 			free_var(args);
