@@ -1395,8 +1395,7 @@ main(int argc, char **argv)
 }
 
 int
-is_connected(what)
-	int what;
+is_connected(int what)
 {
 	shandle        *h;
 
