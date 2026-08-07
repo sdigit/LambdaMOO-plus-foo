@@ -442,4 +442,3 @@ int SHA256Result(SHA256Context *context,
 
     return shaSuccess;
 }
-

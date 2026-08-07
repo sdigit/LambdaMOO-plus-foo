@@ -456,4 +456,3 @@ register_foomods()
     register_function("binary_hash_sha384",1,1,bf_binary_hash_sha384,TYPE_STR);
     register_function("binary_hash_sha512",1,1,bf_binary_hash_sha512,TYPE_STR);
 }
-

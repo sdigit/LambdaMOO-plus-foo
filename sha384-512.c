@@ -1052,4 +1052,3 @@ static int SHA384_512ResultN(SHA512Context *context,
 
     return shaSuccess;
 }
-

@@ -202,4 +202,3 @@ extern int SHA512Result(SHA512Context *,
                         uint8_t Message_Digest[SHA512HashSize]);
 
 #endif /* _SHA_H_ */
-
