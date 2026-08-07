@@ -174,7 +174,7 @@ static package bf_build_info(Var arglist, [[maybe_unused]] Byte next,
                              [[maybe_unused]] Objid progr) {
     Var ret;
 
-    ret = new_list(7);
+    ret = new_list(8);
 
     ret.v.list[1].type = TYPE_STR;
     ret.v.list[1].v.str = str_dup(BUILT_AT);
@@ -183,13 +183,15 @@ static package bf_build_info(Var arglist, [[maybe_unused]] Byte next,
     ret.v.list[3].type = TYPE_STR;
     ret.v.list[3].v.str = str_dup(BUILD_HOST_SYSTEM_PROCESSOR);
     ret.v.list[4].type = TYPE_STR;
-    ret.v.list[4].v.str = str_dup(C_COMPILER_ID);
+    ret.v.list[4].v.str = str_dup(C_COMPILER);
     ret.v.list[5].type = TYPE_STR;
-    ret.v.list[5].v.str = str_dup(C_COMPILER_VERSION);
+    ret.v.list[5].v.str = str_dup(C_COMPILER_ID);
     ret.v.list[6].type = TYPE_STR;
-    ret.v.list[6].v.str = str_dup(GIT_COMMIT_HASH);
+    ret.v.list[6].v.str = str_dup(C_COMPILER_VERSION);
     ret.v.list[7].type = TYPE_STR;
-    ret.v.list[7].v.str = str_dup(GIT_BRANCH);
+    ret.v.list[7].v.str = str_dup(GIT_COMMIT_HASH);
+    ret.v.list[8].type = TYPE_STR;
+    ret.v.list[8].v.str = str_dup(GIT_BRANCH);
 
     free_var(arglist);
 
