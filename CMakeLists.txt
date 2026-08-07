@@ -76,20 +76,20 @@ set(GENERATED_KEYWORDS_C "${CMAKE_CURRENT_BINARY_DIR}/keywords.c")
 
 add_custom_command(
     OUTPUT ${GENERATED_PARSER_C} ${GENERATED_YTAB_H}
-    COMMAND ${YACC_EXECUTABLE} -d "${CMAKE_CURRENT_SOURCE_DIR}/parser.y"
+    COMMAND ${YACC_EXECUTABLE} -d "${CMAKE_CURRENT_SOURCE_DIR}/templates/parser.y"
             -o ${GENERATED_PARSER_C} --defines=${GENERATED_YTAB_H}
-    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/parser.y"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/templates/parser.y"
     COMMENT "Generating parser.c and y.tab.h"
     VERBATIM
 )
 
 add_custom_command(
     OUTPUT ${GENERATED_KEYWORDS_C}
-    COMMAND ${GPERF_EXECUTABLE} -aCIptT -k1,3,\$ "${CMAKE_CURRENT_SOURCE_DIR}/keywords.gperf" --output-file=${GENERATED_KEYWORDS_C}
+    COMMAND ${GPERF_EXECUTABLE} -aCIptT -k1,3,\$ "${CMAKE_CURRENT_SOURCE_DIR}/templates/keywords.gperf" --output-file=${GENERATED_KEYWORDS_C}
     # Not a real gperf input, but keywords.c's *compile* needs y.tab.h to
     # exist (via tokens.h), so we order this after it, mirroring the old
     # `keywords.c: keywords.gperf parser.o` Makefile.in hack.
-    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/keywords.gperf" ${GENERATED_YTAB_H}
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/templates/keywords.gperf" ${GENERATED_YTAB_H}
     COMMENT "Generating keywords.c"
     VERBATIM
 )
@@ -98,51 +98,51 @@ string(TIMESTAMP BUILT_AT "%Y%m%d-%H:%M:%S")
 
 add_executable(moo
     "${CMAKE_CURRENT_SOURCE_DIR}/include/ast.h"
-    ast.c
-    code_gen.c
-    db_file.c
-    db_io.c
-    db_objects.c
-    db_properties.c
-    db_verbs.c
-    decompile.c
-    disassemble.c
-    eval_env.c
-    eval_vm.c
-    exceptions.c
-    execute.c
-    extensions.c
-    foomods.c
-    functions.c
+    src/ast.c
+    src/code_gen.c
+    src/db_file.c
+    src/db_io.c
+    src/db_objects.c
+    src/db_properties.c
+    src/db_verbs.c
+    src/decompile.c
+    src/disassemble.c
+    src/eval_env.c
+    src/eval_vm.c
+    src/exceptions.c
+    src/execute.c
+    src/extensions.c
+    src/foomods.c
+    src/functions.c
     ${GENERATED_KEYWORDS_C}
-    list.c
-    log.c
-    match.c
-    md5.c
-    name_lookup.c
-    network.c
-    numbers.c
-    objects.c
-    parse_cmd.c
+    src/list.c
+    src/log.c
+    src/match.c
+    src/md5.c
+    src/name_lookup.c
+    src/network.c
+    src/numbers.c
+    src/objects.c
+    src/parse_cmd.c
     ${GENERATED_PARSER_C}
-    pattern.c
-    program.c
-    property.c
-    quota.c
-    regexpr.c
-    server.c
-    sha256.c
-    sha384-512.c
-    storage.c
-    streams.c
-    str_intern.c
-    sym_table.c
-    tasks.c
-    timers.c
-    unparse.c
-    utils.c
-    verbs.c
-    version.c 
+    src/pattern.c
+    src/program.c
+    src/property.c
+    src/quota.c
+    src/regexpr.c
+    src/server.c
+    src/sha256.c
+    src/sha384-512.c
+    src/storage.c
+    src/streams.c
+    src/str_intern.c
+    src/sym_table.c
+    src/tasks.c
+    src/timers.c
+    src/unparse.c
+    src/utils.c
+    src/verbs.c
+    src/version.c
 )
 
 add_dependencies(moo UpdateGitHeader)
