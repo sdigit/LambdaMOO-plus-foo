@@ -144,8 +144,7 @@ mplex_clear()
 }
 
 void
-mplex_add_reader(fd)
-	int             fd;
+mplex_add_reader(int fd)
 {
 	FD_SET(fd, &input);
 	if (fd > maxfd)
@@ -153,8 +152,7 @@ mplex_add_reader(fd)
 }
 
 void
-mplex_add_writer(fd)
-	int             fd;
+mplex_add_writer(int fd)
 {
 	FD_SET(fd, &output);
 	if (fd > maxfd)
@@ -162,8 +160,7 @@ mplex_add_writer(fd)
 }
 
 int
-mplex_wait(timeout)
-	unsigned long   timeout;
+mplex_wait(unsigned long timeout)
 {
 	struct timeval  tv;
 	int             n;
@@ -181,25 +178,19 @@ mplex_wait(timeout)
 }
 
 int
-mplex_is_readable(fd)
-	int             fd;
+mplex_is_readable(int fd)
 {
 	return FD_ISSET(fd, &input);
 }
 
 int
-mplex_is_writable(fd)
-	int             fd;
+mplex_is_writable(int fd)
 {
 	return FD_ISSET(fd, &output);
 }
 
 enum error
-tcp_make_listener(desc, fd, canon, name)
-	Var             desc;
-	int            *fd;
-	Var            *canon;
-	const char    **name;
+tcp_make_listener(Var desc, int *fd, Var *canon, const char **name)
 {
 	int             s, port;
 	int             option = 1;
@@ -263,12 +254,7 @@ enum proto_accept_error {
 };
 
 enum proto_accept_error
-tcp_accept(listener_fd, read_fd, write_fd, name, name_lookup)
-	int             listener_fd;
-	int            *read_fd;
-	int            *write_fd;
-	const char    **name;
-	int             name_lookup;
+tcp_accept(int listener_fd, int *read_fd, int *write_fd, const char **name, int name_lookup)
 {
 	int             timeout = server_int_option("name_lookup_timeout", 5);
 	int             fd;
@@ -311,12 +297,7 @@ timeout_proc([[maybe_unused]] Timer_ID id, [[maybe_unused]] Timer_Data data)
 #ifdef OUTBOUND_NETWORK
 
 enum error
-tcp_open(arglist, read_fd, write_fd, local_name, remote_name)
-	Var             arglist;
-	int            *read_fd;
-	int            *write_fd;
-	const char    **local_name;
-	const char    **remote_name;
+tcp_open(Var arglist, int *read_fd, int *write_fd, const char **local_name, const char **remote_name)
 {
 	static const char *host_name;
 	static int      port;
@@ -398,18 +379,13 @@ close_connection(int read_fd, [[maybe_unused]] int write_fd)
 }
 
 void
-close_listener(fd)
-	int             fd;
+close_listener(int fd)
 {
 	close(fd);
 }
 
 void
-network_register_fd(fd, readable, writable, data)
-	int             fd;
-	network_fd_callback readable;
-	network_fd_callback writable;
-	void           *data;
+network_register_fd(int fd, network_fd_callback readable, network_fd_callback writable, void *data)
 {
 	fd_reg         *regptr;
 
@@ -808,51 +784,40 @@ network_listen(nl)
 }
 
 int
-network_send_line(nh, line, flush_ok)
-	network_handle  nh;
-	const char     *line;
-	int             flush_ok;
+network_send_line(network_handle nh, const char *line, int flush_ok)
 {
 	return enqueue_output(nh, line, strlen(line), 1, flush_ok);
 }
 
 int
-network_send_bytes(nh, buffer, buflen, flush_ok)
-	network_handle  nh;
-	const char     *buffer;
-	int             buflen;
-	int             flush_ok;
+network_send_bytes(network_handle nh, const char *buffer, int buflen, int flush_ok)
 {
 	return enqueue_output(nh, buffer, buflen, 0, flush_ok);
 }
 
 int
-network_buffered_output_length(nh)
-	network_handle  nh;
+network_buffered_output_length(network_handle nh)
 {
 	nhandle        *h = nh.ptr;
 	return h->output_length;
 }
 
 void
-network_suspend_input(nh)
-	network_handle  nh;
+network_suspend_input(network_handle nh)
 {
 	nhandle        *h = nh.ptr;
 	h->input_suspended = 1;
 }
 
 void
-network_resume_input(nh)
-	network_handle  nh;
+network_resume_input(network_handle nh)
 {
 	nhandle        *h = nh.ptr;
 	h->input_suspended = 0;
 }
 
 int
-network_process_io(timeout)
-	int             timeout;
+network_process_io(int timeout)
 {
 	nhandle        *h, *hnext;
 	nlistener      *l;
@@ -888,26 +853,21 @@ network_process_io(timeout)
 }
 
 const char     *
-network_connection_name(nh)
-	network_handle  nh;
+network_connection_name(network_handle nh)
 {
 	nhandle        *h = (nhandle *) nh.ptr;
 	return h->name;
 }
 
 void
-network_set_connection_binary(nh, do_binary)
-	network_handle  nh;
-	int             do_binary;
+network_set_connection_binary(network_handle nh, int do_binary)
 {
 	nhandle        *h = nh.ptr;
 	h->binary = do_binary;
 }
 
 Var
-network_connection_options(nh, list)
-	network_handle  nh;
-	Var             list;
+network_connection_options(network_handle nh, Var list)
 {
 	nhandle        *h = nh.ptr;
 	Var             pair;
@@ -922,10 +882,7 @@ network_connection_options(nh, list)
 }
 
 int
-network_connection_option(nh, option, value)
-	network_handle  nh;
-	const char     *option;
-	Var            *value;
+network_connection_option(network_handle nh, const char *option, Var *value)
 {
 	nhandle        *h = nh.ptr;
 
@@ -938,10 +895,7 @@ network_connection_option(nh, option, value)
 }
 
 int
-network_set_connection_option(nh, option, value)
-	network_handle  nh;
-	const char     *option;
-	Var             value;
+network_set_connection_option(network_handle nh, const char *option, Var value)
 {
 	nhandle        *h = nh.ptr;
 
@@ -963,8 +917,7 @@ network_set_connection_option(nh, option, value)
 }
 
 enum error
-network_open_connection(arglist)
-	Var             arglist;
+network_open_connection(Var arglist)
 {
 	int             rfd, wfd;
 	const char     *local_name, *remote_name;
@@ -977,15 +930,13 @@ network_open_connection(arglist)
 }
 
 void
-network_close(h)
-	network_handle  h;
+network_close(network_handle h)
 {
 	close_nhandle(h.ptr);
 }
 
 void
-network_close_listener(nl)
-	network_listener nl;
+network_close_listener(network_listener nl)
 {
 	close_nlistener(nl.ptr);
 }
