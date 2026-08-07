@@ -41,4 +41,3 @@ void	unlinkpidfile_server_panic();
 #endif				/* WRITEPIDFILE */
 
 void	register_foomods(void);
-

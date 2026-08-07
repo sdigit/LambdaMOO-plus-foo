@@ -60,10 +60,7 @@
  *              SHA-512         64 byte / 512 bit
  *
  *  Compilation Note:
- *    These files may be compiled with two options:
- *        USE_32BIT_ONLY - use 32-bit arithmetic only, for systems
- *                         without 64-bit integers
- *
+ *    These files may be compiled with one option:
  *        USE_MODIFIED_MACROS - use alternate form of the SHA_Ch()
  *                         and SHA_Maj() macros that are equivalent
  *                         and potentially faster on many systems
@@ -148,13 +145,8 @@ typedef struct SHA256Context {
  *  hashing operation.
  */
 typedef struct SHA512Context {
-#ifdef USE_32BIT_ONLY
-    uint32_t Intermediate_Hash[SHA512HashSize/4]; /* Message Digest  */
-    uint32_t Length[4];                 /* Message length in bits */
-#else /* !USE_32BIT_ONLY */
     uint64_t Intermediate_Hash[SHA512HashSize/8]; /* Message Digest */
     uint64_t Length_High, Length_Low;   /* Message length in bits */
-#endif /* USE_32BIT_ONLY */
 
     int_least16_t Message_Block_Index;  /* Message_Block array index */
                                         /* 1024-bit message blocks */
@@ -202,4 +194,3 @@ extern int SHA512Result(SHA512Context *,
                         uint8_t Message_Digest[SHA512HashSize]);
 
 #endif /* _SHA_H_ */
-

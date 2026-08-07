@@ -26,4 +26,3 @@
 #endif /* USE_MODIFIED_MACROS */
 
 #endif /* _SHA_PRIVATE__H */
-

@@ -21,4 +21,3 @@ file(WRITE "${TARGET_HEADER_PATH}" "
 
 #endif
 ")
-
