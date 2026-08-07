@@ -123,6 +123,43 @@ the exception text is dropped, the generated output reverts to plain GPLv3.
 Any CMake/build-system change that regenerates this header should be checked
 to confirm the exception clause is still present verbatim in the output.
 
+## 6. RFC 6234 SHA implementation — IETF Trust (2011)
+
+The SHA-256, SHA-384, and SHA-512 implementation imported from RFC 6234 is
+covered by the copyright and license contained in:
+
+- `include/ietf/sha.h`
+- `include/ietf/sha-private.h`
+- `sha256.c`
+- `sha384-512.c`
+
+The implementation is copyrighted by:
+
+```
+Copyright (c) 2011 IETF Trust and the persons identified as
+authors of the code. All rights reserved.
+```
+
+The license is a standard BSD-3-Clause-style permissive license granting
+redistribution and use in source and binary forms, with or without
+modification, subject to the following conditions:
+
+- Redistributions of source code must retain the copyright notice,
+  conditions, and disclaimer.
+- Redistributions in binary form must reproduce the copyright notice,
+  conditions, and disclaimer in the accompanying documentation and/or
+  other materials.
+- Neither the name of the Internet Society, the IETF, the IETF Trust,
+  nor the names of the contributors may be used to endorse or promote
+  derived products without prior written permission.
+
+The software is provided "AS IS", without express or implied warranties,
+including merchantability or fitness for a particular purpose, and the
+copyright holders and contributors disclaim liability for any damages.
+
+This is a conventional permissive BSD-3-Clause-family license and is
+compatible with the rest of this source tree.
+
 ## Summary table
 
 | File(s) | License layer(s) | Notes |
@@ -132,5 +169,6 @@ to confirm the exception clause is still present verbatim in the output.
 | `regexpr.c` | + Tatu Ylonen 1991 permissive license | Distinct grant, ported from Python 1.3 by Pavel Curtis (1995) |
 | `keywords.c` | BSD/Xerox stack carried via `#line` from `keywords.gperf` | gperf-generated; no separate gperf license on output |
 | `include/y.tab.h` | GPLv3 + Bison special exception | Exception clause is required to avoid copyleft on the whole build |
+| `sha256.c`, `sha384-512.c`, `include/ietf/sha.h`, `include/ietf/sha-private.h` | IETF Trust (2011) BSD-3-Clause-style	RFC 6234 reference implementation | includes standard non-endorsement clause |
 
 No file in the tree is unlicensed.
