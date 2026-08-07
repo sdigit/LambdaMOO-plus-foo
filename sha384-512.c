@@ -26,13 +26,7 @@
  *   "fingerprint" for a message.
  *
  * Portability Issues:
- *   SHA-384 and SHA-512 are defined in terms of 64-bit "words",
- *   but if USE_32BIT_ONLY is #defined, this code is implemented in
- *   terms of 32-bit "words".  This code uses <stdint.h> (included
- *   via "sha.h") to define the 64-, 32- and 8-bit unsigned integer
- *   types.  If your C compiler does not support 64-bit unsigned
- *   integers and you do not #define USE_32BIT_ONLY, this code is
- *   not appropriate.
+ *   SHA-384 and SHA-512 are defined in terms of 64-bit "words"
  *
  * Caveats:
  *   SHA-384 and SHA-512 are designed to work with messages less
