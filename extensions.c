@@ -2331,10 +2331,6 @@ build_dir_name(char *thePathStr, char *theDirName, char spec)
 
 int
 build_file_name(char *thePathStr, char *theNameStr, char *theFileName, char spec)
-char *thePathStr;
-char *theNameStr;
-char *theFileName;
-char spec;
 {
     char external_files  [BUF_LEN];
     char localthePathStr [BUF_LEN];
