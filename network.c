@@ -407,8 +407,7 @@ network_register_fd(int fd, network_fd_callback readable, network_fd_callback wr
 }
 
 void
-network_unregister_fd(fd)
-	int             fd;
+network_unregister_fd(int fd)
 {
 	fd_reg         *ptr;
 	fd_reg         *lastptr;
@@ -465,16 +464,14 @@ check_registered_fds()
 }
 
 static void
-free_text_block(b)
-	text_block     *b;
+free_text_block(text_block *b)
 {
 	free(b->buffer);
 	free(b);
 }
 
 int
-network_set_nonblocking(fd)
-	int             fd;
+network_set_nonblocking(int fd)
 {
 	int             a;
 
@@ -486,8 +483,7 @@ network_set_nonblocking(fd)
 }
 
 static int
-push_output(h)
-	nhandle        *h;
+push_output(nhandle *h)
 {
 	text_block     *b;
 	int             count;
@@ -523,8 +519,7 @@ push_output(h)
 }
 
 static int
-pull_input(h)
-	nhandle        *h;
+pull_input(nhandle *h)
 {
 	Stream         *s = h->input;
 	int             count;
@@ -556,12 +551,7 @@ pull_input(h)
 }
 
 static nhandle *
-new_nhandle(rfd, wfd, local_name, remote_name, outbound)
-	int             rfd;
-	int             wfd;
-	const char     *local_name;
-	const char     *remote_name;
-	int             outbound;
+new_nhandle(int rfd, int wfd, const char *local_name, const char *remote_name, int outbound)
 {
 	nhandle        *h;
 	static Stream  *s = 0;
@@ -593,8 +583,7 @@ new_nhandle(rfd, wfd, local_name, remote_name, outbound)
 }
 
 static void
-close_nhandle(h)
-	nhandle        *h;
+close_nhandle(nhandle *h)
 {
 	text_block     *b, *bb;
 
@@ -615,8 +604,7 @@ close_nhandle(h)
 }
 
 static void
-close_nlistener(l)
-	nlistener      *l;
+close_nlistener(nlistener *l)
 {
 	*(l->prev) = l->next;
 	if (l->next)
@@ -628,13 +616,7 @@ close_nlistener(l)
 }
 
 static void
-make_new_connection(sl, rfd, wfd, local_name, remote_name, outbound)
-	server_listener sl;
-	int             rfd;
-	int             wfd;
-	const char     *local_name;
-	const char     *remote_name;
-	int             outbound;
+make_new_connection(server_listener sl, int rfd, int wfd, const char *local_name, const char *remote_name, int outbound)
 {
 	nhandle        *h;
 	network_handle  nh;
@@ -644,8 +626,7 @@ make_new_connection(sl, rfd, wfd, local_name, remote_name, outbound)
 }
 
 static void
-accept_new_connection(l)
-	nlistener      *l;
+accept_new_connection(nlistener *l)
 {
 	int             rfd, wfd;
 	const char     *host_name;
@@ -663,12 +644,7 @@ accept_new_connection(l)
 }
 
 static int
-enqueue_output(nh, line, line_length, add_eol, flush_ok)
-	network_handle  nh;
-	const char     *line;
-	int             line_length;
-	int             add_eol;
-	int             flush_ok;
+enqueue_output(network_handle nh, const char *line, int line_length, int add_eol, int flush_ok)
 {
 	nhandle        *h = nh.ptr;
 	int             length = line_length + (add_eol ? 2 : 0);
@@ -707,10 +683,7 @@ enqueue_output(nh, line, line_length, add_eol, flush_ok)
 }
 
 int
-network_initialize(argc, argv, desc)
-	int             argc;
-	char          **argv;
-	Var            *desc;
+network_initialize(int argc, char **argv, Var *desc)
 {
 	int             port = DEFAULT_PORT;
 	char           *p;
@@ -730,13 +703,7 @@ network_initialize(argc, argv, desc)
 }
 
 enum error
-network_make_listener(sl, desc, nl, canon, name, options)
-	server_listener sl;
-	Var             desc;
-	network_listener *nl;
-	Var            *canon;
-	const char    **name;
-	Var            *options;
+network_make_listener(server_listener sl, Var desc, network_listener *nl, Var *canon, const char **name, Var *options)
 {
 	int             fd;
 	enum error      e = tcp_make_listener(desc, &fd, canon, name);
@@ -775,8 +742,7 @@ network_make_listener(sl, desc, nl, canon, name, options)
 }
 
 int
-network_listen(nl)
-	network_listener nl;
+network_listen(network_listener nl)
 {
 	nlistener      *l = nl.ptr;
 	listen(l->fd, SOMAXCONN);
