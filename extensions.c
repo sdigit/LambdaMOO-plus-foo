@@ -1285,7 +1285,7 @@ bf_file_readline(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void 
 		r = file_raise_notokcall("file_readline", progr);
 	} else if (!file_handle_valid(fhandle)) {
 		r = make_raise_pack(E_INVARG, "Invalid FHANDLE", fhandle);
-	} else if (!(mode = file_handle_mode(fhandle)) & FILE_O_READ)
+	} else if (!((mode = file_handle_mode(fhandle)) & FILE_O_READ))
 		r = make_raise_pack(E_INVARG, "File is open write-only", fhandle);
 	else {
 		type = file_handle_type(fhandle);
@@ -1355,7 +1355,7 @@ bf_file_readlines(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void
 		r = file_raise_notokcall("file_readlines", progr);
 	} else if ((f = file_handle_file_safe(fhandle)) == NULL) {
 		r = make_raise_pack(E_INVARG, "Invalid FHANDLE", fhandle);
-	} else if (!(mode = file_handle_mode(fhandle)) & FILE_O_READ)
+	} else if (!((mode = file_handle_mode(fhandle)) & FILE_O_READ))
 		r = make_raise_pack(E_INVARG, "File is open write-only", fhandle);
 	else {
 
@@ -1528,7 +1528,7 @@ bf_file_read(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vda
 		r = file_raise_notokcall("file_read", progr);
 	} else if ((f = file_handle_file_safe(fhandle)) == NULL) {
 		r = make_raise_pack(E_INVARG, "Invalid FHANDLE", fhandle);
-	} else if (!(mode = file_handle_mode(fhandle)) & FILE_O_READ)
+	} else if (!((mode = file_handle_mode(fhandle)) & FILE_O_READ))
 		r = make_raise_pack(E_INVARG, "File is open write-only", fhandle);
 	else {
 		type = file_handle_type(fhandle);
