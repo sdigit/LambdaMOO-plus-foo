@@ -27,4 +27,4 @@
  * SUCH DAMAGE.
  */
 
-#define IS_REAL(x)    (-DBL_MAX <= (x) && (x) <= DBL_MAX)
+#define IS_REAL(x) (-DBL_MAX <= (x) && (x) <= DBL_MAX)

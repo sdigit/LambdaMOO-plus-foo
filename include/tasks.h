@@ -52,41 +52,36 @@
 #include "structures.h"
 
 typedef struct {
-	void           *ptr;
-}               task_queue;
+    void *ptr;
+} task_queue;
 
 extern task_queue new_task_queue(Objid player, Objid handler);
-extern void     free_task_queue(task_queue q);
+extern void free_task_queue(task_queue q);
 
-extern int 
-tasks_connection_option(task_queue, const char *,
-			Var *);
-extern Var      tasks_connection_options(task_queue, Var);
-extern int 
-tasks_set_connection_option(task_queue, const char *,
-			    Var);
+extern int tasks_connection_option(task_queue, const char *, Var *);
+extern Var tasks_connection_options(task_queue, Var);
+extern int tasks_set_connection_option(task_queue, const char *, Var);
 
-extern void     new_input_task(task_queue, const char *);
-extern void     task_suspend_input(task_queue);
-extern enum error 
-enqueue_forked_task2(activation a, int f_index,
-		     unsigned after_seconds, int vid);
+extern void new_input_task(task_queue, const char *);
+extern void task_suspend_input(task_queue);
+extern enum error enqueue_forked_task2(activation a, int f_index,
+                                       unsigned after_seconds, int vid);
 extern enum error enqueue_suspended_task(vm the_vm, void *data);
 /* data == &(int after_seconds) */
 extern enum error make_reading_task(vm the_vm, void *data);
 /* data == &(Objid connection) */
-extern void     resume_task(vm the_vm, Var value);
+extern void resume_task(vm the_vm, Var value);
 /*
  * Make THE_VM (a suspended task) runnable on the appropriate task queue;
  * when it resumes execution, return VALUE from the built-in function that
  * suspended it.  If VALUE.type is TYPE_ERR, then VALUE is raised instead of
  * returned.
  */
-extern vm       find_suspended_task(int id);
+extern vm find_suspended_task(int id);
 
 /*
  * External task queues:
- * 
+ *
  * The registered enumerator should apply the given closure to every VM in the
  * external queue for as long as the closure returns TEA_CONTINUE, also
  * passing it a short string describing the current state of the VM (relative
@@ -100,47 +95,41 @@ extern vm       find_suspended_task(int id);
  * there were no VMs in the queue.
  */
 typedef enum {
-	TEA_CONTINUE,		/* Enumerator should continue with next VM */
-	TEA_STOP,		/* Enumerator should stop now */
-	TEA_KILL		/* Enumerator should stop and forget VM */
-}               task_enum_action;
+    TEA_CONTINUE, /* Enumerator should continue with next VM */
+    TEA_STOP,     /* Enumerator should stop now */
+    TEA_KILL      /* Enumerator should stop and forget VM */
+} task_enum_action;
 
-typedef         task_enum_action(*task_closure) (vm, const char *, void *);
-typedef         task_enum_action(*task_enumerator) (task_closure, void *);
-extern void     register_task_queue(task_enumerator);
+typedef task_enum_action (*task_closure)(vm, const char *, void *);
+typedef task_enum_action (*task_enumerator)(task_closure, void *);
+extern void register_task_queue(task_enumerator);
 
-extern Var      read_input_now(Objid connection);
+extern Var read_input_now(Objid connection);
 
-extern int      next_task_start(void);
-extern void     run_ready_tasks(void);
-extern enum outcome 
-run_server_task(Objid player, Objid what,
-		const char *verb, Var args,
-		const char *argstr, Var * result);
-extern enum outcome 
-run_server_task_setting_id(Objid player, Objid what,
-			   const char *verb, Var args,
-			   const char *argstr,
-			   Var * result, int *task_id);
-extern enum outcome 
-run_server_program_task(Objid this, const char *verb,
-			Var args, Objid vloc,
-			const char *verbname,
-			Program * program, Objid progr,
-			int debug, Objid player,
-			const char *argstr,
-			Var * result);
+extern int next_task_start(void);
+extern void run_ready_tasks(void);
+extern enum outcome run_server_task(Objid player, Objid what, const char *verb,
+                                    Var args, const char *argstr, Var *result);
+extern enum outcome run_server_task_setting_id(Objid player, Objid what,
+                                               const char *verb, Var args,
+                                               const char *argstr, Var *result,
+                                               int *task_id);
+extern enum outcome run_server_program_task(Objid this, const char *verb,
+                                            Var args, Objid vloc,
+                                            const char *verbname,
+                                            Program *program, Objid progr,
+                                            int debug, Objid player,
+                                            const char *argstr, Var *result);
 
-extern int      current_task_id;
-extern int      last_input_task_id(Objid player);
+extern int current_task_id;
+extern int last_input_task_id(Objid player);
 
-extern void     write_task_queue(void);
-extern int      read_task_queue(void);
+extern void write_task_queue(void);
+extern int read_task_queue(void);
 
-extern db_verb_handle 
-find_verb_for_programming(Objid player,
-			  const char *verbref,
-			  const char **message,
-			  const char **vname);
+extern db_verb_handle find_verb_for_programming(Objid player,
+                                                const char *verbref,
+                                                const char **message,
+                                                const char **vname);
 
-#endif				/* !Tasks_H */
+#endif /* !Tasks_H */

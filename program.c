@@ -55,93 +55,83 @@
 #include "structures.h"
 #include "utils.h"
 
-Program        *
-new_program(void)
-{
-	Program        *p = (Program *) mymalloc(sizeof(Program), M_PROGRAM);
+Program *new_program(void) {
+    Program *p = (Program *)mymalloc(sizeof(Program), M_PROGRAM);
 
-	p->ref_count = 1;
-	p->first_lineno = 1;
-	p->cached_lineno = 1;
-	p->cached_lineno_pc = 0;
-	return p;
+    p->ref_count = 1;
+    p->first_lineno = 1;
+    p->cached_lineno = 1;
+    p->cached_lineno_pc = 0;
+    return p;
 }
 
-Program        *
-null_program(void)
-{
-	static Program *p = 0;
-	Var             code, errors;
+Program *null_program(void) {
+    static Program *p = 0;
+    Var code, errors;
 
-	if (!p) {
-		code = new_list(0);
-		p = parse_list_as_program(code, &errors);
-		if (!p)
-			server_panic("Can't create the null program!");
-		free_var(code);
-		free_var(errors);
-	}
-	return p;
+    if (!p) {
+        code = new_list(0);
+        p = parse_list_as_program(code, &errors);
+        if (!p)
+            server_panic("Can't create the null program!");
+        free_var(code);
+        free_var(errors);
+    }
+    return p;
 }
 
-Program        *
-program_ref(Program * p)
-{
-	p->ref_count++;
+Program *program_ref(Program *p) {
+    p->ref_count++;
 
-	return p;
+    return p;
 }
 
-int
-program_bytes(Program * p)
-{
-	int             i, count;
+int program_bytes(Program *p) {
+    int i, count;
 
-	count = sizeof(Program);
-	count += p->main_vector.size;
+    count = sizeof(Program);
+    count += p->main_vector.size;
 
-	for (i = 0; (unsigned int)i < p->num_literals; i++)
-		count += value_bytes(p->literals[i]);
+    for (i = 0; (unsigned int)i < p->num_literals; i++)
+        count += value_bytes(p->literals[i]);
 
-	count += sizeof(Bytecodes) * p->fork_vectors_size;
-	for (i = 0; (unsigned int)i < p->fork_vectors_size; i++)
-		count += p->fork_vectors[i].size;
+    count += sizeof(Bytecodes) * p->fork_vectors_size;
+    for (i = 0; (unsigned int)i < p->fork_vectors_size; i++)
+        count += p->fork_vectors[i].size;
 
-	count += sizeof(const char *) * p->num_var_names;
-	for (i = 0; (unsigned int)i < p->num_var_names; i++)
-		count += strlen(p->var_names[i]) + 1;
+    count += sizeof(const char *) * p->num_var_names;
+    for (i = 0; (unsigned int)i < p->num_var_names; i++)
+        count += strlen(p->var_names[i]) + 1;
 
-	return count;
+    return count;
 }
 
-void
-free_program(Program * p)
-{
-	unsigned        i;
+void free_program(Program *p) {
+    unsigned i;
 
-	p->ref_count--;
-	if (p->ref_count == 0) {
+    p->ref_count--;
+    if (p->ref_count == 0) {
 
-		for (i = 0; i < p->num_literals; i++)
-			/*
-			 * can't be a list--strings and floats need to be
-			 * freed, though.
-			 */
-			free_var(p->literals[i]);
-		if (p->literals)
-			myfree(p->literals, M_LIT_LIST);
+        for (i = 0; i < p->num_literals; i++)
+            /*
+             * can't be a list--strings and floats need to be
+             * freed, though.
+             */
+            free_var(p->literals[i]);
+        if (p->literals)
+            myfree(p->literals, M_LIT_LIST);
 
-		for (i = 0; i < p->fork_vectors_size; i++)
-			myfree(p->fork_vectors[i].vector, M_BYTECODES);
-		if (p->fork_vectors_size)
-			myfree(p->fork_vectors, M_FORK_VECTORS);
+        for (i = 0; i < p->fork_vectors_size; i++)
+            myfree(p->fork_vectors[i].vector, M_BYTECODES);
+        if (p->fork_vectors_size)
+            myfree(p->fork_vectors, M_FORK_VECTORS);
 
-		for (i = 0; i < p->num_var_names; i++)
-			free_str(p->var_names[i]);
-		myfree(p->var_names, M_NAMES);
+        for (i = 0; i < p->num_var_names; i++)
+            free_str(p->var_names[i]);
+        myfree(p->var_names, M_NAMES);
 
-		myfree(p->main_vector.vector, M_BYTECODES);
+        myfree(p->main_vector.vector, M_BYTECODES);
 
-		myfree(p, M_PROGRAM);
-	}
+        myfree(p, M_PROGRAM);
+    }
 }

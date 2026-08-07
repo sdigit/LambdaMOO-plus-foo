@@ -88,10 +88,10 @@
  */
 enum {
     shaSuccess = 0,
-    shaNull,            /* Null pointer parameter */
-    shaInputTooLong,    /* input data too long */
-    shaStateError,      /* called Input after FinalBits or Result */
-    shaBadParam         /* passed a bad parameter */
+    shaNull,         /* Null pointer parameter */
+    shaInputTooLong, /* input data too long */
+    shaStateError,   /* called Input after FinalBits or Result */
+    shaBadParam      /* passed a bad parameter */
 };
 #endif /* _SHA_enum_ */
 
@@ -118,26 +118,24 @@ enum {
 /*
  *  These constants are used in the USHA (Unified SHA) functions.
  */
-typedef enum SHAversion {
-    SHA256, SHA384, SHA512
-} SHAversion;
+typedef enum SHAversion { SHA256, SHA384, SHA512 } SHAversion;
 
 /*
  *  This structure will hold context information for the SHA-256
  *  hashing operation.
  */
 typedef struct SHA256Context {
-    uint32_t Intermediate_Hash[SHA256HashSize/4]; /* Message Digest */
+    uint32_t Intermediate_Hash[SHA256HashSize / 4]; /* Message Digest */
 
-    uint32_t Length_High;               /* Message length in bits */
-    uint32_t Length_Low;                /* Message length in bits */
+    uint32_t Length_High; /* Message length in bits */
+    uint32_t Length_Low;  /* Message length in bits */
 
-    int_least16_t Message_Block_Index;  /* Message_Block array index */
-                                        /* 512-bit message blocks */
+    int_least16_t Message_Block_Index; /* Message_Block array index */
+                                       /* 512-bit message blocks */
     uint8_t Message_Block[SHA256_Message_Block_Size];
 
-    int Computed;                   /* Is the hash computed? */
-    int Corrupted;                  /* Cumulative corruption code */
+    int Computed;  /* Is the hash computed? */
+    int Corrupted; /* Cumulative corruption code */
 } SHA256Context;
 
 /*
@@ -145,15 +143,15 @@ typedef struct SHA256Context {
  *  hashing operation.
  */
 typedef struct SHA512Context {
-    uint64_t Intermediate_Hash[SHA512HashSize/8]; /* Message Digest */
-    uint64_t Length_High, Length_Low;   /* Message length in bits */
+    uint64_t Intermediate_Hash[SHA512HashSize / 8]; /* Message Digest */
+    uint64_t Length_High, Length_Low;               /* Message length in bits */
 
-    int_least16_t Message_Block_Index;  /* Message_Block array index */
-                                        /* 1024-bit message blocks */
+    int_least16_t Message_Block_Index; /* Message_Block array index */
+                                       /* 1024-bit message blocks */
     uint8_t Message_Block[SHA512_Message_Block_Size];
 
-    int Computed;                   /* Is the hash computed?*/
-    int Corrupted;                  /* Cumulative corruption code */
+    int Computed;  /* Is the hash computed?*/
+    int Corrupted; /* Cumulative corruption code */
 } SHA512Context;
 
 /*
@@ -172,8 +170,7 @@ extern int SHA256Input(SHA256Context *, const uint8_t *bytes,
                        unsigned int bytecount);
 extern int SHA256FinalBits(SHA256Context *, uint8_t bits,
                            unsigned int bit_count);
-extern int SHA256Result(SHA256Context *,
-                        uint8_t *Message_Digest);
+extern int SHA256Result(SHA256Context *, uint8_t *Message_Digest);
 
 /* SHA-384 */
 extern int SHA384Reset(SHA384Context *);

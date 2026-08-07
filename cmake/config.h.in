@@ -44,22 +44,22 @@
 /* Static on every target this codebase runs on; not worth an autoconf-style
  * probe. */
 #include <limits.h>
-typedef int             int32;
-typedef unsigned        unsigned32;
+typedef int int32;
+typedef unsigned unsigned32;
 
 /* Linux needs a kick in the pants to figure out DBL_MAX */
 #ifdef __linux__
-#  include <values.h>
+#include <values.h>
 #else
 /* FreeBSD needs to be kicked too so it can find DBL_MAX */
 #if defined(__FreeBSD__)
-#  include <float.h>
+#include <float.h>
 #endif
 #endif
 
-#define BUILD_HOST_SYSTEM       "@CMAKE_HOST_SYSTEM@"
-#define BUILD_HOST_PROCESSOR    "@CMAKE_HOST_SYSTEM_PROCESSOR@"
-#define C_COMPILER_ID           "@CMAKE_C_COMPILER_ID@"
-#define C_COMPILER_VERSION      "@CMAKE_C_COMPILER_VERSION@"
+#define BUILD_HOST_SYSTEM "@CMAKE_HOST_SYSTEM@"
+#define BUILD_HOST_PROCESSOR "@CMAKE_HOST_SYSTEM_PROCESSOR@"
+#define C_COMPILER_ID "@CMAKE_C_COMPILER_ID@"
+#define C_COMPILER_VERSION "@CMAKE_C_COMPILER_VERSION@"
 
 #endif /* !Config_H */

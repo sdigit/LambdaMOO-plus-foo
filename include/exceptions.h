@@ -67,12 +67,12 @@
 
 /*
  * Syntax:    Exception my_exception;
- * 
+ *
  * TRY stmts; EXCEPT (my_exception)   [ANY matches all exceptions] stmts;
  * [int exception_value available here] ... ENDTRY
- * 
+ *
  * RAISE(my_exception, value);
- * 
+ *
  * TRY stmts; FINALLY stmts; ENDTRY
  */
 
@@ -83,98 +83,90 @@
 
 #include "config.h"
 
-#define ES_MaxExceptionsPerScope	10
+#define ES_MaxExceptionsPerScope 10
 
-typedef enum ES_Value {
-	ES_Initialize, ES_EvalBody, ES_Exception
-}               ES_Value;
+typedef enum ES_Value { ES_Initialize, ES_EvalBody, ES_Exception } ES_Value;
 
 typedef struct {
-	int             junk;
-}               Exception;	/* Only addr. of exception is used. */
+    int junk;
+} Exception; /* Only addr. of exception is used. */
 
 typedef volatile struct ES_CtxBlock ES_CtxBlock;
 struct ES_CtxBlock {
-	jmp_buf         jmp;
-	int             nx;
-	Exception      *array[ES_MaxExceptionsPerScope];
-	Exception      *id;
-	int             value;
-	int             finally;
-	ES_CtxBlock    *link;
+    jmp_buf jmp;
+    int nx;
+    Exception *array[ES_MaxExceptionsPerScope];
+    Exception *id;
+    int value;
+    int finally;
+    ES_CtxBlock *link;
 };
 
 extern Exception ANY;
 extern ES_CtxBlock *ES_exceptionStack;
-extern void     ES_RaiseException(Exception * exception, int value);
+extern void ES_RaiseException(Exception *exception, int value);
 
-#define RAISE(e, v)	ES_RaiseException(&e, v)
+#define RAISE(e, v) ES_RaiseException(&e, v)
 
+#define TRY                                                                    \
+    {                                                                          \
+        ES_CtxBlock ES_ctx;                                                    \
+        volatile ES_Value ES_es = ES_Initialize;                               \
+                                                                               \
+        ES_ctx.nx = 0;                                                         \
+        ES_ctx.finally = 0;                                                    \
+        ES_ctx.link = ES_exceptionStack;                                       \
+        ES_exceptionStack = &ES_ctx;                                           \
+                                                                               \
+        if (setjmp((void *)ES_ctx.jmp) != 0)                                   \
+            ES_es = ES_Exception;                                              \
+                                                                               \
+        while (1) {                                                            \
+            if (ES_es == ES_EvalBody) {                                        \
+        /* TRY body goes here */
 
-#define TRY							\
-	{							\
-	    ES_CtxBlock		ES_ctx;				\
-	    volatile ES_Value	ES_es = ES_Initialize;		\
-								\
-	    ES_ctx.nx = 0;					\
-	    ES_ctx.finally = 0;					\
-	    ES_ctx.link = ES_exceptionStack;			\
-	    ES_exceptionStack = &ES_ctx;			\
-	    							\
-	    if (setjmp((void *) ES_ctx.jmp) != 0)		\
-		ES_es = ES_Exception;				\
-		    						\
-	    while (1) {						\
-		if (ES_es == ES_EvalBody) {			\
-				/* TRY body goes here */
+#define EXCEPT(e)                                                              \
+    /* TRY body or handler goes here */                                        \
+    if (ES_es == ES_EvalBody)                                                  \
+        ES_exceptionStack = ES_ctx.link;                                       \
+    break;                                                                     \
+    }                                                                          \
+    if (ES_es == ES_Initialize) {                                              \
+        if (ES_ctx.nx >= ES_MaxExceptionsPerScope)                             \
+            server_panic("Too many EXCEPT clauses!");                          \
+        ES_ctx.array[ES_ctx.nx++] = &e;                                        \
+    } else if (ES_ctx.id == &e || &e == &ANY) {                                \
+        int exception_value = ES_ctx.value;                                    \
+                                                                               \
+        ES_exceptionStack = ES_ctx.link;                                       \
+        exception_value = exception_value;                                     \
+    /* avoid warnings */                                                       \
+    /* handler goes here */
 
+#define FINALLY                                                                \
+    /* TRY body goes here */                                                   \
+    }                                                                          \
+    if (ES_es == ES_Initialize)                                                \
+        ES_ctx.finally = 1;                                                    \
+    else {                                                                     \
+        ES_exceptionStack = ES_ctx.link;                                       \
+    /* FINALLY body goes here */
 
-#define EXCEPT(e)						\
-		    /* TRY body or handler goes here */		\
-		    if (ES_es == ES_EvalBody)			\
-			ES_exceptionStack = ES_ctx.link;	\
-		    break;					\
-		}						\
-		if (ES_es == ES_Initialize) {			\
-		    if (ES_ctx.nx >= ES_MaxExceptionsPerScope)	\
-			server_panic("Too many EXCEPT clauses!");	\
-		    ES_ctx.array[ES_ctx.nx++] = &e;		\
-		} else if (ES_ctx.id == &e  ||  &e == &ANY) {	\
-		    int	exception_value = ES_ctx.value;		\
-								\
-		    ES_exceptionStack = ES_ctx.link;		\
-		    exception_value = exception_value;		\
-			/* avoid warnings */			\
-				/* handler goes here */
-
-
-#define FINALLY							\
-		    /* TRY body goes here */			\
-		}						\
-		if (ES_es == ES_Initialize)			\
-		    ES_ctx.finally = 1;				\
-		else {						\
-		    ES_exceptionStack = ES_ctx.link;		\
-		    /* FINALLY body goes here */		\
-
-
-#define ENDTRY								\
-		    /* FINALLY body or handler goes here */		\
-		    if (ES_ctx.finally  &&  ES_es == ES_Exception)  	\
-			ES_RaiseException((Exception *) ES_ctx.id,	\
-					  (int) ES_ctx.value);		\
-		    break;						\
-		}							\
-		ES_es = ES_EvalBody;					\
-	    }								\
-	}
-
+#define ENDTRY                                                                 \
+    /* FINALLY body or handler goes here */                                    \
+    if (ES_ctx.finally && ES_es == ES_Exception)                               \
+        ES_RaiseException((Exception *)ES_ctx.id, (int)ES_ctx.value);          \
+    break;                                                                     \
+    }                                                                          \
+    ES_es = ES_EvalBody;                                                       \
+    }                                                                          \
+    }
 
 /* The exceptions package doesn't provide this function, but it calls it */
 /* whenever a fatal error occurs:                                        */
 /* 1) Too many EXCEPT clauses in a single TRY construct.            */
 /* 2) An unhandled exception is RAISEd.                             */
 
-extern void     server_panic(const char *message);
+extern void server_panic(const char *message);
 
-#endif				/* !Exceptions_H */
+#endif /* !Exceptions_H */

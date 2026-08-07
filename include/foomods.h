@@ -27,17 +27,17 @@
  * SUCH DAMAGE.
  */
 
-#include "options.h"
-#include "structures.h"
-#include "program.h"
-#include "functions.h"
 #include "exceptions.h"
+#include "functions.h"
+#include "options.h"
+#include "program.h"
+#include "structures.h"
 
 #ifdef WRITEPIDFILE
-int	checkpidfile();
-void	writepidfile();
-void	unlinkpidfile();
-void	unlinkpidfile_server_panic();
-#endif				/* WRITEPIDFILE */
+int checkpidfile();
+void writepidfile();
+void unlinkpidfile();
+void unlinkpidfile_server_panic();
+#endif /* WRITEPIDFILE */
 
-void	register_foomods(void);
+void register_foomods(void);

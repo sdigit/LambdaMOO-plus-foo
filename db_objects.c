@@ -58,604 +58,515 @@
 #include "utils.h"
 
 static Object **objects;
-static int      num_objects = 0;
-static int      max_objects = 0;
+static int num_objects = 0;
+static int max_objects = 0;
 
-static Var      all_users;
+static Var all_users;
 
-Object         *
-dbpriv_find_object(Objid oid)
-{
-	if (oid < 0 || oid >= num_objects)
-		return 0;
-	else
-		return objects[oid];
+Object *dbpriv_find_object(Objid oid) {
+    if (oid < 0 || oid >= num_objects)
+        return 0;
+    else
+        return objects[oid];
 }
 
-int
-valid(Objid oid)
-{
-	return dbpriv_find_object(oid) != 0;
+int valid(Objid oid) { return dbpriv_find_object(oid) != 0; }
+
+Objid db_last_used_objid(void) { return num_objects - 1; }
+
+void db_reset_last_used_objid(void) {
+    while (!objects[num_objects - 1])
+        num_objects--;
 }
 
-Objid
-db_last_used_objid(void)
-{
-	return num_objects - 1;
+static void ensure_new_object(void) {
+    if (max_objects == 0) {
+        max_objects = 100;
+        objects = mymalloc(max_objects * sizeof(Object *), M_OBJECT_TABLE);
+    }
+    if (num_objects >= max_objects) {
+        int i;
+        Object **new;
+
+        new = mymalloc(max_objects * 2 * sizeof(Object *), M_OBJECT_TABLE);
+        for (i = 0; i < max_objects; i++)
+            new[i] = objects[i];
+        myfree(objects, M_OBJECT_TABLE);
+        objects = new;
+        max_objects *= 2;
+    }
 }
 
-void
-db_reset_last_used_objid(void)
-{
-	while (!objects[num_objects - 1])
-		num_objects--;
+Object *dbpriv_new_object(void) {
+    Object *o;
+
+    ensure_new_object();
+    o = objects[num_objects] = mymalloc(sizeof(Object), M_OBJECT);
+    o->id = num_objects;
+    num_objects++;
+    return o;
 }
 
-static void
-ensure_new_object(void)
-{
-	if (max_objects == 0) {
-		max_objects = 100;
-		objects = mymalloc(max_objects * sizeof(Object *), M_OBJECT_TABLE);
-	}
-	if (num_objects >= max_objects) {
-		int             i;
-		Object        **new;
+Object *dbpriv_new_object_for_renum(void) {
+    Object *o;
 
-		new = mymalloc(max_objects * 2 * sizeof(Object *), M_OBJECT_TABLE);
-		for (i = 0; i < max_objects; i++)
-			new[i] = objects[i];
-		myfree(objects, M_OBJECT_TABLE);
-		objects = new;
-		max_objects *= 2;
-	}
+    ensure_new_object();
+    o = objects[num_objects] = mymalloc(sizeof(Object), M_OBJECT);
+    o->id = num_objects;
+    return o;
 }
 
-Object         *
-dbpriv_new_object(void)
-{
-	Object         *o;
-
-	ensure_new_object();
-	o = objects[num_objects] = mymalloc(sizeof(Object), M_OBJECT);
-	o->id = num_objects;
-	num_objects++;
-	return o;
+void dbpriv_new_recycled_object(void) {
+    ensure_new_object();
+    objects[num_objects++] = 0;
 }
 
-Object         *
-dbpriv_new_object_for_renum(void)
-{
-	Object         *o;
+Objid db_create_object(void) {
+    Object *o;
+    Objid oid;
 
-	ensure_new_object();
-	o = objects[num_objects] = mymalloc(sizeof(Object), M_OBJECT);
-	o->id = num_objects;
-	return o;
+    o = dbpriv_new_object();
+    oid = o->id;
+
+    o->name = str_dup("");
+    o->flags = 0;
+    o->parent = o->child = o->sibling = NOTHING;
+    o->location = o->contents = o->next = NOTHING;
+
+    o->propval = 0;
+
+    o->propdefs.max_length = 0;
+    o->propdefs.cur_length = 0;
+    o->propdefs.l = 0;
+
+    o->verbdefs = 0;
+
+    return oid;
 }
 
-void
-dbpriv_new_recycled_object(void)
-{
-	ensure_new_object();
-	objects[num_objects++] = 0;
+Objid db_create_object_and_renum(void) {
+    Object *o;
+    Objid oid;
+    Objid ooid;
+
+    o = dbpriv_new_object_for_renum();
+    oid = o->id;
+    ooid = oid;
+
+    o->name = str_dup("");
+    o->flags = 0;
+    o->parent = o->child = o->sibling = NOTHING;
+    o->location = o->contents = o->next = NOTHING;
+
+    o->propval = 0;
+
+    o->propdefs.max_length = 0;
+    o->propdefs.cur_length = 0;
+    o->propdefs.l = 0;
+
+    o->verbdefs = 0;
+
+    oid = db_renumber_object(oid);
+    if (oid == ooid) /* we couldn't renumber it */
+        num_objects++;
+    return oid;
 }
 
-Objid
-db_create_object(void)
-{
-	Object         *o;
-	Objid           oid;
+Objid db_create_object_with_num(Objid num) {
+    Object *o;
+    Objid oid;
 
-	o = dbpriv_new_object();
-	oid = o->id;
+    if (num > num_objects || num < 0) /* uh, no. */
+        return -1;
+    if (valid(num)) /* Objid is still in use */
+        return -1;
 
-	o->name = str_dup("");
-	o->flags = 0;
-	o->parent = o->child = o->sibling = NOTHING;
-	o->location = o->contents = o->next = NOTHING;
-
-	o->propval = 0;
-
-	o->propdefs.max_length = 0;
-	o->propdefs.cur_length = 0;
-	o->propdefs.l = 0;
-
-	o->verbdefs = 0;
-
-	return oid;
+    o = dbpriv_new_object_for_renum();
+    oid = o->id;
+    o->name = str_dup("");
+    o->flags = 0;
+    o->parent = o->child = o->sibling = NOTHING;
+    o->location = o->contents = o->next = NOTHING;
+    o->propval = 0;
+    o->propdefs.max_length = 0;
+    o->propdefs.cur_length = 0;
+    o->propdefs.l = 0;
+    o->verbdefs = 0;
+    db_set_object_number(oid, num);
+    return num;
 }
 
-Objid
-db_create_object_and_renum(void)
-{
-	Object         *o;
-	Objid           oid;
-	Objid           ooid;
+void db_destroy_object(Objid oid) {
+    Object *o = dbpriv_find_object(oid);
+    Verbdef *v, *w;
+    int i;
 
-	o = dbpriv_new_object_for_renum();
-	oid = o->id;
-	ooid = oid;
+    db_priv_affected_callable_verb_lookup();
 
-	o->name = str_dup("");
-	o->flags = 0;
-	o->parent = o->child = o->sibling = NOTHING;
-	o->location = o->contents = o->next = NOTHING;
+    if (!o)
+        server_panic("DB_DESTROY_OBJECT: Invalid object!");
 
-	o->propval = 0;
+    if (o->location != NOTHING || o->contents != NOTHING ||
+        o->parent != NOTHING || o->child != NOTHING)
+        server_panic("DB_DESTROY_OBJECT: Not a barren orphan!");
 
-	o->propdefs.max_length = 0;
-	o->propdefs.cur_length = 0;
-	o->propdefs.l = 0;
+    if (is_user(oid)) {
+        Var t;
 
-	o->verbdefs = 0;
+        t.type = TYPE_OBJ;
+        t.v.obj = oid;
+        all_users = setremove(all_users, t);
+    }
+    free_str(o->name);
 
-	oid = db_renumber_object(oid);
-	if (oid == ooid)	/* we couldn't renumber it */
-		num_objects++;
-	return oid;
+    for (i = 0; i < o->propdefs.cur_length; i++) {
+        /*
+         * As an orphan, the only properties on this object are the
+         * ones defined on it directly, so these two arrays must be
+         * the same length.
+         */
+        free_str(o->propdefs.l[i].name);
+        free_var(o->propval[i].var);
+    }
+    if (o->propval)
+        myfree(o->propval, M_PVAL);
+    if (o->propdefs.l)
+        myfree(o->propdefs.l, M_PROPDEF);
+
+    for (v = o->verbdefs; v; v = w) {
+        if (v->program)
+            free_program(v->program);
+        free_str(v->name);
+        w = v->next;
+        myfree(v, M_VERBDEF);
+    }
+
+    myfree(objects[oid], M_OBJECT);
+    objects[oid] = 0;
 }
 
-Objid
-db_create_object_with_num(Objid num)
-{
-	Object *o;
-	Objid oid;
+void db_set_object_number(Objid old, Objid new) {
+    Object *o;
 
-	if (num > num_objects || num < 0) /* uh, no. */
-		return -1;
-	if (valid(num)) /* Objid is still in use */
-		return -1;
+    db_priv_affected_callable_verb_lookup();
 
-	o = dbpriv_new_object_for_renum();
-	oid = o->id;
-	o->name = str_dup("");
-	o->flags = 0;
-	o->parent = o->child = o->sibling = NOTHING;
-	o->location = o->contents = o->next = NOTHING;
-	o->propval = 0;
-	o->propdefs.max_length = 0;
-	o->propdefs.cur_length = 0;
-	o->propdefs.l = 0;
-	o->verbdefs = 0;
-	db_set_object_number(oid,num);
-	return num;
+    /* make sure the requested objnum isn't used */
+    if (valid(new))
+        server_panic("Trying to re-use a valid object!");
+
+    /* Change the identity of the object */
+    o = objects[new] = objects[old];
+    objects[old] = 0;
+    objects[new]->id = new;
+
+    /* cleanup object hierarchy */
+    {
+        Objid oid, *oidp;
+
+        if (o->parent != NOTHING) {
+            oidp = &objects[o->parent]->child;
+            while (*oidp != old && *oidp != NOTHING)
+                oidp = &objects[*oidp]->sibling;
+            if (*oidp == NOTHING)
+                server_panic("Object not in parent's children list");
+            *oidp = new;
+        }
+        for (oid = o->child; oid != NOTHING; oid = objects[oid]->sibling)
+            objects[oid]->parent = new;
+    }
+
+    /* fix up location/contents */
+    {
+        Objid oid, *oidp;
+
+        if (o->location != NOTHING) {
+            oidp = &objects[o->location]->contents;
+            while (*oidp != old && *oidp != NOTHING)
+                oidp = &objects[*oidp]->next;
+            if (*oidp == NOTHING)
+                server_panic("Object not in location's contents list");
+            *oidp = new;
+        }
+        for (oid = o->contents; oid != NOTHING; oid = objects[oid]->next)
+            objects[oid]->location = new;
+    }
+
+    /* fix up users, if we need to */
+    if (is_user(new)) {
+        int i;
+
+        for (i = 1; i <= all_users.v.list[0].v.num; i++)
+            if (all_users.v.list[i].v.obj == old) {
+                all_users.v.list[i].v.obj = new;
+                break;
+            }
+    }
+
+    /* fix verb, property, and object ownership */
+    {
+        Objid oid;
+
+        for (oid = 0; oid < num_objects; oid++) {
+            Object *o = objects[oid];
+            Verbdef *v;
+            Pval *p;
+            int i, count;
+
+            if (!o)
+                continue;
+
+            if (o->owner == new)
+                o->owner = NOTHING;
+            else if (o->owner == old)
+                o->owner = new;
+
+            for (v = o->verbdefs; v; v = v->next)
+                if (v->owner == new)
+                    v->owner = NOTHING;
+                else if (v->owner == old)
+                    v->owner = new;
+
+            count = dbpriv_count_properties(oid);
+            p = o->propval;
+            for (i = 0; i < count; i++)
+                if (p[i].owner == new)
+                    p[i].owner = NOTHING;
+                else if (p[i].owner == old)
+                    p[i].owner = new;
+        }
+    }
 }
 
-void
-db_destroy_object(Objid oid)
-{
-	Object         *o = dbpriv_find_object(oid);
-	Verbdef        *v, *w;
-	int             i;
+Objid db_renumber_object(Objid old) {
+    Objid new;
 
-	db_priv_affected_callable_verb_lookup();
+    db_priv_affected_callable_verb_lookup();
 
-	if (!o)
-		server_panic("DB_DESTROY_OBJECT: Invalid object!");
-
-	if (o->location != NOTHING || o->contents != NOTHING
-	    || o->parent != NOTHING || o->child != NOTHING)
-		server_panic("DB_DESTROY_OBJECT: Not a barren orphan!");
-
-	if (is_user(oid)) {
-		Var             t;
-
-		t.type = TYPE_OBJ;
-		t.v.obj = oid;
-		all_users = setremove(all_users, t);
-	}
-	free_str(o->name);
-
-	for (i = 0; i < o->propdefs.cur_length; i++) {
-		/*
-		 * As an orphan, the only properties on this object are the
-		 * ones defined on it directly, so these two arrays must be
-		 * the same length.
-		 */
-		free_str(o->propdefs.l[i].name);
-		free_var(o->propval[i].var);
-	}
-	if (o->propval)
-		myfree(o->propval, M_PVAL);
-	if (o->propdefs.l)
-		myfree(o->propdefs.l, M_PROPDEF);
-
-	for (v = o->verbdefs; v; v = w) {
-		if (v->program)
-			free_program(v->program);
-		free_str(v->name);
-		w = v->next;
-		myfree(v, M_VERBDEF);
-	}
-
-	myfree(objects[oid], M_OBJECT);
-	objects[oid] = 0;
+    for (new = 0; new < old; new ++) {
+        if (objects[new] == 0) {
+            /* Change the identity of the object. */
+            db_set_object_number(old, new);
+            return new;
+        }
+    }
+    /* we couldn't find an unused oid */
+    return old;
 }
 
-void
-db_set_object_number(Objid old, Objid new)
-{
-	Object		*o;
+int db_object_bytes(Objid oid) {
+    Object *o = objects[oid];
+    int i, len, count;
+    Verbdef *v;
 
-	db_priv_affected_callable_verb_lookup();
+    count = sizeof(Object) + sizeof(Object *);
+    count += strlen(o->name) + 1;
 
-	/* make sure the requested objnum isn't used */
-	if (valid(new))
-		server_panic("Trying to re-use a valid object!");
+    for (v = o->verbdefs; v; v = v->next) {
+        count += sizeof(Verbdef);
+        count += strlen(v->name) + 1;
+        if (v->program)
+            count += program_bytes(v->program);
+    }
 
-	/* Change the identity of the object */
-	o = objects[new] = objects[old];
-	objects[old] = 0;
-	objects[new]->id = new;
+    count += sizeof(Propdef) * o->propdefs.cur_length;
+    for (i = 0; i < o->propdefs.cur_length; i++)
+        count += strlen(o->propdefs.l[i].name) + 1;
 
-	/* cleanup object hierarchy */
-	{
-		Objid	oid, *oidp;
+    len = dbpriv_count_properties(oid);
+    count += (sizeof(Pval) - sizeof(Var)) * len;
+    for (i = 0; i < len; i++)
+        count += value_bytes(o->propval[i].var);
 
-		if (o->parent != NOTHING) {
-			oidp = &objects[o->parent]->child;
-			while (*oidp != old && *oidp != NOTHING)
-				oidp = &objects[*oidp]->sibling;
-			if (*oidp == NOTHING)
-				server_panic("Object not in parent's children list");
-			*oidp = new;
-		}
-		for (oid = o->child;
-			oid != NOTHING;
-			oid = objects[oid]->sibling)
-			objects[oid]->parent = new;
-	}
-
-	/* fix up location/contents */
-	{
-		Objid	oid, *oidp;
-
-		if (o->location != NOTHING) {
-			oidp = &objects[o->location]->contents;
-			while (*oidp != old && *oidp != NOTHING)
-				oidp = &objects[*oidp]->next;
-			if (*oidp == NOTHING)
-				server_panic("Object not in location's contents list");
-			*oidp = new;
-		}
-		for (oid = o->contents;
-			oid != NOTHING;
-			oid = objects[oid]->next)
-			objects[oid]->location = new;
-	}
-
-	/* fix up users, if we need to */
-	if (is_user(new)) {
-		int	i;
-
-		for (i = 1; i <= all_users.v.list[0].v.num; i++)
-			if (all_users.v.list[i].v.obj == old) {
-				all_users.v.list[i].v.obj = new;
-				break;
-			}
-	}
-
-	/* fix verb, property, and object ownership */
-	{
-		Objid	oid;
-
-		for (oid = 0; oid < num_objects; oid++) {
-			Object	*o = objects[oid];
-			Verbdef	*v;
-			Pval	*p;
-			int	i, count;
-
-			if (!o)
-				continue;
-
-			if (o->owner == new)
-				o->owner = NOTHING;
-			else if (o->owner == old)
-				o->owner = new;
-
-			for (v = o->verbdefs; v; v = v->next)
-				if (v->owner == new)
-					v->owner = NOTHING;
-				else if (v->owner == old)
-					v->owner = new;
-
-			count = dbpriv_count_properties(oid);
-			p = o->propval;
-			for (i = 0; i < count; i++)
-				if (p[i].owner == new)
-					p[i].owner = NOTHING;
-				else if (p[i].owner == old)
-					p[i].owner = new;
-		}
-	}
-}
-
-Objid
-db_renumber_object(Objid old)
-{
-	Objid           new;
-
-	db_priv_affected_callable_verb_lookup();
-
-	for (new = 0; new < old; new++) {
-		if (objects[new] == 0) {
-			/* Change the identity of the object. */
-			db_set_object_number(old,new);
-			return new;
-		}
-	}
-	/* we couldn't find an unused oid */
-	return old;
-}
-
-int
-db_object_bytes(Objid oid)
-{
-	Object         *o = objects[oid];
-	int             i, len, count;
-	Verbdef        *v;
-
-	count = sizeof(Object) + sizeof(Object *);
-	count += strlen(o->name) + 1;
-
-	for (v = o->verbdefs; v; v = v->next) {
-		count += sizeof(Verbdef);
-		count += strlen(v->name) + 1;
-		if (v->program)
-			count += program_bytes(v->program);
-	}
-
-	count += sizeof(Propdef) * o->propdefs.cur_length;
-	for (i = 0; i < o->propdefs.cur_length; i++)
-		count += strlen(o->propdefs.l[i].name) + 1;
-
-	len = dbpriv_count_properties(oid);
-	count += (sizeof(Pval) - sizeof(Var)) * len;
-	for (i = 0; i < len; i++)
-		count += value_bytes(o->propval[i].var);
-
-	return count;
+    return count;
 }
 
 /*********** Object attributes ***********/
 
-Objid
-db_object_owner(Objid oid)
-{
-	return objects[oid]->owner;
+Objid db_object_owner(Objid oid) { return objects[oid]->owner; }
+
+void db_set_object_owner(Objid oid, Objid owner) {
+    objects[oid]->owner = owner;
 }
 
-void
-db_set_object_owner(Objid oid, Objid owner)
-{
-	objects[oid]->owner = owner;
+const char *db_object_name(Objid oid) { return objects[oid]->name; }
+
+void db_set_object_name(Objid oid, const char *name) {
+    Object *o = objects[oid];
+
+    if (o->name)
+        free_str(o->name);
+    o->name = name;
 }
 
-const char     *
-db_object_name(Objid oid)
-{
-	return objects[oid]->name;
+Objid db_object_parent(Objid oid) { return objects[oid]->parent; }
+
+int db_count_children(Objid oid) {
+    Objid c;
+    int i = 0;
+
+    for (c = objects[oid]->child; c != NOTHING; c = objects[c]->sibling)
+        i++;
+
+    return i;
 }
 
-void
-db_set_object_name(Objid oid, const char *name)
-{
-	Object         *o = objects[oid];
+int db_for_all_children(Objid oid, int (*func)(void *, Objid), void *data) {
+    Objid c;
 
-	if (o->name)
-		free_str(o->name);
-	o->name = name;
+    for (c = objects[oid]->child; c != NOTHING; c = objects[c]->sibling)
+        if (func(data, c))
+            return 1;
+
+    return 0;
 }
 
-Objid
-db_object_parent(Objid oid)
-{
-	return objects[oid]->parent;
+#define LL_REMOVE(where, listname, what, nextname)                             \
+    {                                                                          \
+        Objid lid;                                                             \
+        if (objects[where]->listname == what)                                  \
+            objects[where]->listname = objects[what]->nextname;                \
+        else {                                                                 \
+            for (lid = objects[where]->listname; lid != NOTHING;               \
+                 lid = objects[lid]->nextname) {                               \
+                if (objects[lid]->nextname == what) {                          \
+                    objects[lid]->nextname = objects[what]->nextname;          \
+                    break;                                                     \
+                }                                                              \
+            }                                                                  \
+        }                                                                      \
+        objects[what]->nextname = NOTHING;                                     \
+    }
+
+#define LL_APPEND(where, listname, what, nextname)                             \
+    {                                                                          \
+        Objid lid;                                                             \
+        if (objects[where]->listname == NOTHING) {                             \
+            objects[where]->listname = what;                                   \
+        } else {                                                               \
+            for (lid = objects[where]->listname;                               \
+                 objects[lid]->nextname != NOTHING;                            \
+                 lid = objects[lid]->nextname)                                 \
+                ;                                                              \
+            objects[lid]->nextname = what;                                     \
+        }                                                                      \
+        objects[what]->nextname = NOTHING;                                     \
+    }
+
+int db_change_parent(Objid oid, Objid parent) {
+    Objid old_parent;
+
+    if (!dbpriv_check_properties_for_chparent(oid, parent))
+        return 0;
+
+    if (objects[oid]->child == NOTHING && objects[oid]->verbdefs == NULL) {
+        /*
+         * Since this object has no children and no verbs, we know
+         * that it can't have had any part in affecting verb lookup,
+         * since we use first parent with verbs as a key in the verb
+         * lookup cache.
+         */
+        /*
+         * The "no kids" rule is necessary because potentially one of
+         * the kids could have verbs on it--and that kid could have
+         * cache entries for THIS object's parentage.
+         */
+        /* In any case, don't clear the cache. */
+        ;
+    } else {
+        db_priv_affected_callable_verb_lookup();
+    }
+
+    old_parent = objects[oid]->parent;
+
+    if (old_parent != NOTHING)
+        LL_REMOVE(old_parent, child, oid, sibling);
+
+    if (parent != NOTHING)
+        LL_APPEND(parent, child, oid, sibling);
+
+    objects[oid]->parent = parent;
+    dbpriv_fix_properties_after_chparent(oid, old_parent);
+
+    return 1;
 }
 
-int
-db_count_children(Objid oid)
-{
-	Objid           c;
-	int             i = 0;
+Objid db_object_location(Objid oid) { return objects[oid]->location; }
 
-	for (c = objects[oid]->child; c != NOTHING; c = objects[c]->sibling)
-		i++;
+int db_count_contents(Objid oid) {
+    Objid c;
+    int i = 0;
 
-	return i;
+    for (c = objects[oid]->contents; c != NOTHING; c = objects[c]->next)
+        i++;
+
+    return i;
 }
 
-int
-                db_for_all_children(Objid oid, int (*func) (void *, Objid), void *data) {
-	Objid           c;
+int db_for_all_contents(Objid oid, int (*func)(void *, Objid), void *data) {
+    Objid c;
 
-	for (c = objects[oid]->child; c != NOTHING; c = objects[c]->sibling)
-		if (func(data, c))
-			return 1;
+    for (c = objects[oid]->contents; c != NOTHING; c = objects[c]->next)
+        if (func(data, c))
+            return 1;
 
-	return 0;
+    return 0;
 }
 
-#define LL_REMOVE(where, listname, what, nextname) { \
-    Objid lid; \
-    if (objects[where]->listname == what) \
-	objects[where]->listname = objects[what]->nextname; \
-    else { \
-	for (lid = objects[where]->listname; lid != NOTHING; \
-	      lid = objects[lid]->nextname) { \
-	    if (objects[lid]->nextname == what) { \
-		objects[lid]->nextname = objects[what]->nextname; \
-		break; \
-	    } \
-	} \
-    } \
-    objects[what]->nextname = NOTHING; \
+void db_change_location(Objid oid, Objid location) {
+    Objid old_location = objects[oid]->location;
+
+    if (valid(old_location))
+        LL_REMOVE(old_location, contents, oid, next);
+
+    if (valid(location))
+        LL_APPEND(location, contents, oid, next);
+
+    objects[oid]->location = location;
 }
 
-#define LL_APPEND(where, listname, what, nextname) { \
-    Objid lid; \
-    if (objects[where]->listname == NOTHING) { \
-	objects[where]->listname = what; \
-    } else { \
-	for (lid = objects[where]->listname; \
-	     objects[lid]->nextname != NOTHING; \
-	     lid = objects[lid]->nextname) \
-	    ; \
-	objects[lid]->nextname = what; \
-    } \
-    objects[what]->nextname = NOTHING; \
+int db_object_has_flag(Objid oid, db_object_flag f) {
+    return (objects[oid]->flags & (1 << f)) != 0;
 }
 
-int
-db_change_parent(Objid oid, Objid parent)
-{
-	Objid           old_parent;
+void db_set_object_flag(Objid oid, db_object_flag f) {
+    objects[oid]->flags |= (1 << f);
+    if (f == FLAG_USER) {
+        Var v;
 
-	if (!dbpriv_check_properties_for_chparent(oid, parent))
-		return 0;
-
-	if (objects[oid]->child == NOTHING && objects[oid]->verbdefs == NULL) {
-		/*
-		 * Since this object has no children and no verbs, we know
-		 * that it can't have had any part in affecting verb lookup,
-		 * since we use first parent with verbs as a key in the verb
-		 * lookup cache.
-		 */
-		/*
-		 * The "no kids" rule is necessary because potentially one of
-		 * the kids could have verbs on it--and that kid could have
-		 * cache entries for THIS object's parentage.
-		 */
-		/* In any case, don't clear the cache. */
-		;
-	} else {
-		db_priv_affected_callable_verb_lookup();
-	}
-
-	old_parent = objects[oid]->parent;
-
-	if (old_parent != NOTHING)
-		LL_REMOVE(old_parent, child, oid, sibling);
-
-	if (parent != NOTHING)
-		LL_APPEND(parent, child, oid, sibling);
-
-	objects[oid]->parent = parent;
-	dbpriv_fix_properties_after_chparent(oid, old_parent);
-
-	return 1;
+        v.type = TYPE_OBJ;
+        v.v.obj = oid;
+        all_users = setadd(all_users, v);
+    }
 }
 
-Objid
-db_object_location(Objid oid)
-{
-	return objects[oid]->location;
+void db_clear_object_flag(Objid oid, db_object_flag f) {
+    objects[oid]->flags &= ~(1 << f);
+    if (f == FLAG_USER) {
+        Var v;
+
+        v.type = TYPE_OBJ;
+        v.v.obj = oid;
+        all_users = setremove(all_users, v);
+    }
 }
 
-int
-db_count_contents(Objid oid)
-{
-	Objid           c;
-	int             i = 0;
-
-	for (c = objects[oid]->contents; c != NOTHING; c = objects[c]->next)
-		i++;
-
-	return i;
+int db_object_allows(Objid oid, Objid progr, db_object_flag f) {
+    return (progr == db_object_owner(oid) || is_wizard(progr) ||
+            db_object_has_flag(oid, f));
 }
 
-int
-                db_for_all_contents(Objid oid, int (*func) (void *, Objid), void *data) {
-	Objid           c;
-
-	for (c = objects[oid]->contents; c != NOTHING; c = objects[c]->next)
-		if (func(data, c))
-			return 1;
-
-	return 0;
+int is_wizard(Objid oid) {
+    return valid(oid) && db_object_has_flag(oid, FLAG_WIZARD);
 }
 
-void
-db_change_location(Objid oid, Objid location)
-{
-	Objid           old_location = objects[oid]->location;
-
-	if (valid(old_location))
-		LL_REMOVE(old_location, contents, oid, next);
-
-	if (valid(location))
-		LL_APPEND(location, contents, oid, next);
-
-	objects[oid]->location = location;
+int is_programmer(Objid oid) {
+    return valid(oid) && db_object_has_flag(oid, FLAG_PROGRAMMER);
 }
 
-int
-db_object_has_flag(Objid oid, db_object_flag f)
-{
-	return (objects[oid]->flags & (1 << f)) != 0;
+int is_user(Objid oid) {
+    return valid(oid) && db_object_has_flag(oid, FLAG_USER);
 }
 
-void
-db_set_object_flag(Objid oid, db_object_flag f)
-{
-	objects[oid]->flags |= (1 << f);
-	if (f == FLAG_USER) {
-		Var             v;
+Var db_all_users(void) { return all_users; }
 
-		v.type = TYPE_OBJ;
-		v.v.obj = oid;
-		all_users = setadd(all_users, v);
-	}
-}
-
-void
-db_clear_object_flag(Objid oid, db_object_flag f)
-{
-	objects[oid]->flags &= ~(1 << f);
-	if (f == FLAG_USER) {
-		Var             v;
-
-		v.type = TYPE_OBJ;
-		v.v.obj = oid;
-		all_users = setremove(all_users, v);
-	}
-}
-
-int
-db_object_allows(Objid oid, Objid progr, db_object_flag f)
-{
-	return (progr == db_object_owner(oid)
-		|| is_wizard(progr)
-		|| db_object_has_flag(oid, f));
-}
-
-int
-is_wizard(Objid oid)
-{
-	return valid(oid) && db_object_has_flag(oid, FLAG_WIZARD);
-}
-
-int
-is_programmer(Objid oid)
-{
-	return valid(oid) && db_object_has_flag(oid, FLAG_PROGRAMMER);
-}
-
-int
-is_user(Objid oid)
-{
-	return valid(oid) && db_object_has_flag(oid, FLAG_USER);
-}
-
-Var
-db_all_users(void)
-{
-	return all_users;
-}
-
-void
-dbpriv_set_all_users(Var v)
-{
-	all_users = v;
-}
+void dbpriv_set_all_users(Var v) { all_users = v; }

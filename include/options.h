@@ -59,7 +59,7 @@
 
 #ifdef WRITEPIDFILE
 #define PIDFILE "MOO.pid"
-#endif				/* WRITEPIDFILE */
+#endif /* WRITEPIDFILE */
 
 /*
  * The server is prepared to keep a log of every command entered by players
@@ -139,27 +139,27 @@
  * updated.
  */
 
-#define DEFAULT_MAX_STACK_DEPTH	32
+#define DEFAULT_MAX_STACK_DEPTH 32
 
-#define DEFAULT_FG_TICKS	131072
-#define DEFAULT_BG_TICKS	65536
+#define DEFAULT_FG_TICKS 131072
+#define DEFAULT_BG_TICKS 65536
 
-#define DEFAULT_FG_SECONDS	8
-#define DEFAULT_BG_SECONDS	4
+#define DEFAULT_FG_SECONDS 8
+#define DEFAULT_BG_SECONDS 4
 
 /* the default mode for FUP to make directories */
 
-#define CREATE_NEW_DIR_MODE             0755
+#define CREATE_NEW_DIR_MODE 0755
 
 /*
  * FIO_SUBDIR defines the subdirectory to use for the File/IO code.
  * FUP_SUBDIR defines the subdirectory to use for the FUP code.
  */
 
-#define FIO_SUBDIR	"files-FIO/"
-#define	FUP_SUBDIR	"files-FUP/"
+#define FIO_SUBDIR "files-FIO/"
+#define FUP_SUBDIR "files-FUP/"
 
-#define DEFAULT_PORT 		4500
+#define DEFAULT_PORT 4500
 
 /*
  * Define OUTBOUND_NETWORK to enable the built-in MOO function
@@ -200,15 +200,15 @@
  *			   accepted by a given listener L.
  */
 
-#define MAX_QUEUED_OUTPUT	131072
-#define MAX_QUEUED_INPUT	MAX_QUEUED_OUTPUT
-#define DEFAULT_CONNECT_TIMEOUT	300
-
+#define MAX_QUEUED_OUTPUT 131072
+#define MAX_QUEUED_INPUT MAX_QUEUED_OUTPUT
+#define DEFAULT_CONNECT_TIMEOUT 300
 
 /*
  * The following constants define certain aspects of the server's network
  * listener points behavior when they are created. They can be modified on a
- * per port basis by using the options argument in the listen() built-in function.
+ * per port basis by using the options argument in the listen() built-in
+ * function.
  *
  * DEFAULT_LISTENER_PRINT_MESSAGES is a boolean. If it is true, then the various
  *        database-configurable messages (also detailed in the chapter on server
@@ -228,8 +228,7 @@
  */
 
 #define DEFAULT_LISTENER_PRINT_MESSAGES 1
-#define DEFAULT_LISTENER_NAME_LOOKUP  1
-
+#define DEFAULT_LISTENER_NAME_LOOKUP 1
 
 /*
  * The server maintains a cache of the most recently used patterns from calls
@@ -238,7 +237,7 @@
  * number less than 1.
  */
 
-#define PATTERN_CACHE_SIZE	20
+#define PATTERN_CACHE_SIZE 20
 
 /*
  * If you don't plan on using protecting built-in properties (like
@@ -281,7 +280,7 @@
 #undef BYTECODE_REDUCE_REF
 
 #ifdef BYTECODE_REDUCE_REF
- #error Think carefully before enabling BYTECODE_REDUCE_REF.  This feature is still beta.  Comment out this line if you are sure.
+#error Think carefully before enabling BYTECODE_REDUCE_REF.  This feature is still beta.  Comment out this line if you are sure.
 #endif
 
 /*
@@ -294,7 +293,7 @@
  * INTERN: lines in the log at startup.
  */
 
-#define STRING_INTERNING	/* */
+#define STRING_INTERNING /* */
 
 /*****************************************************************************
  ********** You shouldn't need to change anything below this point. **********
@@ -305,9 +304,9 @@
 #endif
 
 #if PATTERN_CACHE_SIZE < 1
- #error Illegal match() pattern cache size!
+#error Illegal match() pattern cache size!
 #endif
 
 #include "config.h"
 
-#endif				/* !Options_h */
+#endif /* !Options_h */

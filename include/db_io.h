@@ -57,17 +57,17 @@
 extern DB_Version dbio_input_version;
 /* What DB-format version are we reading? */
 
-extern void     dbio_read_line(char *s, int n);
+extern void dbio_read_line(char *s, int n);
 /*
  * Reads at most N-1 characters through the next newline into S, terminating
  * S with a null.  (Like the `fgets()' function.)
  */
 
-extern int      dbio_scanf(const char *format,...);
+extern int dbio_scanf(const char *format, ...);
 
-extern int      dbio_read_num(void);
-extern Objid    dbio_read_objid(void);
-extern double   dbio_read_float(void);
+extern int dbio_read_num(void);
+extern Objid dbio_read_objid(void);
+extern double dbio_read_float(void);
 
 extern const char *dbio_read_string(void);
 /*
@@ -81,22 +81,19 @@ extern const char *dbio_read_string_intern(void);
  * string intern table.
  */
 
-extern Var      dbio_read_var(void);
+extern Var dbio_read_var(void);
 /*
  * The DBIO module retains no references to the returned value, so freeing it
  * is entirely the responsibility of the caller.
  */
 
-extern Program *
-dbio_read_program(DB_Version version,
-		  const char *(*fmtr) (void *),
-		  void *data);
+extern Program *dbio_read_program(DB_Version version,
+                                  const char *(*fmtr)(void *), void *data);
 /*
  * FMTR is called with DATA to produce a human- understandable identifier for
  * the program being read, for use in any error/warning messages.  If FMTR is
  * null, then DATA should be the required string.
  */
-
 
 /*********** Output ***********/
 
@@ -110,18 +107,18 @@ dbio_read_program(DB_Version version,
  * such an event.
  */
 
-	extern void     dbio_printf(const char *format,...);
+extern void dbio_printf(const char *format, ...);
 
-	extern void     dbio_write_num(int);
-	extern void     dbio_write_objid(Objid);
-	extern void     dbio_write_float(double);
+extern void dbio_write_num(int);
+extern void dbio_write_objid(Objid);
+extern void dbio_write_float(double);
 
-	extern void     dbio_write_string(const char *);
+extern void dbio_write_string(const char *);
 /*
  * The given string should not contain any newline characters.
  */
 
-	extern void     dbio_write_var(Var);
+extern void dbio_write_var(Var);
 
-	extern void     dbio_write_program(Program *);
-	extern void     dbio_write_forked_program(Program * prog, int f_index);
+extern void dbio_write_program(Program *);
+extern void dbio_write_forked_program(Program *prog, int f_index);

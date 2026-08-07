@@ -56,53 +56,52 @@
 typedef struct Verbdef Verbdef;
 
 struct Verbdef {
-	const char     *name;
-	Program        *program;
-	Objid           owner;
-	short           perms;
-	short           prep;
-	Verbdef        *next;
+    const char *name;
+    Program *program;
+    Objid owner;
+    short perms;
+    short prep;
+    Verbdef *next;
 };
 
 typedef struct Proplist Proplist;
 typedef struct Propdef Propdef;
 
 struct Propdef {
-	const char     *name;
-	int             hash;
+    const char *name;
+    int hash;
 };
 
 struct Proplist {
-	int             max_length;
-	int             cur_length;
-	Propdef        *l;
+    int max_length;
+    int cur_length;
+    Propdef *l;
 };
 
 typedef struct Pval {
-	Var             var;
-	Objid           owner;
-	short           perms;
-}               Pval;
+    Var var;
+    Objid owner;
+    short perms;
+} Pval;
 
 typedef struct Object {
-	Objid           id;
-	Objid           owner;
-	Objid           location;
-	Objid           contents;
-	Objid           next;
+    Objid id;
+    Objid owner;
+    Objid location;
+    Objid contents;
+    Objid next;
 
-	Objid           parent;
-	Objid           child;
-	Objid           sibling;
+    Objid parent;
+    Objid child;
+    Objid sibling;
 
+    const char *name;
+    int flags;
 
-	const char     *name;
-	int             flags;
-
-	Verbdef        *verbdefs;
-	Proplist        propdefs;
-	Pval           *propval;
-}               Object;
+    Verbdef *verbdefs;
+    Proplist propdefs;
+    Pval *propval;
+} Object;
 
 /*********** Verb cache support ***********/
 
@@ -121,53 +120,49 @@ typedef struct Object {
 extern unsigned int db_verb_generation;
 #endif
 
-extern void     db_priv_affected_callable_verb_lookup(void);
+extern void db_priv_affected_callable_verb_lookup(void);
 
-#else				/* no cache */
+#else /* no cache */
 #define db_priv_affected_callable_verb_lookup()
 #endif
 
 /*********** Objects ***********/
 
-extern void     dbpriv_set_all_users(Var);
+extern void dbpriv_set_all_users(Var);
 /*
  * Initialize the list returned by db_all_users().
  */
 
-extern Object  *dbpriv_new_object(void);
+extern Object *dbpriv_new_object(void);
 /*
  * Creates a new object, assigning it a number, but doesn't fill in any of
  * the fields other than `id'.
  */
 
-extern void     dbpriv_new_recycled_object(void);
+extern void dbpriv_new_recycled_object(void);
 /*
  * Does the equivalent of creating and destroying an object, with the net
  * effect of using up the next available object number.
  */
 
-extern Object  *dbpriv_find_object(Objid);
+extern Object *dbpriv_find_object(Objid);
 /*
  * Returns 0 if given object is not valid.
  */
 
 /*********** Properties ***********/
 
-extern Propdef  dbpriv_new_propdef(const char *name);
+extern Propdef dbpriv_new_propdef(const char *name);
 
-extern int      dbpriv_count_properties(Objid);
+extern int dbpriv_count_properties(Objid);
 
-extern int 
-dbpriv_check_properties_for_chparent(Objid oid,
-				     Objid new_parent);
+extern int dbpriv_check_properties_for_chparent(Objid oid, Objid new_parent);
 /*
  * Return true iff NEW_PARENT defines no properties that are also defined by
  * either OID or any of OID's descendants.
  */
 
-extern void 
-dbpriv_fix_properties_after_chparent(Objid oid,
-				     Objid old_parent);
+extern void dbpriv_fix_properties_after_chparent(Objid oid, Objid old_parent);
 /*
  * OID has just had its parent changed away from OLD_PARENT.  Fix up the
  * properties of OID and its descendants, removing obsolete ones and adding
@@ -176,7 +171,7 @@ dbpriv_fix_properties_after_chparent(Objid oid,
 
 /*********** Verbs ***********/
 
-extern void     dbpriv_build_prep_table(void);
+extern void dbpriv_build_prep_table(void);
 /*
  * Should be called once near the beginning of the world, to initialize the
  * prepositional-phrase matching table.
@@ -190,5 +185,5 @@ extern Exception dbpriv_dbio_failed;
  * dump).
  */
 
-extern void     dbpriv_set_dbio_input(FILE *);
-extern void     dbpriv_set_dbio_output(FILE *);
+extern void dbpriv_set_dbio_input(FILE *);
+extern void dbpriv_set_dbio_output(FILE *);

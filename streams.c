@@ -46,214 +46,191 @@
 
 #include <float.h>
 #include <stdarg.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "config.h"
 #include "log.h"
 #include "storage.h"
 #include "streams.h"
 
-Stream         *
-new_stream(int size)
-{
-	Stream         *s = mymalloc(sizeof(Stream), M_STREAM);
+Stream *new_stream(int size) {
+    Stream *s = mymalloc(sizeof(Stream), M_STREAM);
 
-	s->buffer = mymalloc(size, M_STREAM);
-	s->buflen = size;
-	s->current = 0;
+    s->buffer = mymalloc(size, M_STREAM);
+    s->buflen = size;
+    s->current = 0;
 
-	return s;
+    return s;
 }
 
-static void
-grow(Stream * s, int newlen)
-{
-	char           *newbuf;
+static void grow(Stream *s, int newlen) {
+    char *newbuf;
 
-	newbuf = mymalloc(newlen, M_STREAM);
-	memcpy(newbuf, s->buffer, s->current);
-	myfree(s->buffer, M_STREAM);
-	s->buffer = newbuf;
-	s->buflen = newlen;
+    newbuf = mymalloc(newlen, M_STREAM);
+    memcpy(newbuf, s->buffer, s->current);
+    myfree(s->buffer, M_STREAM);
+    s->buffer = newbuf;
+    s->buflen = newlen;
 }
 
-void
-stream_add_char(Stream * s, char c)
-{
-	if (s->current + 1 >= s->buflen)
-		grow(s, s->buflen * 2);
+void stream_add_char(Stream *s, char c) {
+    if (s->current + 1 >= s->buflen)
+        grow(s, s->buflen * 2);
 
-	s->buffer[s->current++] = c;
+    s->buffer[s->current++] = c;
 }
 
-void
-stream_add_string(Stream * s, const char *string)
-{
-	int             len = strlen(string);
+void stream_add_string(Stream *s, const char *string) {
+    int len = strlen(string);
 
-	if (s->current + len >= s->buflen) {
-		int             newlen = s->buflen * 2;
+    if (s->current + len >= s->buflen) {
+        int newlen = s->buflen * 2;
 
-		if (newlen <= s->current + len)
-			newlen = s->current + len + 1;
-		grow(s, newlen);
-	}
-	strcpy(s->buffer + s->current, string);
-	s->current += len;
+        if (newlen <= s->current + len)
+            newlen = s->current + len + 1;
+        grow(s, newlen);
+    }
+    strcpy(s->buffer + s->current, string);
+    s->current += len;
 }
 
-static const char *
-itoa(int n, int radix)
-{
-	if (n == 0)		/* zero produces "" below. */
-		return "0";
-	else if (n == -2147483647 - 1)	/* min. integer won't work below. */
-		switch (radix) {
-		case 16:
-			return "-7FFFFFFF";
-		case 10:
-			return "-2147483648";
-		case 8:
-			return "-17777777777";
-		default:
-			errlog("STREAM_PRINTF: Illegal radix %d!\n", radix);
-			return "0";
-	} else {
-		static char     buffer[20];
-		char           *ptr = buffer + 19;
-		int             neg = 0;
+static const char *itoa(int n, int radix) {
+    if (n == 0) /* zero produces "" below. */
+        return "0";
+    else if (n == -2147483647 - 1) /* min. integer won't work below. */
+        switch (radix) {
+        case 16:
+            return "-7FFFFFFF";
+        case 10:
+            return "-2147483648";
+        case 8:
+            return "-17777777777";
+        default:
+            errlog("STREAM_PRINTF: Illegal radix %d!\n", radix);
+            return "0";
+        }
+    else {
+        static char buffer[20];
+        char *ptr = buffer + 19;
+        int neg = 0;
 
-		if (n < 0) {
-			neg = 1;
-			n = -n;
-		}
-		*(ptr) = '\0';
-		while (n != 0) {
-			int             digit = n % radix;
-			*(--ptr) = (digit < 10 ? '0' + digit : 'A' + digit - 10);
-			n /= radix;
-		}
-		if (neg)
-			*(--ptr) = '-';
-		return ptr;
-	}
+        if (n < 0) {
+            neg = 1;
+            n = -n;
+        }
+        *(ptr) = '\0';
+        while (n != 0) {
+            int digit = n % radix;
+            *(--ptr) = (digit < 10 ? '0' + digit : 'A' + digit - 10);
+            n /= radix;
+        }
+        if (neg)
+            *(--ptr) = '-';
+        return ptr;
+    }
 }
 
-static const char *
-dbl_fmt(void)
-{
-	static const char *fmt = 0;
-	static char     buffer[10];
+static const char *dbl_fmt(void) {
+    static const char *fmt = 0;
+    static char buffer[10];
 
-	if (!fmt) {
-		sprintf(buffer, "%%.%dg", DBL_DIG);
-		fmt = buffer;
-	}
-	return fmt;
+    if (!fmt) {
+        sprintf(buffer, "%%.%dg", DBL_DIG);
+        fmt = buffer;
+    }
+    return fmt;
 }
 
-void
-stream_printf(Stream * s, const char *fmt,...)
-{
-	char            buffer[40];
-	va_list         args;
+void stream_printf(Stream *s, const char *fmt, ...) {
+    char buffer[40];
+    va_list args;
 
-	va_start(args, fmt);
-	while (*fmt) {
-		char            c = *fmt;
+    va_start(args, fmt);
+    while (*fmt) {
+        char c = *fmt;
 
-		if (c == '%') {
-			char            pad = ' ';
-			int             width = 0, base;
-			const char     *string = "";	/* initialized to
-							 * silence warning */
+        if (c == '%') {
+            char pad = ' ';
+            int width = 0, base;
+            const char *string = ""; /* initialized to
+                                      * silence warning */
 
-			while ((c = *(++fmt)) != '\0') {
-				switch (c) {
-				case 's':
-					string = va_arg(args, char *);
-					break;
-				case 'x':
-					base = 16;
-					goto finish_number;
-				case 'o':
-					base = 8;
-					goto finish_number;
-				case 'd':
-					base = 10;
-			finish_number:
-					string = itoa(va_arg(args, int), base);
-					break;
-				case 'g':
-					sprintf(buffer, dbl_fmt(), va_arg(args, double));
-					if (!strchr(buffer, '.') && !strchr(buffer, 'e'))
-						strcat(buffer, ".0");	/* make it look floating */
-					string = buffer;
-					break;
-				case '0':
-					if (width == 0) {
-						pad = '0';
-						continue;
-					}
-					[[fallthrough]];
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-				case '8':
-				case '9':
-					width = width * 10 + c - '0';
-					continue;
-				default:
-					errlog("STREAM_PRINTF: Unknown format directive: %%%c\n",
-					       c);
-					goto abort;
-				}
-				break;
-			}
+            while ((c = *(++fmt)) != '\0') {
+                switch (c) {
+                case 's':
+                    string = va_arg(args, char *);
+                    break;
+                case 'x':
+                    base = 16;
+                    goto finish_number;
+                case 'o':
+                    base = 8;
+                    goto finish_number;
+                case 'd':
+                    base = 10;
+                finish_number:
+                    string = itoa(va_arg(args, int), base);
+                    break;
+                case 'g':
+                    sprintf(buffer, dbl_fmt(), va_arg(args, double));
+                    if (!strchr(buffer, '.') && !strchr(buffer, 'e'))
+                        strcat(buffer, ".0"); /* make it look floating */
+                    string = buffer;
+                    break;
+                case '0':
+                    if (width == 0) {
+                        pad = '0';
+                        continue;
+                    }
+                    [[fallthrough]];
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                    width = width * 10 + c - '0';
+                    continue;
+                default:
+                    errlog("STREAM_PRINTF: Unknown format directive: %%%c\n",
+                           c);
+                    goto abort;
+                }
+                break;
+            }
 
-			if (width && (width -= strlen(string)) > 0)
-				while (width--)
-					stream_add_char(s, pad);
-			stream_add_string(s, string);
-		} else
-			stream_add_char(s, *fmt);
+            if (width && (width -= strlen(string)) > 0)
+                while (width--)
+                    stream_add_char(s, pad);
+            stream_add_string(s, string);
+        } else
+            stream_add_char(s, *fmt);
 
-		fmt++;
-	}
+        fmt++;
+    }
 
 abort:
-	va_end(args);
+    va_end(args);
 }
 
-void
-free_stream(Stream * s)
-{
-	myfree(s->buffer, M_STREAM);
-	myfree(s, M_STREAM);
+void free_stream(Stream *s) {
+    myfree(s->buffer, M_STREAM);
+    myfree(s, M_STREAM);
 }
 
-char           *
-reset_stream(Stream * s)
-{
-	s->buffer[s->current] = '\0';
-	s->current = 0;
-	return s->buffer;
+char *reset_stream(Stream *s) {
+    s->buffer[s->current] = '\0';
+    s->current = 0;
+    return s->buffer;
 }
 
-char           *
-stream_contents(Stream * s)
-{
-	s->buffer[s->current] = '\0';
-	return s->buffer;
+char *stream_contents(Stream *s) {
+    s->buffer[s->current] = '\0';
+    return s->buffer;
 }
 
-int
-stream_length(Stream * s)
-{
-	return s->current;
-}
+int stream_length(Stream *s) { return s->current; }

@@ -47,20 +47,20 @@
 #ifndef Structures_h
 #define Structures_h 1
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "config.h"
 
-typedef int32_t   Objid;
+typedef int32_t Objid;
 
 /*
  * Special Objid's
  */
-#define SYSTEM_OBJECT	0
-#define NOTHING		-1
-#define AMBIGUOUS	-2
-#define FAILED_MATCH	-3
+#define SYSTEM_OBJECT 0
+#define NOTHING -1
+#define AMBIGUOUS -2
+#define FAILED_MATCH -3
 
 /*
  * Do not reorder or otherwise modify this list, except to add new elements
@@ -69,8 +69,22 @@ typedef int32_t   Objid;
  * stored in raw form in the DB.
  */
 enum error {
-	E_NONE, E_TYPE, E_DIV, E_PERM, E_PROPNF, E_VERBNF, E_VARNF, E_INVIND,
-	E_RECMOVE, E_MAXREC, E_RANGE, E_ARGS, E_NACC, E_INVARG, E_QUOTA, E_FLOAT
+    E_NONE,
+    E_TYPE,
+    E_DIV,
+    E_PERM,
+    E_PROPNF,
+    E_VERBNF,
+    E_VARNF,
+    E_INVIND,
+    E_RECMOVE,
+    E_MAXREC,
+    E_RANGE,
+    E_ARGS,
+    E_NACC,
+    E_INVARG,
+    E_QUOTA,
+    E_FLOAT
 };
 
 /*
@@ -80,13 +94,17 @@ enum error {
  * stored in raw form in the DB.
  */
 typedef enum {
-	TYPE_INT, TYPE_OBJ, _TYPE_STR, TYPE_ERR, _TYPE_LIST,	/* user-visible */
-	TYPE_CLEAR,		/* in clear properties' value slot */
-	TYPE_NONE,		/* in uninitialized MOO variables */
-	TYPE_CATCH,		/* on-stack marker for an exception handler */
-	TYPE_FINALLY,		/* on-stack marker for a TRY-FINALLY clause */
-	_TYPE_FLOAT		/* floating-point number; user-visible */
-}               var_type;
+    TYPE_INT,
+    TYPE_OBJ,
+    _TYPE_STR,
+    TYPE_ERR,
+    _TYPE_LIST,   /* user-visible */
+    TYPE_CLEAR,   /* in clear properties' value slot */
+    TYPE_NONE,    /* in uninitialized MOO variables */
+    TYPE_CATCH,   /* on-stack marker for an exception handler */
+    TYPE_FINALLY, /* on-stack marker for a TRY-FINALLY clause */
+    _TYPE_FLOAT   /* floating-point number; user-visible */
+} var_type;
 
 /*
  * Types which have external data should be marked with the TYPE_COMPLEX_FLAG
@@ -96,30 +114,32 @@ typedef enum {
  * be extremely cheap (both in space and time) for simple types like oids and
  * ints.
  */
-#define TYPE_DB_MASK		0x7f
-#define TYPE_COMPLEX_FLAG	0x80
+#define TYPE_DB_MASK 0x7f
+#define TYPE_COMPLEX_FLAG 0x80
 
-#define TYPE_STR		(_TYPE_STR | TYPE_COMPLEX_FLAG)
-#define TYPE_FLOAT		(_TYPE_FLOAT | TYPE_COMPLEX_FLAG)
-#define TYPE_LIST		(_TYPE_LIST | TYPE_COMPLEX_FLAG)
+#define TYPE_STR (_TYPE_STR | TYPE_COMPLEX_FLAG)
+#define TYPE_FLOAT (_TYPE_FLOAT | TYPE_COMPLEX_FLAG)
+#define TYPE_LIST (_TYPE_LIST | TYPE_COMPLEX_FLAG)
 
-#define TYPE_ANY ((var_type) -1)/* wildcard for use in declaring built-ins */
-#define TYPE_NUMERIC ((var_type) -2)	/* wildcard for (integer or float) */
+#define TYPE_ANY                                                               \
+    ((var_type) - 1) /* wildcard for use in declaring built-ins                \
+                      */
+#define TYPE_NUMERIC ((var_type) - 2) /* wildcard for (integer or float) */
 
 typedef struct Var Var;
 
 struct Var {
-	union {
-		const char     *str;	/* STR */
-		int32_t           num;	/* NUM, CATCH, FINALLY */
-		Objid           obj;	/* OBJ */
-		enum error      err;	/* ERR */
-		Var            *list;	/* LIST */
-		double         *fnum;	/* FLOAT */
-	}               v;
-	var_type        type;
+    union {
+        const char *str; /* STR */
+        int32_t num;     /* NUM, CATCH, FINALLY */
+        Objid obj;       /* OBJ */
+        enum error err;  /* ERR */
+        Var *list;       /* LIST */
+        double *fnum;    /* FLOAT */
+    } v;
+    var_type type;
 };
 
-extern Var      zero;		/* useful constant */
+extern Var zero; /* useful constant */
 
-#endif				/* !Structures_h */
+#endif /* !Structures_h */

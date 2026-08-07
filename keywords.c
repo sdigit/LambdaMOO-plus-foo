@@ -1,35 +1,35 @@
 /* ANSI-C code produced by gperf version 3.2.1 */
 /* Command-line: gperf -aCIptT -k'1,3,$' keywords.gperf  */
 
-#if !((' ' == 32) && ('!' == 33) && ('"' == 34) && ('#' == 35) \
-      && ('%' == 37) && ('&' == 38) && ('\'' == 39) && ('(' == 40) \
-      && (')' == 41) && ('*' == 42) && ('+' == 43) && (',' == 44) \
-      && ('-' == 45) && ('.' == 46) && ('/' == 47) && ('0' == 48) \
-      && ('1' == 49) && ('2' == 50) && ('3' == 51) && ('4' == 52) \
-      && ('5' == 53) && ('6' == 54) && ('7' == 55) && ('8' == 56) \
-      && ('9' == 57) && (':' == 58) && (';' == 59) && ('<' == 60) \
-      && ('=' == 61) && ('>' == 62) && ('?' == 63) && ('A' == 65) \
-      && ('B' == 66) && ('C' == 67) && ('D' == 68) && ('E' == 69) \
-      && ('F' == 70) && ('G' == 71) && ('H' == 72) && ('I' == 73) \
-      && ('J' == 74) && ('K' == 75) && ('L' == 76) && ('M' == 77) \
-      && ('N' == 78) && ('O' == 79) && ('P' == 80) && ('Q' == 81) \
-      && ('R' == 82) && ('S' == 83) && ('T' == 84) && ('U' == 85) \
-      && ('V' == 86) && ('W' == 87) && ('X' == 88) && ('Y' == 89) \
-      && ('Z' == 90) && ('[' == 91) && ('\\' == 92) && (']' == 93) \
-      && ('^' == 94) && ('_' == 95) && ('a' == 97) && ('b' == 98) \
-      && ('c' == 99) && ('d' == 100) && ('e' == 101) && ('f' == 102) \
-      && ('g' == 103) && ('h' == 104) && ('i' == 105) && ('j' == 106) \
-      && ('k' == 107) && ('l' == 108) && ('m' == 109) && ('n' == 110) \
-      && ('o' == 111) && ('p' == 112) && ('q' == 113) && ('r' == 114) \
-      && ('s' == 115) && ('t' == 116) && ('u' == 117) && ('v' == 118) \
-      && ('w' == 119) && ('x' == 120) && ('y' == 121) && ('z' == 122) \
-      && ('{' == 123) && ('|' == 124) && ('}' == 125) && ('~' == 126))
+#if !(                                                                         \
+    (' ' == 32) && ('!' == 33) && ('"' == 34) && ('#' == 35) && ('%' == 37) && \
+    ('&' == 38) && ('\'' == 39) && ('(' == 40) && (')' == 41) &&               \
+    ('*' == 42) && ('+' == 43) && (',' == 44) && ('-' == 45) && ('.' == 46) && \
+    ('/' == 47) && ('0' == 48) && ('1' == 49) && ('2' == 50) && ('3' == 51) && \
+    ('4' == 52) && ('5' == 53) && ('6' == 54) && ('7' == 55) && ('8' == 56) && \
+    ('9' == 57) && (':' == 58) && (';' == 59) && ('<' == 60) && ('=' == 61) && \
+    ('>' == 62) && ('?' == 63) && ('A' == 65) && ('B' == 66) && ('C' == 67) && \
+    ('D' == 68) && ('E' == 69) && ('F' == 70) && ('G' == 71) && ('H' == 72) && \
+    ('I' == 73) && ('J' == 74) && ('K' == 75) && ('L' == 76) && ('M' == 77) && \
+    ('N' == 78) && ('O' == 79) && ('P' == 80) && ('Q' == 81) && ('R' == 82) && \
+    ('S' == 83) && ('T' == 84) && ('U' == 85) && ('V' == 86) && ('W' == 87) && \
+    ('X' == 88) && ('Y' == 89) && ('Z' == 90) && ('[' == 91) &&                \
+    ('\\' == 92) && (']' == 93) && ('^' == 94) && ('_' == 95) &&               \
+    ('a' == 97) && ('b' == 98) && ('c' == 99) && ('d' == 100) &&               \
+    ('e' == 101) && ('f' == 102) && ('g' == 103) && ('h' == 104) &&            \
+    ('i' == 105) && ('j' == 106) && ('k' == 107) && ('l' == 108) &&            \
+    ('m' == 109) && ('n' == 110) && ('o' == 111) && ('p' == 112) &&            \
+    ('q' == 113) && ('r' == 114) && ('s' == 115) && ('t' == 116) &&            \
+    ('u' == 117) && ('v' == 118) && ('w' == 119) && ('x' == 120) &&            \
+    ('y' == 121) && ('z' == 122) && ('{' == 123) && ('|' == 124) &&            \
+    ('}' == 125) && ('~' == 126))
 /* The character set is not based on ISO-646.  */
-#error "gperf generated tables don't work with this execution character set. Please report a bug to <bug-gperf@gnu.org>."
+#error                                                                         \
+    "gperf generated tables don't work with this execution character set. Please report a bug to <bug-gperf@gnu.org>."
 #endif
 
 #line 1 "keywords.gperf"
-	/* -*- C -*- */
+/* -*- C -*- */
 
 /******************************************************************************
   Copyright (c) 1992, 1995, 1996 Xerox Corporation.  All rights reserved.
@@ -71,172 +71,163 @@ __inline
 inline
 #endif
 #endif
-static unsigned int
-hash (register const char *str, register size_t len)
-{
-  static const unsigned char asso_values[] =
-    {
-      52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
-      52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
-      52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
-      52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
-      52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
-      52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
-      52, 52, 52, 52, 52, 10, 52, 10,  5,  0,
-       0, 10, 52, 30, 52, 52, 52, 20, 30, 52,
-      15, 25, 30, 35, 25, 52,  5, 52, 52, 10,
-      52, 52, 52, 52, 52, 52, 52, 52,  5, 15,
-       0,  0,  0, 52, 52, 20, 52,  0, 52, 52,
-       5, 52, 52, 52,  0, 15,  5, 52, 52,  0,
-      52,  5, 52, 52, 52, 52, 52, 52, 52, 52,
-      52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
-      52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
-      52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
-      52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
-      52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
-      52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
-      52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
-      52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
-      52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
-      52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
-      52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
-      52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
-      52, 52, 52, 52, 52, 52
-    };
-  register unsigned int hval = len;
+    static unsigned int hash(register const char *str, register size_t len) {
+    static const unsigned char asso_values[] = {
+        52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
+        52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
+        52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
+        52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 10, 52, 10, 5,  0,  0,  10,
+        52, 30, 52, 52, 52, 20, 30, 52, 15, 25, 30, 35, 25, 52, 5,  52, 52, 10,
+        52, 52, 52, 52, 52, 52, 52, 52, 5,  15, 0,  0,  0,  52, 52, 20, 52, 0,
+        52, 52, 5,  52, 52, 52, 0,  15, 5,  52, 52, 0,  52, 5,  52, 52, 52, 52,
+        52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
+        52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
+        52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
+        52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
+        52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
+        52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
+        52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52,
+        52, 52, 52, 52};
+    register unsigned int hval = len;
 
-  switch (hval)
-    {
-      default:
+    switch (hval) {
+    default:
         hval += asso_values[(unsigned char)str[2]];
-#if (defined __cplusplus && (__cplusplus >= 201703L || (__cplusplus >= 201103L && defined __clang__ && __clang_major__ + (__clang_minor__ >= 9) > 3))) || (defined __STDC_VERSION__ && __STDC_VERSION__ >= 202000L && ((defined __GNUC__ && __GNUC__ >= 10) || (defined __clang__ && __clang_major__ >= 9)))
-      [[fallthrough]];
-#elif (defined __GNUC__ && __GNUC__ >= 7) || (defined __clang__ && __clang_major__ >= 10)
-      __attribute__ ((__fallthrough__));
+#if (defined __cplusplus &&                                                    \
+     (__cplusplus >= 201703L ||                                                \
+      (__cplusplus >= 201103L && defined __clang__ &&                          \
+       __clang_major__ + (__clang_minor__ >= 9) > 3))) ||                      \
+    (defined __STDC_VERSION__ && __STDC_VERSION__ >= 202000L &&                \
+     ((defined __GNUC__ && __GNUC__ >= 10) ||                                  \
+      (defined __clang__ && __clang_major__ >= 9)))
+        [[fallthrough]];
+#elif (defined __GNUC__ && __GNUC__ >= 7) ||                                   \
+    (defined __clang__ && __clang_major__ >= 10)
+        __attribute__((__fallthrough__));
 #endif
-      /*FALLTHROUGH*/
-      case 2:
-      case 1:
+    /*FALLTHROUGH*/
+    case 2:
+    case 1:
         hval += asso_values[(unsigned char)str[0]];
         break;
     }
-  return hval + asso_values[(unsigned char)str[len - 1]];
+    return hval + asso_values[(unsigned char)str[len - 1]];
 }
 
-const struct keyword *
-in_word_set (register const char *str, register size_t len)
-{
-#if (defined __GNUC__ && __GNUC__ + (__GNUC_MINOR__ >= 6) > 4) || (defined __clang__ && __clang_major__ >= 3)
+const struct keyword *in_word_set(register const char *str,
+                                  register size_t len) {
+#if (defined __GNUC__ && __GNUC__ + (__GNUC_MINOR__ >= 6) > 4) ||              \
+    (defined __clang__ && __clang_major__ >= 3)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #endif
-  static const struct keyword wordlist[] =
-    {
-      {""}, {""}, {""},
+    static const struct keyword wordlist[] = {
+        {""},
+        {""},
+        {""},
 #line 34 "keywords.gperf"
-      {"for",		DBV_Prehistory, tFOR},
+        {"for", DBV_Prehistory, tFOR},
 #line 37 "keywords.gperf"
-      {"fork",		DBV_Prehistory, tFORK},
+        {"fork", DBV_Prehistory, tFORK},
 #line 33 "keywords.gperf"
-      {"endif",		DBV_Prehistory, tENDIF},
+        {"endif", DBV_Prehistory, tENDIF},
 #line 36 "keywords.gperf"
-      {"endfor",		DBV_Prehistory, tENDFOR},
+        {"endfor", DBV_Prehistory, tENDFOR},
 #line 38 "keywords.gperf"
-      {"endfork",	DBV_Prehistory, tENDFORK},
+        {"endfork", DBV_Prehistory, tENDFORK},
 #line 41 "keywords.gperf"
-      {"endwhile",	DBV_Prehistory, tENDWHILE},
-      {""},
+        {"endwhile", DBV_Prehistory, tENDWHILE},
+        {""},
 #line 47 "keywords.gperf"
-      {"break",		DBV_BreakCont, tBREAK},
+        {"break", DBV_BreakCont, tBREAK},
 #line 45 "keywords.gperf"
-      {"endtry",		DBV_Exceptions, tENDTRY},
+        {"endtry", DBV_Exceptions, tENDTRY},
 #line 55 "keywords.gperf"
-      {"E_VARNF",	DBV_Prehistory, tERROR,	E_VARNF},
+        {"E_VARNF", DBV_Prehistory, tERROR, E_VARNF},
 #line 54 "keywords.gperf"
-      {"E_VERBNF",	DBV_Prehistory, tERROR,	E_VERBNF},
-      {""},
+        {"E_VERBNF", DBV_Prehistory, tERROR, E_VERBNF},
+        {""},
 #line 51 "keywords.gperf"
-      {"E_DIV",		DBV_Prehistory, tERROR,	E_DIV},
+        {"E_DIV", DBV_Prehistory, tERROR, E_DIV},
 #line 39 "keywords.gperf"
-      {"return",		DBV_Prehistory, tRETURN},
+        {"return", DBV_Prehistory, tRETURN},
 #line 44 "keywords.gperf"
-      {"finally",	DBV_Exceptions, tFINALLY},
+        {"finally", DBV_Exceptions, tFINALLY},
 #line 42 "keywords.gperf"
-      {"try",		DBV_Exceptions, tTRY},
+        {"try", DBV_Exceptions, tTRY},
 #line 31 "keywords.gperf"
-      {"else",		DBV_Prehistory, tELSE},
-      {""},
+        {"else", DBV_Prehistory, tELSE},
+        {""},
 #line 32 "keywords.gperf"
-      {"elseif",		DBV_Prehistory, tELSEIF},
+        {"elseif", DBV_Prehistory, tELSEIF},
 #line 30 "keywords.gperf"
-      {"if",		DBV_Prehistory, tIF},
+        {"if", DBV_Prehistory, tIF},
 #line 53 "keywords.gperf"
-      {"E_PROPNF",	DBV_Prehistory, tERROR,	E_PROPNF},
-      {""},
+        {"E_PROPNF", DBV_Prehistory, tERROR, E_PROPNF},
+        {""},
 #line 40 "keywords.gperf"
-      {"while",		DBV_Prehistory, tWHILE},
+        {"while", DBV_Prehistory, tWHILE},
 #line 43 "keywords.gperf"
-      {"except",		DBV_Exceptions, tEXCEPT},
+        {"except", DBV_Exceptions, tEXCEPT},
 #line 35 "keywords.gperf"
-      {"in",		DBV_Prehistory, tIN},
+        {"in", DBV_Prehistory, tIN},
 #line 48 "keywords.gperf"
-      {"continue",	DBV_BreakCont, tCONTINUE},
-      {""}, {""},
+        {"continue", DBV_BreakCont, tCONTINUE},
+        {""},
+        {""},
 #line 50 "keywords.gperf"
-      {"E_TYPE",		DBV_Prehistory, tERROR,	E_TYPE},
+        {"E_TYPE", DBV_Prehistory, tERROR, E_TYPE},
 #line 64 "keywords.gperf"
-      {"E_FLOAT",	DBV_Float,	tERROR,	E_FLOAT},
+        {"E_FLOAT", DBV_Float, tERROR, E_FLOAT},
 #line 46 "keywords.gperf"
-      {"ANY",		DBV_Exceptions, tANY},
-      {""}, {""},
+        {"ANY", DBV_Exceptions, tANY},
+        {""},
+        {""},
 #line 49 "keywords.gperf"
-      {"E_NONE",		DBV_Prehistory, tERROR,	E_NONE},
+        {"E_NONE", DBV_Prehistory, tERROR, E_NONE},
 #line 59 "keywords.gperf"
-      {"E_RANGE",	DBV_Prehistory, tERROR,	E_RANGE},
+        {"E_RANGE", DBV_Prehistory, tERROR, E_RANGE},
 #line 58 "keywords.gperf"
-      {"E_MAXREC",	DBV_Prehistory, tERROR,	E_MAXREC},
+        {"E_MAXREC", DBV_Prehistory, tERROR, E_MAXREC},
 #line 57 "keywords.gperf"
-      {"E_RECMOVE",	DBV_Prehistory, tERROR,	E_RECMOVE},
-      {""},
+        {"E_RECMOVE", DBV_Prehistory, tERROR, E_RECMOVE},
+        {""},
 #line 52 "keywords.gperf"
-      {"E_PERM",		DBV_Prehistory, tERROR,	E_PERM},
+        {"E_PERM", DBV_Prehistory, tERROR, E_PERM},
 #line 63 "keywords.gperf"
-      {"E_QUOTA",	DBV_Prehistory, tERROR,	E_QUOTA},
+        {"E_QUOTA", DBV_Prehistory, tERROR, E_QUOTA},
 #line 56 "keywords.gperf"
-      {"E_INVIND",	DBV_Prehistory, tERROR,	E_INVIND},
-      {""}, {""},
+        {"E_INVIND", DBV_Prehistory, tERROR, E_INVIND},
+        {""},
+        {""},
 #line 61 "keywords.gperf"
-      {"E_NACC",		DBV_Prehistory, tERROR,	E_NACC},
-      {""},
+        {"E_NACC", DBV_Prehistory, tERROR, E_NACC},
+        {""},
 #line 62 "keywords.gperf"
-      {"E_INVARG",	DBV_Prehistory, tERROR,	E_INVARG},
-      {""}, {""},
+        {"E_INVARG", DBV_Prehistory, tERROR, E_INVARG},
+        {""},
+        {""},
 #line 60 "keywords.gperf"
-      {"E_ARGS",		DBV_Prehistory, tERROR,	E_ARGS}
-    };
-#if (defined __GNUC__ && __GNUC__ + (__GNUC_MINOR__ >= 6) > 4) || (defined __clang__ && __clang_major__ >= 3)
+        {"E_ARGS", DBV_Prehistory, tERROR, E_ARGS}};
+#if (defined __GNUC__ && __GNUC__ + (__GNUC_MINOR__ >= 6) > 4) ||              \
+    (defined __clang__ && __clang_major__ >= 3)
 #pragma GCC diagnostic pop
 #endif
 
-  if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)
-    {
-      register unsigned int key = hash (str, len);
+    if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH) {
+        register unsigned int key = hash(str, len);
 
-      if (key <= MAX_HASH_VALUE)
-        {
-          register const char *s = wordlist[key].name;
+        if (key <= MAX_HASH_VALUE) {
+            register const char *s = wordlist[key].name;
 
-          if (*str == *s && !strcmp (str + 1, s + 1))
-            return &wordlist[key];
+            if (*str == *s && !strcmp(str + 1, s + 1))
+                return &wordlist[key];
         }
     }
-  return (struct keyword *) 0;
+    return (struct keyword *)0;
 }
 #line 65 "keywords.gperf"
 
-
-const struct keyword *
-find_keyword(const char *word)
-{
+const struct keyword *find_keyword(const char *word) {
     return in_word_set(word, strlen(word));
 }

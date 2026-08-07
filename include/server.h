@@ -59,21 +59,20 @@
 
 #include "config.h"
 
-typedef struct {		/* Server's handle on a connection */
-	void           *ptr;
-}               server_handle;
+typedef struct { /* Server's handle on a connection */
+    void *ptr;
+} server_handle;
 
-typedef struct {		/* Server's handle on a listening point */
-	void           *ptr;
-}               server_listener;
+typedef struct { /* Server's handle on a listening point */
+    void *ptr;
+} server_listener;
 
-#include "network.h"		/* Include this *after* defining the types */
+#include "network.h" /* Include this *after* defining the types */
 
 extern server_listener null_server_listener;
 
-extern server_handle 
-server_new_connection(server_listener l,
-		      network_handle h, int outbound);
+extern server_handle server_new_connection(server_listener l, network_handle h,
+                                           int outbound);
 /*
  * Called by the network whenever a new player connection is created.  If
  * `outbound' is true, then the connection is being made from the server to
@@ -83,9 +82,7 @@ server_new_connection(server_listener l,
  * representing the connection for use in later calls on each other.
  */
 
-extern void 
-server_refuse_connection(server_listener l,
-			 network_handle h);
+extern void server_refuse_connection(server_listener l, network_handle h);
 /*
  * Called by the network whenever it has temporarily accepted a connection
  * just to explain to the user that the server is too full to accept their
@@ -94,7 +91,7 @@ server_refuse_connection(server_listener l,
  * be valid after server_refuse_connection() returns.
  */
 
-extern void     server_receive_line(server_handle h, const char *line);
+extern void server_receive_line(server_handle h, const char *line);
 /*
  * The given line has been received as input on the specified connection.
  * 'line' does not end in a newline; any such bytes have been removed by the
@@ -102,7 +99,7 @@ extern void     server_receive_line(server_handle h, const char *line);
  * whitespace ASCII characters.
  */
 
-extern void     server_close(server_handle h);
+extern void server_close(server_handle h);
 /*
  * The specified connection has been broken for some reason not in the
  * server's control. Effective immediately, the network will no longer use
@@ -115,18 +112,18 @@ extern void     server_close(server_handle h);
  * they are exported from the server module to other parts of the program.
  */
 
-extern void     server_suspend_input(Objid connection);
+extern void server_suspend_input(Objid connection);
 /*
  * As soon as possible, the server module should temporarily stop enqueuing
  * input tasks for the given connection.
  */
-extern void     server_resume_input(Objid connection);
+extern void server_resume_input(Objid connection);
 /*
  * The server module may resume enqueuing input tasks for the given
  * connection.
  */
 
-extern void     set_server_cmdline(const char *line);
+extern void set_server_cmdline(const char *line);
 /*
  * If possible, the server's command line, as shown in the output of the `ps'
  * command, is changed to the given string.  NOTE: This is not possible on
@@ -135,28 +132,26 @@ extern void     set_server_cmdline(const char *line);
 
 #include "structures.h"
 
-extern int      server_flag_option_default(const char *name, int defallt);
+extern int server_flag_option_default(const char *name, int defallt);
 /*
  * If both $server_options and $server_options.NAME exist, return true if the
  * latter has a true MOO value and false if it has a false MOOvalue.
  * Otherwise, return DEFALLT.
  */
 
-extern int      server_flag_option(const char *name);
+extern int server_flag_option(const char *name);
 /*
  * Return true iff both $server_options and $server_options.NAME exist and
  * the latter has a true MOO value.
  */
 
-extern int      server_int_option(const char *name, int defallt);
+extern int server_int_option(const char *name, int defallt);
 /*
  * If both $server_options and $server_options.NAME exist and the latter has
  * a numeric value, then return that value. Otherwise, return DEFALLT.
  */
 
-extern const char *
-server_string_option(const char *name,
-		     const char *defallt);
+extern const char *server_string_option(const char *name, const char *defallt);
 /*
  * If either $server_options or $server_options.NAME does not exist, then
  * return DEFALLT.  Otherwise, if the latter has a string value, then return
@@ -165,26 +160,22 @@ server_string_option(const char *name,
  * reference is to be persistent.
  */
 
-extern int      get_server_option(Objid oid, const char *name, Var * r);
+extern int get_server_option(Objid oid, const char *name, Var *r);
 /*
  * If OID.server_options or $server_options exists, and the first of these
  * that exists has as value a valid object OPT, and OPT.NAME exists, then set
  * *R to the value of OPT.NAME and return 1; else return 0.
  */
 
-enum Fork_Result {
-	FORK_PARENT, FORK_CHILD, FORK_ERROR
-};
+enum Fork_Result { FORK_PARENT, FORK_CHILD, FORK_ERROR };
 extern enum Fork_Result fork_server(const char *subtask_name);
 
-extern void 
-player_connected(Objid old_id, Objid new_id,
-		 int is_newly_created);
-extern void     notify(Objid player, const char *message);
-extern void     boot_player(Objid player);
+extern void player_connected(Objid old_id, Objid new_id, int is_newly_created);
+extern void notify(Objid player, const char *message);
+extern void boot_player(Objid player);
 
-extern void     write_active_connections(void);
-extern int      read_active_connections(void);
+extern void write_active_connections(void);
+extern int read_active_connections(void);
 
-extern int			is_connected(int what);
-#endif				/* Server_H */
+extern int is_connected(int what);
+#endif /* Server_H */
