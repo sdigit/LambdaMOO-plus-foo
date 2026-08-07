@@ -158,7 +158,9 @@ target_include_directories(moo PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
     "${CMAKE_CURRENT_BINARY_DIR}"
 )
+
 target_link_libraries(moo PUBLIC m)
+
 if(MOO_CRYPT_LIBRARY)
     target_link_libraries(moo PUBLIC ${MOO_CRYPT_LIBRARY})
 endif()
@@ -168,6 +170,7 @@ target_compile_options(moo PRIVATE
     $<$<CONFIG:Build>: -O3 >
     $<$<CONFIG:Release>: -O3 >
 )
+
 target_compile_definitions(moo PRIVATE
     BUILT_AT="${BUILT_AT}"
     BUILD_HOST_SYSTEM="${CMAKE_HOST_SYSTEM}"
@@ -175,3 +178,5 @@ target_compile_definitions(moo PRIVATE
     C_COMPILER_ID="${CMAKE_C_COMPILER_ID}"
     C_COMPILER_VERSION="${CMAKE_C_COMPILER_VERSION}"
 )
+
+target_compile_features(moo PUBLIC c_std_23)
