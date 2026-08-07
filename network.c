@@ -869,14 +869,14 @@ network_set_connection_option(network_handle nh, const char *option, Var value)
 #define TN_WILL	251
 #define TN_WONT	252
 #define TN_ECHO	1
-	static char     telnet_cmd[4] = {TN_IAC, 0, TN_ECHO, 0};
+	static uint8_t telnet_cmd[4] = {TN_IAC, 0, TN_ECHO, 0};
 	if (!mystrcasecmp(option, "client-echo")) {
 		h->client_echo = is_true(value);
 		if (h->client_echo)
 			telnet_cmd[1] = TN_WONT;
 		else
 			telnet_cmd[1] = TN_WILL;
-		enqueue_output(nh, telnet_cmd, 3, 0, 1);
+		enqueue_output(nh, (const char *)&telnet_cmd, 3, 0, 1);
 		return 1;
 	}
 	return 0;
