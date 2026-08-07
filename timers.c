@@ -59,11 +59,11 @@
 
 typedef struct Timer_Entry Timer_Entry;
 struct Timer_Entry {
-	Timer_Entry    *next;
-	time_t          when;
-	Timer_Proc      proc;
-	Timer_Data      data;
-	Timer_ID        id;
+    Timer_Entry *next;
+    time_t when;
+    Timer_Proc proc;
+    Timer_Data data;
+    Timer_ID id;
 };
 
 static Timer_Entry *active_timers = 0;
@@ -71,259 +71,233 @@ static Timer_Entry *free_timers = 0;
 static Timer_Entry *virtual_timer = 0;
 static Timer_ID next_id = 0;
 
-static Timer_Entry *
-allocate_timer(void)
-{
-	if (free_timers) {
-		Timer_Entry    *this = free_timers;
+static Timer_Entry *allocate_timer(void) {
+    if (free_timers) {
+        Timer_Entry *this = free_timers;
 
-		free_timers = this->next;
-		return this;
-	} else
-		return (Timer_Entry *) malloc(sizeof(Timer_Entry));
+        free_timers = this->next;
+        return this;
+    } else
+        return (Timer_Entry *)malloc(sizeof(Timer_Entry));
 }
 
-static void
-free_timer(Timer_Entry * this)
-{
-	this->next = free_timers;
-	free_timers = this;
+static void free_timer(Timer_Entry *this) {
+    this->next = free_timers;
+    free_timers = this;
 }
 
-static void     restart_timers(void);
+static void restart_timers(void);
 
-static void
-wakeup_call([[maybe_unused]] int signo)
-{
-	Timer_Entry    *this = active_timers;
-	Timer_Proc      proc = this->proc;
-	Timer_ID        id = this->id;
-	Timer_Data      data = this->data;
+static void wakeup_call([[maybe_unused]] int signo) {
+    Timer_Entry *this = active_timers;
+    Timer_Proc proc = this->proc;
+    Timer_ID id = this->id;
+    Timer_Data data = this->data;
 
-	active_timers = active_timers->next;
-	free_timer(this);
-	restart_timers();
-	if (proc)
-		(*proc) (id, data);
+    active_timers = active_timers->next;
+    free_timer(this);
+    restart_timers();
+    if (proc)
+        (*proc)(id, data);
 }
-
 
 #ifdef ITIMER_VIRTUAL
-static void
-virtual_wakeup_call([[maybe_unused]] int signo)
-{
-	Timer_Entry    *this = virtual_timer;
-	Timer_Proc      proc = this->proc;
-	Timer_ID        id = this->id;
-	Timer_Data      data = this->data;
+static void virtual_wakeup_call([[maybe_unused]] int signo) {
+    Timer_Entry *this = virtual_timer;
+    Timer_Proc proc = this->proc;
+    Timer_ID id = this->id;
+    Timer_Data data = this->data;
 
-	virtual_timer = 0;
-	free_timer(this);
-	if (proc)
-		(*proc) (id, data);
+    virtual_timer = 0;
+    free_timer(this);
+    if (proc)
+        (*proc)(id, data);
 }
 #endif
 
-static void
-stop_timers()
-{
-	alarm(0);
-	signal(SIGALRM, SIG_IGN);
-	signal(SIGALRM, wakeup_call);
+static void stop_timers() {
+    alarm(0);
+    signal(SIGALRM, SIG_IGN);
+    signal(SIGALRM, wakeup_call);
 
 #ifdef ITIMER_VIRTUAL
-	{
-		struct itimerval itimer, oitimer;
+    {
+        struct itimerval itimer, oitimer;
 
-		itimer.it_value.tv_sec = 0;
-		itimer.it_value.tv_usec = 0;
-		itimer.it_interval.tv_sec = 0;
-		itimer.it_interval.tv_usec = 0;
+        itimer.it_value.tv_sec = 0;
+        itimer.it_value.tv_usec = 0;
+        itimer.it_interval.tv_sec = 0;
+        itimer.it_interval.tv_usec = 0;
 
-		setitimer(ITIMER_VIRTUAL, &itimer, &oitimer);
-		signal(SIGVTALRM, SIG_IGN);
-		signal(SIGVTALRM, virtual_wakeup_call);
-		if (virtual_timer)
-			virtual_timer->when = oitimer.it_value.tv_sec;
-	}
+        setitimer(ITIMER_VIRTUAL, &itimer, &oitimer);
+        signal(SIGVTALRM, SIG_IGN);
+        signal(SIGVTALRM, virtual_wakeup_call);
+        if (virtual_timer)
+            virtual_timer->when = oitimer.it_value.tv_sec;
+    }
 #endif
 }
 
-static void
-restart_timers()
-{
-	if (active_timers) {
-		time_t          now = time(0);
+static void restart_timers() {
+    if (active_timers) {
+        time_t now = time(0);
 
-		signal(SIGALRM, wakeup_call);
+        signal(SIGALRM, wakeup_call);
 
-		if (now < active_timers->when)	/* first timer is in the
-						 * future */
-			alarm(active_timers->when - now);
-		else
-			kill(getpid(), SIGALRM);	/* we're already late... */
-	}
+        if (now < active_timers->when) /* first timer is in the
+                                        * future */
+            alarm(active_timers->when - now);
+        else
+            kill(getpid(), SIGALRM); /* we're already late... */
+    }
 #ifdef ITIMER_VIRTUAL
 
-	if (virtual_timer) {
-		signal(SIGVTALRM, virtual_wakeup_call);
+    if (virtual_timer) {
+        signal(SIGVTALRM, virtual_wakeup_call);
 
-		if (virtual_timer->when > 0) {
-			struct itimerval itimer;
+        if (virtual_timer->when > 0) {
+            struct itimerval itimer;
 
-			itimer.it_value.tv_sec = virtual_timer->when;
-			itimer.it_value.tv_usec = 0;
-			itimer.it_interval.tv_sec = 0;
-			itimer.it_interval.tv_usec = 0;
+            itimer.it_value.tv_sec = virtual_timer->when;
+            itimer.it_value.tv_usec = 0;
+            itimer.it_interval.tv_sec = 0;
+            itimer.it_interval.tv_usec = 0;
 
-			setitimer(ITIMER_VIRTUAL, &itimer, 0);
-		} else
-			kill(getpid(), SIGVTALRM);
-	}
+            setitimer(ITIMER_VIRTUAL, &itimer, 0);
+        } else
+            kill(getpid(), SIGVTALRM);
+    }
 #endif
 }
 
-Timer_ID
-set_timer(unsigned seconds, Timer_Proc proc, Timer_Data data)
-{
-	Timer_Entry    *this = allocate_timer();
-	Timer_Entry   **t;
+Timer_ID set_timer(unsigned seconds, Timer_Proc proc, Timer_Data data) {
+    Timer_Entry *this = allocate_timer();
+    Timer_Entry **t;
 
-	this->id = next_id++;
-	this->when = time(0) + seconds;
-	this->proc = proc;
-	this->data = data;
+    this->id = next_id++;
+    this->when = time(0) + seconds;
+    this->proc = proc;
+    this->data = data;
 
-	stop_timers();
+    stop_timers();
 
-	t = &active_timers;
-	while (*t && this->when >= (*t)->when)
-		t = &((*t)->next);
-	this->next = *t;
-	*t = this;
+    t = &active_timers;
+    while (*t && this->when >= (*t)->when)
+        t = &((*t)->next);
+    this->next = *t;
+    *t = this;
 
-	restart_timers();
+    restart_timers();
 
-	return this->id;
+    return this->id;
 }
 
-Timer_ID
-set_virtual_timer(unsigned seconds, Timer_Proc proc, Timer_Data data)
-{
+Timer_ID set_virtual_timer(unsigned seconds, Timer_Proc proc, Timer_Data data) {
 #ifdef ITIMER_VIRTUAL
 
-	if (virtual_timer)
-		return -1;
+    if (virtual_timer)
+        return -1;
 
-	stop_timers();
+    stop_timers();
 
-	virtual_timer = allocate_timer();
-	virtual_timer->id = next_id++;
-	virtual_timer->when = seconds;
-	virtual_timer->proc = proc;
-	virtual_timer->data = data;
+    virtual_timer = allocate_timer();
+    virtual_timer->id = next_id++;
+    virtual_timer->when = seconds;
+    virtual_timer->proc = proc;
+    virtual_timer->data = data;
 
-	restart_timers();
+    restart_timers();
 
-	return virtual_timer->id;
+    return virtual_timer->id;
 
-#else				/* !ITIMER_VIRTUAL */
+#else /* !ITIMER_VIRTUAL */
 
-	return set_timer(seconds, proc, data);
+    return set_timer(seconds, proc, data);
 
 #endif
 }
 
-int
-virtual_timer_available()
-{
+int virtual_timer_available() {
 #ifdef ITIMER_VIRTUAL
-	return 1;
+    return 1;
 #else
-	return 0;
+    return 0;
 #endif
 }
 
-unsigned
-timer_wakeup_interval(Timer_ID id)
-{
-	Timer_Entry    *t;
+unsigned timer_wakeup_interval(Timer_ID id) {
+    Timer_Entry *t;
 
 #ifdef ITIMER_VIRTUAL
 
-	if (virtual_timer && virtual_timer->id == id) {
-		struct itimerval itimer;
+    if (virtual_timer && virtual_timer->id == id) {
+        struct itimerval itimer;
 
-		getitimer(ITIMER_VIRTUAL, &itimer);
-		return itimer.it_value.tv_sec;
-	}
+        getitimer(ITIMER_VIRTUAL, &itimer);
+        return itimer.it_value.tv_sec;
+    }
 #endif
 
-	for (t = active_timers; t; t = t->next)
-		if (t->id == id)
-			return t->when - time(0);;
+    for (t = active_timers; t; t = t->next)
+        if (t->id == id)
+            return t->when - time(0);
+    ;
 
-	return 0;
+    return 0;
 }
 
-void
-timer_sleep(unsigned seconds)
-{
-	set_timer(seconds, 0, 0);
-	pause();
+void timer_sleep(unsigned seconds) {
+    set_timer(seconds, 0, 0);
+    pause();
 }
 
-int
-cancel_timer(Timer_ID id)
-{
-	Timer_Entry   **t = &active_timers;
-	int             found = 0;
+int cancel_timer(Timer_ID id) {
+    Timer_Entry **t = &active_timers;
+    int found = 0;
 
-	stop_timers();
+    stop_timers();
 
-	if (virtual_timer && virtual_timer->id == id) {
-		free(virtual_timer);
-		virtual_timer = 0;
-		found = 1;
-	} else {
-		while (*t) {
-			if ((*t)->id == id) {
-				Timer_Entry    *tt = *t;
+    if (virtual_timer && virtual_timer->id == id) {
+        free(virtual_timer);
+        virtual_timer = 0;
+        found = 1;
+    } else {
+        while (*t) {
+            if ((*t)->id == id) {
+                Timer_Entry *tt = *t;
 
-				*t = tt->next;
-				found = 1;
-				free(tt);
-				break;
-			}
-			t = &((*t)->next);
-		}
-	}
+                *t = tt->next;
+                found = 1;
+                free(tt);
+                break;
+            }
+            t = &((*t)->next);
+        }
+    }
 
-	restart_timers();
+    restart_timers();
 
-	return found;
+    return found;
 }
 
-void
-reenable_timers(void)
-{
+void reenable_timers(void) {
 #if HAVE_SIGEMPTYSET
-	sigset_t        sigs;
+    sigset_t sigs;
 
-	sigemptyset(&sigs);
-	sigaddset(&sigs, SIGALRM);
-	sigprocmask(SIG_UNBLOCK, &sigs, 0);
+    sigemptyset(&sigs);
+    sigaddset(&sigs, SIGALRM);
+    sigprocmask(SIG_UNBLOCK, &sigs, 0);
 #else
 #if HAVE_SIGSETMASK
-	int             old_mask = sigsetmask(-1);	/* block everything, get
-							 * old mask */
+    int old_mask = sigsetmask(-1); /* block everything, get
+                                    * old mask */
 
-	old_mask &= ~sigmask(SIGALRM);	/* clear blocked bit for SIGALRM */
-	sigsetmask(old_mask);	/* reset the signal mask */
+    old_mask &= ~sigmask(SIGALRM); /* clear blocked bit for SIGALRM */
+    sigsetmask(old_mask);          /* reset the signal mask */
 #else
 #if HAVE_SIGRELSE
-	                sigrelse(SIGALRM);	/* restore previous signal
-						 * action */
+    sigrelse(SIGALRM); /* restore previous signal
+                        * action */
 #else
 #error I need some way to stop blocking SIGALRM!
 #endif

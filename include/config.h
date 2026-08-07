@@ -55,41 +55,41 @@
 /* #undef NEED_BSDTYPES_H */
 #define NEED_SELECT_H 1
 
-/* #undef NDECL_TOLOWER */		/* <ctype.h>      */
-/* #undef NDECL_FCNTL */		/* <fcntl.h>      */
-/* #undef NDECL_HTONL */		/* <netinet/in.h> */
-/* #undef NDECL_IOCTL */		/* <sys/ioctl.h>  */
-/* #undef NDECL_KILL */		/* <signal.h>	  */
-/* #undef NDECL_SIGEMPTYSET */	/* <signal.h>	  */
-/* #undef NDECL_SIGPROCMASK */	/* <signal.h>	  */
-/* #undef NDECL_SIGRELSE */		/* <signal.h>	  */
-/* #undef NDECL_ACCEPT */		/* <sys/socket.h> */
-/* #undef NDECL_BIND */		/* <sys/socket.h> */
-/* #undef NDECL_SHUTDOWN */		/* <sys/socket.h> */
-/* #undef NDECL_FSTAT */		/* <sys/stat.h>	  */
-/* #undef NDECL_FCLOSE */		/* <stdio.h>	  */
-/* #undef NDECL_PERROR */		/* <stdio.h>	  */
-/* #undef NDECL_REMOVE */		/* <stdio.h>	  */
-/* #undef NDECL_VFPRINTF */		/* <stdio.h>	  */
-/* #undef NDECL_RANDOM */		/* <stdlib.h>	  */
-/* #undef NDECL_SRANDOM */		/* <stdlib.h>	  */
-/* #undef NDECL_STRTOD */		/* <stdlib.h>	  */
-/* #undef NDECL_STRTOL */		/* <stdlib.h>	  */
-/* #undef NDECL_STRTOUL */		/* <stdlib.h>	  */
-/* #undef NDECL_BZERO */		/* <string.h>	  */
-/* #undef NDECL_MEMCPY */		/* <string.h>	  */
-/* #undef NDECL_MEMSET */		/* <string.h>	  */
-/* #undef NDECL_STRERROR */		/* <string.h>	  */
-/* #undef NDECL_GETITIMER */		/* <sys/time.h>	  */
-/* #undef NDECL_SETITIMER */		/* <sys/time.h>	  */
-/* #undef NDECL_SELECT */		/* <sys/time.h>	  */
-/* #undef NDECL_STRFTIME */		/* <time.h>	  */
-/* #undef NDECL_TIME */		/* <time.h>	  */
-/* #undef NDECL_TZNAME */		/* <time.h>	  */
-/* #undef NDECL_T_OPEN */		/* <tiuser.h>	  */
-/* #undef NDECL_T_ERRLIST */		/* <tiuser.h>	  */
-/* #undef NDECL_FORK */		/* <unistd.h>	  */
-/* #undef NDECL_WAITPID */		/* <sys/wait.h>	  */
+/* #undef NDECL_TOLOWER */     /* <ctype.h>      */
+/* #undef NDECL_FCNTL */       /* <fcntl.h>      */
+/* #undef NDECL_HTONL */       /* <netinet/in.h> */
+/* #undef NDECL_IOCTL */       /* <sys/ioctl.h>  */
+/* #undef NDECL_KILL */        /* <signal.h>	  */
+/* #undef NDECL_SIGEMPTYSET */ /* <signal.h>	  */
+/* #undef NDECL_SIGPROCMASK */ /* <signal.h>	  */
+/* #undef NDECL_SIGRELSE */    /* <signal.h>	  */
+/* #undef NDECL_ACCEPT */      /* <sys/socket.h> */
+/* #undef NDECL_BIND */        /* <sys/socket.h> */
+/* #undef NDECL_SHUTDOWN */    /* <sys/socket.h> */
+/* #undef NDECL_FSTAT */       /* <sys/stat.h>	  */
+/* #undef NDECL_FCLOSE */      /* <stdio.h>	  */
+/* #undef NDECL_PERROR */      /* <stdio.h>	  */
+/* #undef NDECL_REMOVE */      /* <stdio.h>	  */
+/* #undef NDECL_VFPRINTF */    /* <stdio.h>	  */
+/* #undef NDECL_RANDOM */      /* <stdlib.h>	  */
+/* #undef NDECL_SRANDOM */     /* <stdlib.h>	  */
+/* #undef NDECL_STRTOD */      /* <stdlib.h>	  */
+/* #undef NDECL_STRTOL */      /* <stdlib.h>	  */
+/* #undef NDECL_STRTOUL */     /* <stdlib.h>	  */
+/* #undef NDECL_BZERO */       /* <string.h>	  */
+/* #undef NDECL_MEMCPY */      /* <string.h>	  */
+/* #undef NDECL_MEMSET */      /* <string.h>	  */
+/* #undef NDECL_STRERROR */    /* <string.h>	  */
+/* #undef NDECL_GETITIMER */   /* <sys/time.h>	  */
+/* #undef NDECL_SETITIMER */   /* <sys/time.h>	  */
+/* #undef NDECL_SELECT */      /* <sys/time.h>	  */
+/* #undef NDECL_STRFTIME */    /* <time.h>	  */
+/* #undef NDECL_TIME */        /* <time.h>	  */
+/* #undef NDECL_TZNAME */      /* <time.h>	  */
+/* #undef NDECL_T_OPEN */      /* <tiuser.h>	  */
+/* #undef NDECL_T_ERRLIST */   /* <tiuser.h>	  */
+/* #undef NDECL_FORK */        /* <unistd.h>	  */
+/* #undef NDECL_WAITPID */     /* <sys/wait.h>	  */
 
 /* Some systems declare bzero() in <stdlib.h> instead of in <string.h>. */
 
@@ -149,9 +149,9 @@
  */
 
 #if defined(__GNUC__) && !HAVE_SYS_CDEFS_H
-#  define const __const__
-#  define volatile __volatile__
-#  define signed __signed__
+#define const __const__
+#define volatile __volatile__
+#define signed __signed__
 #endif
 
 /* Certain functions used by the server are `optional', in the sense that the
@@ -221,16 +221,16 @@
 
 #include <limits.h>
 
-typedef int             int32;
-typedef unsigned        unsigned32;
+typedef int int32;
+typedef unsigned unsigned32;
 
 /* Linux needs a kick in the pants to figure out DBL_MAX */
 #ifdef __linux__
-#  include <values.h>
+#include <values.h>
 #else
 /* FreeBSD needs to be kicked too so it can find DBL_MAX */
 #if defined(__FreeBSD__)
-#  include <float.h>
+#include <float.h>
 #endif
 #endif
 #endif /* !Config_H */

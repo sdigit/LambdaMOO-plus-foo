@@ -49,12 +49,12 @@
 #include "config.h"
 #include "structures.h"
 
-extern void     set_log_file(FILE *);
+extern void set_log_file(FILE *);
 
-extern void     oklog(const char *,...);
-extern void     errlog(const char *,...);
-extern void     log_perror(const char *);
+extern void oklog(const char *, ...);
+extern void errlog(const char *, ...);
+extern void log_perror(const char *);
 
-extern void     reset_command_history(void);
-extern void     log_command_history(void);
-extern void     add_command_to_history(Objid player, const char *command);
+extern void reset_command_history(void);
+extern void log_command_history(void);
+extern void add_command_to_history(Objid player, const char *command);

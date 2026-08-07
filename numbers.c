@@ -44,9 +44,9 @@
     Pavel@Xerox.Com
  *****************************************************************************/
 
-#include <limits.h>
 #include <errno.h>
 #include <float.h>
+#include <limits.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -58,182 +58,165 @@
 #include "config.h"
 #include "functions.h"
 #include "log.h"
+#include "misc.h"
 #include "random.h"
 #include "storage.h"
 #include "structures.h"
 #include "utils.h"
-#include "misc.h"
 
-static int
-parse_number(const char *str, int *result, int try_floating_point)
-{
-	char           *p;
+static int parse_number(const char *str, int *result, int try_floating_point) {
+    char *p;
 
-	*result = strtol(str, &p, 10);
-	if (try_floating_point &&
-	    (p == str || *p == '.' || *p == 'e' || *p == 'E'))
-		*result = (int) strtod(str, &p);
-	if (p == str)
-		return 0;
-	while (*p) {
-		if (*p != ' ')
-			return 0;
-		p++;
-	}
-	return 1;
+    *result = strtol(str, &p, 10);
+    if (try_floating_point && (p == str || *p == '.' || *p == 'e' || *p == 'E'))
+        *result = (int)strtod(str, &p);
+    if (p == str)
+        return 0;
+    while (*p) {
+        if (*p != ' ')
+            return 0;
+        p++;
+    }
+    return 1;
 }
 
-static int
-parse_object(const char *str, Objid * result)
-{
-	int             number;
+static int parse_object(const char *str, Objid *result) {
+    int number;
 
-	while (*str && *str == ' ')
-		str++;
-	if (*str == '#')
-		str++;
-	if (parse_number(str, &number, 0)) {
-		*result = number;
-		return 1;
-	} else
-		return 0;
+    while (*str && *str == ' ')
+        str++;
+    if (*str == '#')
+        str++;
+    if (parse_number(str, &number, 0)) {
+        *result = number;
+        return 1;
+    } else
+        return 0;
 }
 
-static int
-parse_float(const char *str, double *result)
-{
-	char           *p;
-	int             negative = 0;
+static int parse_float(const char *str, double *result) {
+    char *p;
+    int negative = 0;
 
-	while (*str && *str == ' ')
-		str++;
-	if (*str == '-') {
-		str++;
-		negative = 1;
-	}
-	*result = strtod(str, &p);
-	if (p == str)
-		return 0;
-	while (*p) {
-		if (*p != ' ')
-			return 0;
-		p++;
-	}
-	if (negative)
-		*result = -*result;
-	return 1;
+    while (*str && *str == ' ')
+        str++;
+    if (*str == '-') {
+        str++;
+        negative = 1;
+    }
+    *result = strtod(str, &p);
+    if (p == str)
+        return 0;
+    while (*p) {
+        if (*p != ' ')
+            return 0;
+        p++;
+    }
+    if (negative)
+        *result = -*result;
+    return 1;
 }
 
-enum error
-become_integer(Var in, int *ret, int called_from_tonum)
-{
-	switch ((int)in.type) {
-	case TYPE_INT:
-		*ret = in.v.num;
-		break;
-	case TYPE_STR:
-		if (!(called_from_tonum
-		      ? parse_number(in.v.str, ret, 1)
-		      : parse_object(in.v.str, ret)))
-			*ret = 0;
-		break;
-	case TYPE_OBJ:
-		*ret = in.v.obj;
-		break;
-	case TYPE_ERR:
-		*ret = in.v.err;
-		break;
-	case TYPE_FLOAT:
-		if (*in.v.fnum < (double) INT_MIN || *in.v.fnum > (double) INT_MAX)
-			return E_FLOAT;
-		*ret = (int) *in.v.fnum;
-		break;
-	case TYPE_LIST:
-		return E_TYPE;
-	default:
-		errlog("BECOME_INTEGER: Impossible var type: %d\n", (int) in.type);
-	}
-	return E_NONE;
+enum error become_integer(Var in, int *ret, int called_from_tonum) {
+    switch ((int)in.type) {
+    case TYPE_INT:
+        *ret = in.v.num;
+        break;
+    case TYPE_STR:
+        if (!(called_from_tonum ? parse_number(in.v.str, ret, 1)
+                                : parse_object(in.v.str, ret)))
+            *ret = 0;
+        break;
+    case TYPE_OBJ:
+        *ret = in.v.obj;
+        break;
+    case TYPE_ERR:
+        *ret = in.v.err;
+        break;
+    case TYPE_FLOAT:
+        if (*in.v.fnum < (double)INT_MIN || *in.v.fnum > (double)INT_MAX)
+            return E_FLOAT;
+        *ret = (int)*in.v.fnum;
+        break;
+    case TYPE_LIST:
+        return E_TYPE;
+    default:
+        errlog("BECOME_INTEGER: Impossible var type: %d\n", (int)in.type);
+    }
+    return E_NONE;
 }
 
-static enum error
-become_float(Var in, double *ret)
-{
-	switch ((int)in.type) {
-	case TYPE_INT:
-		*ret = (double) in.v.num;
-		break;
-	case TYPE_STR:
-		if (!parse_float(in.v.str, ret) || !IS_REAL(*ret))
-			return E_INVARG;
-		break;
-	case TYPE_OBJ:
-		*ret = (double) in.v.obj;
-		break;
-	case TYPE_ERR:
-		*ret = (double) in.v.err;
-		break;
-	case TYPE_FLOAT:
-		*ret = *in.v.fnum;
-		break;
-	case TYPE_LIST:
-		return E_TYPE;
-	default:
-		errlog("BECOME_FLOAT: Impossible var type: %d\n", (int) in.type);
-	}
-	return E_NONE;
+static enum error become_float(Var in, double *ret) {
+    switch ((int)in.type) {
+    case TYPE_INT:
+        *ret = (double)in.v.num;
+        break;
+    case TYPE_STR:
+        if (!parse_float(in.v.str, ret) || !IS_REAL(*ret))
+            return E_INVARG;
+        break;
+    case TYPE_OBJ:
+        *ret = (double)in.v.obj;
+        break;
+    case TYPE_ERR:
+        *ret = (double)in.v.err;
+        break;
+    case TYPE_FLOAT:
+        *ret = *in.v.fnum;
+        break;
+    case TYPE_LIST:
+        return E_TYPE;
+    default:
+        errlog("BECOME_FLOAT: Impossible var type: %d\n", (int)in.type);
+    }
+    return E_NONE;
 }
 
-Var
-new_float(double d)
-{
-	Var             v;
+Var new_float(double d) {
+    Var v;
 
-	v.type = TYPE_FLOAT;
-	v.v.fnum = mymalloc(sizeof(double), M_FLOAT);
-	*v.v.fnum = d;
+    v.type = TYPE_FLOAT;
+    v.v.fnum = mymalloc(sizeof(double), M_FLOAT);
+    *v.v.fnum = d;
 
-	return v;
+    return v;
 }
 
 #if COERCION_IS_EVER_IMPLEMENTED_AND_DESIRED
-static int
-to_float(Var v, double *dp)
-{
-	switch (v.type) {
-	case TYPE_INT:
-		*dp = (double) v.v.num;
-		break;
-	case TYPE_FLOAT:
-		*dp = *v.v.fnum;
-		break;
-	default:
-		return 0;
-	}
+static int to_float(Var v, double *dp) {
+    switch (v.type) {
+    case TYPE_INT:
+        *dp = (double)v.v.num;
+        break;
+    case TYPE_FLOAT:
+        *dp = *v.v.fnum;
+        break;
+    default:
+        return 0;
+    }
 
-	return 1;
+    return 1;
 }
 #endif
 
-#if defined(HAVE_MATHERR) && defined(DOMAIN) && defined(SING) && defined(OVERFLOW) && defined(UNDERFLOW)
+#if defined(HAVE_MATHERR) && defined(DOMAIN) && defined(SING) &&               \
+    defined(OVERFLOW) && defined(UNDERFLOW)
 /* Required in order to properly handle FP exceptions on SVID3 systems */
-int
-matherr(struct exception * x)
-{
-	switch (x->type) {
-	case DOMAIN:
-	case SING:
-		errno = EDOM;
-		/* fall thru to... */
-	case OVERFLOW:
-		x->retval = HUGE_VAL;
-		return 1;
-	case UNDERFLOW:
-		x->retval = 0.0;
-		return 1;
-	default:
-		return 0;	/* Take default action */
-	}
+int matherr(struct exception *x) {
+    switch (x->type) {
+    case DOMAIN:
+    case SING:
+        errno = EDOM;
+        /* fall thru to... */
+    case OVERFLOW:
+        x->retval = HUGE_VAL;
+        return 1;
+    case UNDERFLOW:
+        x->retval = 0.0;
+        return 1;
+    default:
+        return 0; /* Take default action */
+    }
 }
 #endif
 
@@ -244,311 +227,298 @@ matherr(struct exception * x)
  * coercions between integer and floating-point operands.
  */
 
-int
-do_equals(Var lhs, Var rhs)
-{				/* LHS == RHS */
-	/* At least one of LHS and RHS is TYPE_FLOAT */
+int do_equals(Var lhs, Var rhs) { /* LHS == RHS */
+    /* At least one of LHS and RHS is TYPE_FLOAT */
 
-	if (lhs.type != rhs.type)
-		return 0;
-	else
-		return *lhs.v.fnum == *rhs.v.fnum;
+    if (lhs.type != rhs.type)
+        return 0;
+    else
+        return *lhs.v.fnum == *rhs.v.fnum;
 }
 
-int
-compare_integers(int a, int b)
-{
-	if (a < b)
-		return -1;
-	else if (a == b)
-		return 0;
-	else
-		return 1;
+int compare_integers(int a, int b) {
+    if (a < b)
+        return -1;
+    else if (a == b)
+        return 0;
+    else
+        return 1;
 }
 
-Var
-compare_numbers(Var a, Var b)
-{
-	Var             ans;
+Var compare_numbers(Var a, Var b) {
+    Var ans;
 
-	if (a.type != b.type) {
-		ans.type = TYPE_ERR;
-		ans.v.err = E_TYPE;
-	} else if (a.type == TYPE_INT) {
-		ans.type = TYPE_INT;
-		ans.v.num = compare_integers(a.v.num, b.v.num);
-	} else {
-		double          aa = *a.v.fnum, bb = *b.v.fnum;
+    if (a.type != b.type) {
+        ans.type = TYPE_ERR;
+        ans.v.err = E_TYPE;
+    } else if (a.type == TYPE_INT) {
+        ans.type = TYPE_INT;
+        ans.v.num = compare_integers(a.v.num, b.v.num);
+    } else {
+        double aa = *a.v.fnum, bb = *b.v.fnum;
 
-		ans.type = TYPE_INT;
-		if (aa < bb)
-			ans.v.num = -1;
-		else if (aa == bb)
-			ans.v.num = 0;
-		else
-			ans.v.num = 1;
-	}
+        ans.type = TYPE_INT;
+        if (aa < bb)
+            ans.v.num = -1;
+        else if (aa == bb)
+            ans.v.num = 0;
+        else
+            ans.v.num = 1;
+    }
 
-	return ans;
+    return ans;
 }
 
-#define SIMPLE_BINARY(name, op)					\
-		Var						\
-		do_ ## name(Var a, Var b)			\
-		{						\
-		    Var	ans;					\
-								\
-		    if (a.type != b.type) {			\
-			ans.type = TYPE_ERR;			\
-			ans.v.err = E_TYPE;			\
-		    } else if (a.type == TYPE_INT) {		\
-			ans.type = TYPE_INT;			\
-			ans.v.num = a.v.num op b.v.num;		\
-		    } else {					\
-			double d = *a.v.fnum op *b.v.fnum;	\
-								\
-			if (!IS_REAL(d)) {			\
-			    ans.type = TYPE_ERR;		\
-			    ans.v.err = E_FLOAT;		\
-			} else					\
-			    ans = new_float(d);			\
-		    }						\
-								\
-		    return ans;					\
-		}
+#define SIMPLE_BINARY(name, op)                                                \
+    Var do_##name(Var a, Var b) {                                              \
+        Var ans;                                                               \
+                                                                               \
+        if (a.type != b.type) {                                                \
+            ans.type = TYPE_ERR;                                               \
+            ans.v.err = E_TYPE;                                                \
+        } else if (a.type == TYPE_INT) {                                       \
+            ans.type = TYPE_INT;                                               \
+            ans.v.num = a.v.num op b.v.num;                                    \
+        } else {                                                               \
+            double d = *a.v.fnum op * b.v.fnum;                                \
+                                                                               \
+            if (!IS_REAL(d)) {                                                 \
+                ans.type = TYPE_ERR;                                           \
+                ans.v.err = E_FLOAT;                                           \
+            } else                                                             \
+                ans = new_float(d);                                            \
+        }                                                                      \
+                                                                               \
+        return ans;                                                            \
+    }
 
 SIMPLE_BINARY(add, +)
 SIMPLE_BINARY(subtract, -)
 SIMPLE_BINARY(multiply, *)
-#define DIVISION_OP(name, iop, fexpr)				\
-		Var						\
-		do_ ## name(Var a, Var b)			\
-		{						\
-		    Var	ans;					\
-								\
-		    if (a.type != b.type) {			\
-			ans.type = TYPE_ERR;			\
-			ans.v.err = E_TYPE;			\
-		    } else if (a.type == TYPE_INT		\
-			       && b.v.num != 0) {		\
-			ans.type = TYPE_INT;			\
-			ans.v.num = a.v.num iop b.v.num;	\
-		    } else if (a.type == TYPE_FLOAT		\
-			       && *b.v.fnum != 0.0) {		\
-			double d = fexpr;			\
-								\
-			if (!IS_REAL(d)) {			\
-			    ans.type = TYPE_ERR;		\
-			    ans.v.err = E_FLOAT;		\
-			} else					\
-			    ans = new_float(d);			\
-		    } else {					\
-		        ans.type = TYPE_ERR;			\
-			ans.v.err = E_DIV;			\
-		    }						\
-								\
-		    return ans;					\
-		}
+#define DIVISION_OP(name, iop, fexpr)                                          \
+    Var do_##name(Var a, Var b) {                                              \
+        Var ans;                                                               \
+                                                                               \
+        if (a.type != b.type) {                                                \
+            ans.type = TYPE_ERR;                                               \
+            ans.v.err = E_TYPE;                                                \
+        } else if (a.type == TYPE_INT && b.v.num != 0) {                       \
+            ans.type = TYPE_INT;                                               \
+            ans.v.num = a.v.num iop b.v.num;                                   \
+        } else if (a.type == TYPE_FLOAT && *b.v.fnum != 0.0) {                 \
+            double d = fexpr;                                                  \
+                                                                               \
+            if (!IS_REAL(d)) {                                                 \
+                ans.type = TYPE_ERR;                                           \
+                ans.v.err = E_FLOAT;                                           \
+            } else                                                             \
+                ans = new_float(d);                                            \
+        } else {                                                               \
+            ans.type = TYPE_ERR;                                               \
+            ans.v.err = E_DIV;                                                 \
+        }                                                                      \
+                                                                               \
+        return ans;                                                            \
+    }
 
 DIVISION_OP(divide, /, *a.v.fnum / *b.v.fnum)
 DIVISION_OP(modulus, %, fmod(*a.v.fnum, *b.v.fnum))
-Var
-do_power(Var lhs, Var rhs)
-{				/* LHS ^ RHS */
-	Var             ans;
+Var do_power(Var lhs, Var rhs) { /* LHS ^ RHS */
+    Var ans;
 
-	if (lhs.type == TYPE_INT) {	/* integer exponentiation */
-		int             a = lhs.v.num, b, r;
+    if (lhs.type == TYPE_INT) { /* integer exponentiation */
+        int a = lhs.v.num, b, r;
 
-		if (rhs.type != TYPE_INT)
-			goto type_error;
+        if (rhs.type != TYPE_INT)
+            goto type_error;
 
-		b = rhs.v.num;
-		ans.type = TYPE_INT;
-		if (b < 0)
-			switch (a) {
-			case -1:
-				ans.v.num = (b % 2 == 0 ? 1 : -1);
-				break;
-			case 0:
-				ans.type = TYPE_ERR;
-				ans.v.err = E_DIV;
-				break;
-			case 1:
-				ans.v.num = 1;
-				break;
-			default:
-				ans.v.num = 0;
-		} else {
-			r = 1;
-			while (b != 0) {
-				if (b % 2 != 0)
-					r *= a;
-				a *= a;
-				b >>= 1;
-			}
-			ans.v.num = r;
-		}
-	} else if (lhs.type == TYPE_FLOAT) {	/* floating-point
-						 * exponentiation */
-		double          d;
+        b = rhs.v.num;
+        ans.type = TYPE_INT;
+        if (b < 0)
+            switch (a) {
+            case -1:
+                ans.v.num = (b % 2 == 0 ? 1 : -1);
+                break;
+            case 0:
+                ans.type = TYPE_ERR;
+                ans.v.err = E_DIV;
+                break;
+            case 1:
+                ans.v.num = 1;
+                break;
+            default:
+                ans.v.num = 0;
+            }
+        else {
+            r = 1;
+            while (b != 0) {
+                if (b % 2 != 0)
+                    r *= a;
+                a *= a;
+                b >>= 1;
+            }
+            ans.v.num = r;
+        }
+    } else if (lhs.type == TYPE_FLOAT) { /* floating-point
+                                          * exponentiation */
+        double d;
 
-		switch ((int)rhs.type) {
-		case TYPE_INT:
-			d = (double) rhs.v.num;
-			break;
-		case TYPE_FLOAT:
-			d = *rhs.v.fnum;
-			break;
-		default:
-			goto type_error;
-		}
-		errno = 0;
-		d = pow(*lhs.v.fnum, d);
-		if (errno != 0 || !IS_REAL(d)) {
-			ans.type = TYPE_ERR;
-			ans.v.err = E_FLOAT;
-		} else
-			ans = new_float(d);
-	} else
-		goto type_error;
+        switch ((int)rhs.type) {
+        case TYPE_INT:
+            d = (double)rhs.v.num;
+            break;
+        case TYPE_FLOAT:
+            d = *rhs.v.fnum;
+            break;
+        default:
+            goto type_error;
+        }
+        errno = 0;
+        d = pow(*lhs.v.fnum, d);
+        if (errno != 0 || !IS_REAL(d)) {
+            ans.type = TYPE_ERR;
+            ans.v.err = E_FLOAT;
+        } else
+            ans = new_float(d);
+    } else
+        goto type_error;
 
-	return ans;
+    return ans;
 
 type_error:
-	ans.type = TYPE_ERR;
-	ans.v.err = E_TYPE;
-	return ans;
+    ans.type = TYPE_ERR;
+    ans.v.err = E_TYPE;
+    return ans;
 }
 
 /**** built in functions ****/
 
-static          package
-bf_toint(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
-{
-	Var             r;
-	enum error      e;
+static package bf_toint(Var arglist, [[maybe_unused]] Byte next,
+                        [[maybe_unused]] void *vdata,
+                        [[maybe_unused]] Objid progr) {
+    Var r;
+    enum error e;
 
-	r.type = TYPE_INT;
-	e = become_integer(arglist.v.list[1], &(r.v.num), 1);
+    r.type = TYPE_INT;
+    e = become_integer(arglist.v.list[1], &(r.v.num), 1);
 
-	free_var(arglist);
-	if (e != E_NONE)
-		return make_error_pack(e);
+    free_var(arglist);
+    if (e != E_NONE)
+        return make_error_pack(e);
 
-	return make_var_pack(r);
+    return make_var_pack(r);
 }
 
-static          package
-bf_tofloat(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
-{
-	Var             r;
-	enum error      e;
+static package bf_tofloat(Var arglist, [[maybe_unused]] Byte next,
+                          [[maybe_unused]] void *vdata,
+                          [[maybe_unused]] Objid progr) {
+    Var r;
+    enum error e;
 
-	r = new_float(0.0);
-	e = become_float(arglist.v.list[1], r.v.fnum);
+    r = new_float(0.0);
+    e = become_float(arglist.v.list[1], r.v.fnum);
 
-	free_var(arglist);
-	if (e == E_NONE)
-		return make_var_pack(r);
+    free_var(arglist);
+    if (e == E_NONE)
+        return make_var_pack(r);
 
-	free_var(r);
-	return make_error_pack(e);
+    free_var(r);
+    return make_error_pack(e);
 }
 
-static          package
-bf_min(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
-{
-	Var             r;
-	int             i, nargs = arglist.v.list[0].v.num;
-	int             bad_types = 0;
+static package bf_min(Var arglist, [[maybe_unused]] Byte next,
+                      [[maybe_unused]] void *vdata,
+                      [[maybe_unused]] Objid progr) {
+    Var r;
+    int i, nargs = arglist.v.list[0].v.num;
+    int bad_types = 0;
 
-	r = arglist.v.list[1];
-	if (r.type == TYPE_INT) {	/* integers */
-		for (i = 2; i <= nargs; i++)
-			if (arglist.v.list[i].type != TYPE_INT)
-				bad_types = 1;
-			else if (arglist.v.list[i].v.num < r.v.num)
-				r = arglist.v.list[i];
-	} else {		/* floats */
-		for (i = 2; i <= nargs; i++)
-			if (arglist.v.list[i].type != TYPE_FLOAT)
-				bad_types = 1;
-			else if (*arglist.v.list[i].v.fnum < *r.v.fnum)
-				r = arglist.v.list[i];
-	}
+    r = arglist.v.list[1];
+    if (r.type == TYPE_INT) { /* integers */
+        for (i = 2; i <= nargs; i++)
+            if (arglist.v.list[i].type != TYPE_INT)
+                bad_types = 1;
+            else if (arglist.v.list[i].v.num < r.v.num)
+                r = arglist.v.list[i];
+    } else { /* floats */
+        for (i = 2; i <= nargs; i++)
+            if (arglist.v.list[i].type != TYPE_FLOAT)
+                bad_types = 1;
+            else if (*arglist.v.list[i].v.fnum < *r.v.fnum)
+                r = arglist.v.list[i];
+    }
 
-	r = var_ref(r);
-	free_var(arglist);
-	if (bad_types)
-		return make_error_pack(E_TYPE);
-	else
-		return make_var_pack(r);
+    r = var_ref(r);
+    free_var(arglist);
+    if (bad_types)
+        return make_error_pack(E_TYPE);
+    else
+        return make_var_pack(r);
 }
 
-static          package
-bf_max(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
-{
-	Var             r;
-	int             i, nargs = arglist.v.list[0].v.num;
-	int             bad_types = 0;
+static package bf_max(Var arglist, [[maybe_unused]] Byte next,
+                      [[maybe_unused]] void *vdata,
+                      [[maybe_unused]] Objid progr) {
+    Var r;
+    int i, nargs = arglist.v.list[0].v.num;
+    int bad_types = 0;
 
-	r = arglist.v.list[1];
-	if (r.type == TYPE_INT) {	/* integers */
-		for (i = 2; i <= nargs; i++)
-			if (arglist.v.list[i].type != TYPE_INT)
-				bad_types = 1;
-			else if (arglist.v.list[i].v.num > r.v.num)
-				r = arglist.v.list[i];
-	} else {		/* floats */
-		for (i = 2; i <= nargs; i++)
-			if (arglist.v.list[i].type != TYPE_FLOAT)
-				bad_types = 1;
-			else if (*arglist.v.list[i].v.fnum > *r.v.fnum)
-				r = arglist.v.list[i];
-	}
+    r = arglist.v.list[1];
+    if (r.type == TYPE_INT) { /* integers */
+        for (i = 2; i <= nargs; i++)
+            if (arglist.v.list[i].type != TYPE_INT)
+                bad_types = 1;
+            else if (arglist.v.list[i].v.num > r.v.num)
+                r = arglist.v.list[i];
+    } else { /* floats */
+        for (i = 2; i <= nargs; i++)
+            if (arglist.v.list[i].type != TYPE_FLOAT)
+                bad_types = 1;
+            else if (*arglist.v.list[i].v.fnum > *r.v.fnum)
+                r = arglist.v.list[i];
+    }
 
-	r = var_ref(r);
-	free_var(arglist);
-	if (bad_types)
-		return make_error_pack(E_TYPE);
-	else
-		return make_var_pack(r);
+    r = var_ref(r);
+    free_var(arglist);
+    if (bad_types)
+        return make_error_pack(E_TYPE);
+    else
+        return make_var_pack(r);
 }
 
-static          package
-bf_abs(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
-{
-	Var             r;
+static package bf_abs(Var arglist, [[maybe_unused]] Byte next,
+                      [[maybe_unused]] void *vdata,
+                      [[maybe_unused]] Objid progr) {
+    Var r;
 
-	r = var_dup(arglist.v.list[1]);
-	if (r.type == TYPE_INT) {
-		if (r.v.num < 0)
-			r.v.num = -r.v.num;
-	} else
-		*r.v.fnum = fabs(*r.v.fnum);
+    r = var_dup(arglist.v.list[1]);
+    if (r.type == TYPE_INT) {
+        if (r.v.num < 0)
+            r.v.num = -r.v.num;
+    } else
+        *r.v.fnum = fabs(*r.v.fnum);
 
-	free_var(arglist);
-	return make_var_pack(r);
+    free_var(arglist);
+    return make_var_pack(r);
 }
 
-#define MATH_FUNC(name)							      \
-		static package						      \
-		bf_ ## name(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr) \
-		{							      \
-		    double	d;					      \
-									      \
-		    d = *arglist.v.list[1].v.fnum;			      \
-		    errno = 0;						      \
-		    d = name(d);					      \
-		    free_var(arglist);					      \
-		    if (errno == EDOM)					      \
-		        return make_error_pack(E_INVARG);		      \
-		    else if (errno != 0  ||  !IS_REAL(d))		      \
-			return make_error_pack(E_FLOAT);		      \
-		    else						      \
-			return make_var_pack(new_float(d));		      \
-		}
+#define MATH_FUNC(name)                                                        \
+    static package bf_##name(Var arglist, [[maybe_unused]] Byte next,          \
+                             [[maybe_unused]] void *vdata,                     \
+                             [[maybe_unused]] Objid progr) {                   \
+        double d;                                                              \
+                                                                               \
+        d = *arglist.v.list[1].v.fnum;                                         \
+        errno = 0;                                                             \
+        d = name(d);                                                           \
+        free_var(arglist);                                                     \
+        if (errno == EDOM)                                                     \
+            return make_error_pack(E_INVARG);                                  \
+        else if (errno != 0 || !IS_REAL(d))                                    \
+            return make_error_pack(E_FLOAT);                                   \
+        else                                                                   \
+            return make_var_pack(new_float(d));                                \
+    }
 
 MATH_FUNC(sqrt)
 MATH_FUNC(sin)
@@ -564,178 +534,175 @@ MATH_FUNC(log)
 MATH_FUNC(log10)
 MATH_FUNC(ceil)
 MATH_FUNC(floor)
-	static          package
-	                bf_trunc(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
-{
-	double          d;
+static package bf_trunc(Var arglist, [[maybe_unused]] Byte next,
+                        [[maybe_unused]] void *vdata,
+                        [[maybe_unused]] Objid progr) {
+    double d;
 
-	d = *arglist.v.list[1].v.fnum;
-	errno = 0;
-	if (d < 0.0)
-		d = ceil(d);
-	else
-		d = floor(d);
-	free_var(arglist);
-	if (errno == EDOM)
-		return make_error_pack(E_INVARG);
-	else if (errno != 0 || !IS_REAL(d))
-		return make_error_pack(E_FLOAT);
-	else
-		return make_var_pack(new_float(d));
+    d = *arglist.v.list[1].v.fnum;
+    errno = 0;
+    if (d < 0.0)
+        d = ceil(d);
+    else
+        d = floor(d);
+    free_var(arglist);
+    if (errno == EDOM)
+        return make_error_pack(E_INVARG);
+    else if (errno != 0 || !IS_REAL(d))
+        return make_error_pack(E_FLOAT);
+    else
+        return make_var_pack(new_float(d));
 }
 
-static          package
-bf_atan(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
-{
-	double          d, dd;
+static package bf_atan(Var arglist, [[maybe_unused]] Byte next,
+                       [[maybe_unused]] void *vdata,
+                       [[maybe_unused]] Objid progr) {
+    double d, dd;
 
-	d = *arglist.v.list[1].v.fnum;
-	errno = 0;
-	if (arglist.v.list[0].v.num >= 2) {
-		dd = *arglist.v.list[2].v.fnum;
-		d = atan2(d, dd);
-	} else
-		d = atan(d);
-	free_var(arglist);
-	if (errno == EDOM)
-		return make_error_pack(E_INVARG);
-	else if (errno != 0 || !IS_REAL(d))
-		return make_error_pack(E_FLOAT);
-	else
-		return make_var_pack(new_float(d));
+    d = *arglist.v.list[1].v.fnum;
+    errno = 0;
+    if (arglist.v.list[0].v.num >= 2) {
+        dd = *arglist.v.list[2].v.fnum;
+        d = atan2(d, dd);
+    } else
+        d = atan(d);
+    free_var(arglist);
+    if (errno == EDOM)
+        return make_error_pack(E_INVARG);
+    else if (errno != 0 || !IS_REAL(d))
+        return make_error_pack(E_FLOAT);
+    else
+        return make_var_pack(new_float(d));
 }
 
-static          package
-bf_time(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
-{
-	Var             r;
-	r.type = TYPE_INT;
-	r.v.num = time(0);
-	free_var(arglist);
-	return make_var_pack(r);
+static package bf_time(Var arglist, [[maybe_unused]] Byte next,
+                       [[maybe_unused]] void *vdata,
+                       [[maybe_unused]] Objid progr) {
+    Var r;
+    r.type = TYPE_INT;
+    r.v.num = time(0);
+    free_var(arglist);
+    return make_var_pack(r);
 }
 
-static          package
-bf_ctime(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
-{
-	Var             r;
-	time_t          c;
-	char            buffer[50];
+static package bf_ctime(Var arglist, [[maybe_unused]] Byte next,
+                        [[maybe_unused]] void *vdata,
+                        [[maybe_unused]] Objid progr) {
+    Var r;
+    time_t c;
+    char buffer[50];
 
-	if (arglist.v.list[0].v.num == 1) {
-		c = arglist.v.list[1].v.num;
-	} else {
-		c = time(0);
-	}
+    if (arglist.v.list[0].v.num == 1) {
+        c = arglist.v.list[1].v.num;
+    } else {
+        c = time(0);
+    }
 
-	{			/* Format the time, including a timezone name */
+    { /* Format the time, including a timezone name */
 #if HAVE_STRFTIME
-		strftime(buffer, 50, "%a %b %d %H:%M:%S %Y %Z", localtime(&c));
+        strftime(buffer, 50, "%a %b %d %H:%M:%S %Y %Z", localtime(&c));
 #else
 #if HAVE_TM_ZONE
-		struct tm      *t = localtime(&c);
-		char           *tzname = t->tm_zone;
+        struct tm *t = localtime(&c);
+        char *tzname = t->tm_zone;
 #else
 #if !HAVE_TZNAME
-		const char     *tzname = "XXX";
+        const char *tzname = "XXX";
 #endif
 #endif
 
-		strcpy(buffer, ctime(&c));
-		buffer[24] = ' ';
-		strncpy(buffer + 25, tzname, 3);
-		buffer[28] = '\0';
+        strcpy(buffer, ctime(&c));
+        buffer[24] = ' ';
+        strncpy(buffer + 25, tzname, 3);
+        buffer[28] = '\0';
 #endif
-	}
+    }
 
-	if (buffer[8] == '0')
-		buffer[8] = ' ';
-	r.type = TYPE_STR;
-	r.v.str = str_dup(buffer);
+    if (buffer[8] == '0')
+        buffer[8] = ' ';
+    r.type = TYPE_STR;
+    r.v.str = str_dup(buffer);
 
-	free_var(arglist);
-	return make_var_pack(r);
+    free_var(arglist);
+    return make_var_pack(r);
 }
 
-static          package
-bf_random(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
-{
-	int             nargs = arglist.v.list[0].v.num;
-	int             num = (nargs >= 1 ? arglist.v.list[1].v.num : 1);
+static package bf_random(Var arglist, [[maybe_unused]] Byte next,
+                         [[maybe_unused]] void *vdata,
+                         [[maybe_unused]] Objid progr) {
+    int nargs = arglist.v.list[0].v.num;
+    int num = (nargs >= 1 ? arglist.v.list[1].v.num : 1);
 
-	free_var(arglist);
+    free_var(arglist);
 
-	if (num <= 0)
-		return make_error_pack(E_INVARG);
-	else {
-		Var             r;
+    if (num <= 0)
+        return make_error_pack(E_INVARG);
+    else {
+        Var r;
 
-		r.type = TYPE_INT;
-		if (nargs == 0)
-			r.v.num = RANDOM();
-		else
-			r.v.num = RANDOM() % num + 1;
-		return make_var_pack(r);
-	}
+        r.type = TYPE_INT;
+        if (nargs == 0)
+            r.v.num = RANDOM();
+        else
+            r.v.num = RANDOM() % num + 1;
+        return make_var_pack(r);
+    }
 }
 
-static          package
-bf_floatstr(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
-{				/* (float, precision [, sci-notation]) */
-	double          d = *arglist.v.list[1].v.fnum;
-	int             prec = arglist.v.list[2].v.num;
-	int             use_sci = (arglist.v.list[0].v.num >= 3
-				   && is_true(arglist.v.list[3]));
-	char            fmt[10], output[500];	/* enough for IEEE double */
-	Var             r;
+static package bf_floatstr(
+    Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata,
+    [[maybe_unused]] Objid progr) { /* (float, precision [, sci-notation]) */
+    double d = *arglist.v.list[1].v.fnum;
+    int prec = arglist.v.list[2].v.num;
+    int use_sci = (arglist.v.list[0].v.num >= 3 && is_true(arglist.v.list[3]));
+    char fmt[10], output[500]; /* enough for IEEE double */
+    Var r;
 
-	free_var(arglist);
-	if (prec > DBL_DIG + 4)
-		prec = DBL_DIG + 4;
-	else if (prec < 0)
-		return make_error_pack(E_INVARG);
-	sprintf(fmt, "%%.%d%c", prec, use_sci ? 'e' : 'f');
-	sprintf(output, fmt, d);
+    free_var(arglist);
+    if (prec > DBL_DIG + 4)
+        prec = DBL_DIG + 4;
+    else if (prec < 0)
+        return make_error_pack(E_INVARG);
+    sprintf(fmt, "%%.%d%c", prec, use_sci ? 'e' : 'f');
+    sprintf(output, fmt, d);
 
-	r.type = TYPE_STR;
-	r.v.str = str_dup(output);
+    r.type = TYPE_STR;
+    r.v.str = str_dup(output);
 
-	return make_var_pack(r);
+    return make_var_pack(r);
 }
 
-Var             zero;		/* useful constant */
+Var zero; /* useful constant */
 
-void
-register_numbers(void)
-{
-	zero.type = TYPE_INT;
-	zero.v.num = 0;
-	register_function("toint", 1, 1, bf_toint, TYPE_ANY);
-	register_function("tonum", 1, 1, bf_toint, TYPE_ANY);
-	register_function("tofloat", 1, 1, bf_tofloat, TYPE_ANY);
-	register_function("min", 1, -1, bf_min, TYPE_NUMERIC);
-	register_function("max", 1, -1, bf_max, TYPE_NUMERIC);
-	register_function("abs", 1, 1, bf_abs, TYPE_NUMERIC);
-	register_function("random", 0, 1, bf_random, TYPE_INT);
-	register_function("time", 0, 0, bf_time);
-	register_function("ctime", 0, 1, bf_ctime, TYPE_INT);
-	register_function("floatstr", 2, 3, bf_floatstr,
-			  TYPE_FLOAT, TYPE_INT, TYPE_ANY);
+void register_numbers(void) {
+    zero.type = TYPE_INT;
+    zero.v.num = 0;
+    register_function("toint", 1, 1, bf_toint, TYPE_ANY);
+    register_function("tonum", 1, 1, bf_toint, TYPE_ANY);
+    register_function("tofloat", 1, 1, bf_tofloat, TYPE_ANY);
+    register_function("min", 1, -1, bf_min, TYPE_NUMERIC);
+    register_function("max", 1, -1, bf_max, TYPE_NUMERIC);
+    register_function("abs", 1, 1, bf_abs, TYPE_NUMERIC);
+    register_function("random", 0, 1, bf_random, TYPE_INT);
+    register_function("time", 0, 0, bf_time);
+    register_function("ctime", 0, 1, bf_ctime, TYPE_INT);
+    register_function("floatstr", 2, 3, bf_floatstr, TYPE_FLOAT, TYPE_INT,
+                      TYPE_ANY);
 
-	register_function("sqrt", 1, 1, bf_sqrt, TYPE_FLOAT);
-	register_function("sin", 1, 1, bf_sin, TYPE_FLOAT);
-	register_function("cos", 1, 1, bf_cos, TYPE_FLOAT);
-	register_function("tan", 1, 1, bf_tan, TYPE_FLOAT);
-	register_function("asin", 1, 1, bf_asin, TYPE_FLOAT);
-	register_function("acos", 1, 1, bf_acos, TYPE_FLOAT);
-	register_function("atan", 1, 2, bf_atan, TYPE_FLOAT, TYPE_FLOAT);
-	register_function("sinh", 1, 1, bf_sinh, TYPE_FLOAT);
-	register_function("cosh", 1, 1, bf_cosh, TYPE_FLOAT);
-	register_function("tanh", 1, 1, bf_tanh, TYPE_FLOAT);
-	register_function("exp", 1, 1, bf_exp, TYPE_FLOAT);
-	register_function("log", 1, 1, bf_log, TYPE_FLOAT);
-	register_function("log10", 1, 1, bf_log10, TYPE_FLOAT);
-	register_function("ceil", 1, 1, bf_ceil, TYPE_FLOAT);
-	register_function("floor", 1, 1, bf_floor, TYPE_FLOAT);
-	register_function("trunc", 1, 1, bf_trunc, TYPE_FLOAT);
+    register_function("sqrt", 1, 1, bf_sqrt, TYPE_FLOAT);
+    register_function("sin", 1, 1, bf_sin, TYPE_FLOAT);
+    register_function("cos", 1, 1, bf_cos, TYPE_FLOAT);
+    register_function("tan", 1, 1, bf_tan, TYPE_FLOAT);
+    register_function("asin", 1, 1, bf_asin, TYPE_FLOAT);
+    register_function("acos", 1, 1, bf_acos, TYPE_FLOAT);
+    register_function("atan", 1, 2, bf_atan, TYPE_FLOAT, TYPE_FLOAT);
+    register_function("sinh", 1, 1, bf_sinh, TYPE_FLOAT);
+    register_function("cosh", 1, 1, bf_cosh, TYPE_FLOAT);
+    register_function("tanh", 1, 1, bf_tanh, TYPE_FLOAT);
+    register_function("exp", 1, 1, bf_exp, TYPE_FLOAT);
+    register_function("log", 1, 1, bf_log, TYPE_FLOAT);
+    register_function("log10", 1, 1, bf_log10, TYPE_FLOAT);
+    register_function("ceil", 1, 1, bf_ceil, TYPE_FLOAT);
+    register_function("floor", 1, 1, bf_floor, TYPE_FLOAT);
+    register_function("trunc", 1, 1, bf_trunc, TYPE_FLOAT);
 }

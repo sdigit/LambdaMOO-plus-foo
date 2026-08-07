@@ -65,738 +65,679 @@
 
 /*********** Prepositions ***********/
 
-#define MAXPPHRASE 3		/* max. number of words in a prepositional
-				 * phrase */
+#define MAXPPHRASE                                                             \
+    3 /* max. number of words in a prepositional                               \
+       * phrase */
 
 /*
  * NOTE: New prepositional phrases should only be added to this list at the
  * end, never in the middle, and no entries should every be removed from this
  * list; the list indices are stored raw in the DB file.
  */
-static const char *prep_list[] =
-{
-	"with/using",
-	"at/to",
-	"in front of",
-	"in/inside/into",
-	"on top of/on/onto/upon",
-	"out of/from inside/from",
-	"over",
-	"through",
-	"under/underneath/beneath",
-	"behind",
-	"beside",
-	"for/about",
-	"is",
-	"as",
-	"off/off of",
+static const char *prep_list[] = {
+    "with/using",
+    "at/to",
+    "in front of",
+    "in/inside/into",
+    "on top of/on/onto/upon",
+    "out of/from inside/from",
+    "over",
+    "through",
+    "under/underneath/beneath",
+    "behind",
+    "beside",
+    "for/about",
+    "is",
+    "as",
+    "off/off of",
 };
 
 #define NPREPS Arraysize(prep_list)
 
 typedef struct pt_entry {
-	int             nwords;
-	char           *words[MAXPPHRASE];
-	struct pt_entry *next;
-}               pt_entry;
+    int nwords;
+    char *words[MAXPPHRASE];
+    struct pt_entry *next;
+} pt_entry;
 
 struct pt_entry *prep_table[NPREPS];
 
-void
-dbpriv_build_prep_table(void)
-{
-	int             i, j;
-	int             nwords;
-	char          **words;
-	char            cprep[100];
-	const char     *p;
-	char           *t;
-	pt_entry       *current_alias, **prev;
+void dbpriv_build_prep_table(void) {
+    int i, j;
+    int nwords;
+    char **words;
+    char cprep[100];
+    const char *p;
+    char *t;
+    pt_entry *current_alias, **prev;
 
-	for (i = 0; i < (int) NPREPS; i++) {
-		p = prep_list[i];
-		prev = &prep_table[i];
-		while (*p) {
-			t = cprep;
-			if (*p == '/')
-				p++;
-			while (*p && *p != '/')
-				*t++ = *p++;
-			*t = '\0';
+    for (i = 0; i < (int)NPREPS; i++) {
+        p = prep_list[i];
+        prev = &prep_table[i];
+        while (*p) {
+            t = cprep;
+            if (*p == '/')
+                p++;
+            while (*p && *p != '/')
+                *t++ = *p++;
+            *t = '\0';
 
-			/*
-			 * This call to PARSE_INTO_WORDS() is the reason that
-			 * this function is called from DB_INITIALIZE()
-			 * instead of from the first call to DB_FIND_PREP(),
-			 * below.  You see, PARSE_INTO_WORDS() isn't
-			 * re-entrant, and DB_FIND_PREP() is called from code
-			 * that's still using the results of a previous call
-			 * to PARSE_INTO_WORDS()...
-			 */
-			words = parse_into_words(cprep, &nwords);
+            /*
+             * This call to PARSE_INTO_WORDS() is the reason that
+             * this function is called from DB_INITIALIZE()
+             * instead of from the first call to DB_FIND_PREP(),
+             * below.  You see, PARSE_INTO_WORDS() isn't
+             * re-entrant, and DB_FIND_PREP() is called from code
+             * that's still using the results of a previous call
+             * to PARSE_INTO_WORDS()...
+             */
+            words = parse_into_words(cprep, &nwords);
 
-			current_alias = mymalloc(sizeof(struct pt_entry), M_PREP);
-			current_alias->nwords = nwords;
-			current_alias->next = 0;
-			for (j = 0; j < nwords; j++)
-				current_alias->words[j] = str_dup(words[j]);
-			*prev = current_alias;
-			prev = &current_alias->next;
-		}
-	}
+            current_alias = mymalloc(sizeof(struct pt_entry), M_PREP);
+            current_alias->nwords = nwords;
+            current_alias->next = 0;
+            for (j = 0; j < nwords; j++)
+                current_alias->words[j] = str_dup(words[j]);
+            *prev = current_alias;
+            prev = &current_alias->next;
+        }
+    }
 }
 
-db_prep_spec
-db_find_prep(int argc, char *argv[], int *first, int *last)
-{
-	pt_entry       *alias;
-	int             i, j, k;
-	int             exact_match = (first == 0 || last == 0);
+db_prep_spec db_find_prep(int argc, char *argv[], int *first, int *last) {
+    pt_entry *alias;
+    int i, j, k;
+    int exact_match = (first == 0 || last == 0);
 
-	for (i = 0; i < argc; i++) {
-		for (j = 0; j < (int) NPREPS; j++) {
-			for (alias = prep_table[j]; alias; alias = alias->next) {
-				if (i + alias->nwords <= argc) {
-					for (k = 0; k < alias->nwords; k++) {
-						if (mystrcasecmp(argv[i + k], alias->words[k]))
-							break;
-					}
-					if (k == alias->nwords
-					&& (!exact_match || i + k == argc)) {
-						if (!exact_match) {
-							*first = i;
-							*last = i + alias->nwords - 1;
-						}
-						return (db_prep_spec) j;
-					}
-				}
-			}
-		}
-		if (exact_match)
-			break;
-	}
-	return PREP_NONE;
+    for (i = 0; i < argc; i++) {
+        for (j = 0; j < (int)NPREPS; j++) {
+            for (alias = prep_table[j]; alias; alias = alias->next) {
+                if (i + alias->nwords <= argc) {
+                    for (k = 0; k < alias->nwords; k++) {
+                        if (mystrcasecmp(argv[i + k], alias->words[k]))
+                            break;
+                    }
+                    if (k == alias->nwords && (!exact_match || i + k == argc)) {
+                        if (!exact_match) {
+                            *first = i;
+                            *last = i + alias->nwords - 1;
+                        }
+                        return (db_prep_spec)j;
+                    }
+                }
+            }
+        }
+        if (exact_match)
+            break;
+    }
+    return PREP_NONE;
 }
 
-db_prep_spec
-db_match_prep(const char *prepname)
-{
-	db_prep_spec    prep;
-	int             argc;
-	char           *ptr;
-	char          **argv;
-	long           first;
+db_prep_spec db_match_prep(const char *prepname) {
+    db_prep_spec prep;
+    int argc;
+    char *ptr;
+    char **argv;
+    long first;
 
     char *copy = str_dup(prepname);
     char *s = copy;
 
     first = (long)s[0];
-    if ((char)first == '#' && (unsigned long)(s - copy) < (NPREPS-1)) {
+    if ((char)first == '#' && (unsigned long)(s - copy) < (NPREPS - 1)) {
         s++;
         first = (long)s[0];
     }
-	prep = strtol(s, &ptr, 10);
-	if (*ptr == '\0') {
-		free_str(copy);
-		if (!isdigit((int)first) || prep >= (db_prep_spec) NPREPS)
-			return PREP_NONE;
-		else
-			return prep;
-	}
-	if ((ptr = strchr(s, '/')) != NULL) {
-		*ptr = '\0';
-	}
-	argv = parse_into_words(s, &argc);
-	prep = db_find_prep(argc, argv, 0, 0);
-	free_str(copy);
-	return prep;
+    prep = strtol(s, &ptr, 10);
+    if (*ptr == '\0') {
+        free_str(copy);
+        if (!isdigit((int)first) || prep >= (db_prep_spec)NPREPS)
+            return PREP_NONE;
+        else
+            return prep;
+    }
+    if ((ptr = strchr(s, '/')) != NULL) {
+        *ptr = '\0';
+    }
+    argv = parse_into_words(s, &argc);
+    prep = db_find_prep(argc, argv, 0, 0);
+    free_str(copy);
+    return prep;
 }
 
-const char     *
-db_unparse_prep(db_prep_spec prep)
-{
-	if (prep == PREP_NONE)
-		return "none";
-	else if (prep == PREP_ANY)
-		return "any";
-	else
-		return prep_list[prep];
+const char *db_unparse_prep(db_prep_spec prep) {
+    if (prep == PREP_NONE)
+        return "none";
+    else if (prep == PREP_ANY)
+        return "any";
+    else
+        return prep_list[prep];
 }
 
 /*********** Verbs ***********/
 
-#define DOBJSHIFT  4
-#define IOBJSHIFT  6
-#define OBJMASK    0x3
+#define DOBJSHIFT 4
+#define IOBJSHIFT 6
+#define OBJMASK 0x3
 /*** -o_Verbs Patch ***/
-#define PERMMASK   0x70F
+#define PERMMASK 0x70F
 /*** end -o_Verbs Patch ***/
 
-int
-db_add_verb(Objid oid, const char *vnames, Objid owner, unsigned flags,
-	    db_arg_spec dobj, db_prep_spec prep, db_arg_spec iobj)
-{
-	Object         *o = dbpriv_find_object(oid);
-	Verbdef        *v, *newv;
-	int             count;
+int db_add_verb(Objid oid, const char *vnames, Objid owner, unsigned flags,
+                db_arg_spec dobj, db_prep_spec prep, db_arg_spec iobj) {
+    Object *o = dbpriv_find_object(oid);
+    Verbdef *v, *newv;
+    int count;
 
-	db_priv_affected_callable_verb_lookup();
+    db_priv_affected_callable_verb_lookup();
 
-	newv = mymalloc(sizeof(Verbdef), M_VERBDEF);
-	newv->name = vnames;
-	newv->owner = owner;
-	newv->perms = flags | (dobj << DOBJSHIFT) | (iobj << IOBJSHIFT);
-	newv->prep = prep;
-	newv->next = 0;
-	newv->program = 0;
-	if (o->verbdefs) {
-		for (v = o->verbdefs, count = 2; v->next; v = v->next, ++count);
-		v->next = newv;
-	} else {
-		o->verbdefs = newv;
-		count = 1;
-	}
-	return count;
+    newv = mymalloc(sizeof(Verbdef), M_VERBDEF);
+    newv->name = vnames;
+    newv->owner = owner;
+    newv->perms = flags | (dobj << DOBJSHIFT) | (iobj << IOBJSHIFT);
+    newv->prep = prep;
+    newv->next = 0;
+    newv->program = 0;
+    if (o->verbdefs) {
+        for (v = o->verbdefs, count = 2; v->next; v = v->next, ++count)
+            ;
+        v->next = newv;
+    } else {
+        o->verbdefs = newv;
+        count = 1;
+    }
+    return count;
 }
 
-static Verbdef *
-find_verbdef_by_name(Object * o, const char *vname, int check_x_bit)
-{
-	Verbdef        *v;
+static Verbdef *find_verbdef_by_name(Object *o, const char *vname,
+                                     int check_x_bit) {
+    Verbdef *v;
 
-	for (v = o->verbdefs; v; v = v->next)
-		if (verbcasecmp(v->name, vname)
-		    && (!check_x_bit || (v->perms & VF_EXEC)))
-			break;
+    for (v = o->verbdefs; v; v = v->next)
+        if (verbcasecmp(v->name, vname) &&
+            (!check_x_bit || (v->perms & VF_EXEC)))
+            break;
 
-	return v;
+    return v;
 }
 
-int
-db_count_verbs(Objid oid)
-{
-	int             count = 0;
-	Object         *o = dbpriv_find_object(oid);
-	Verbdef        *v;
+int db_count_verbs(Objid oid) {
+    int count = 0;
+    Object *o = dbpriv_find_object(oid);
+    Verbdef *v;
 
-	for (v = o->verbdefs; v; v = v->next)
-		count++;
+    for (v = o->verbdefs; v; v = v->next)
+        count++;
 
-	return count;
+    return count;
 }
 
-int
-db_for_all_verbs(Objid oid,
-		 int (*func) (void *data, const char *vname),
-		 void *data)
-{
-	Object         *o = dbpriv_find_object(oid);
-	Verbdef        *v;
+int db_for_all_verbs(Objid oid, int (*func)(void *data, const char *vname),
+                     void *data) {
+    Object *o = dbpriv_find_object(oid);
+    Verbdef *v;
 
-	for (v = o->verbdefs; v; v = v->next)
-		if ((*func) (data, v->name))
-			return 1;
+    for (v = o->verbdefs; v; v = v->next)
+        if ((*func)(data, v->name))
+            return 1;
 
-	return 0;
+    return 0;
 }
 
-typedef struct {		/* Non-null db_verb_handles point to these */
-	Objid           definer;
-	Verbdef        *verbdef;
-}               handle;
+typedef struct { /* Non-null db_verb_handles point to these */
+    Objid definer;
+    Verbdef *verbdef;
+} handle;
 
-void
-db_delete_verb(db_verb_handle vh)
-{
-	handle         *h = (handle *) vh.ptr;
-	Objid           oid = h->definer;
-	Verbdef        *v = h->verbdef;
-	Object         *o = dbpriv_find_object(oid);
-	Verbdef        *vv;
+void db_delete_verb(db_verb_handle vh) {
+    handle *h = (handle *)vh.ptr;
+    Objid oid = h->definer;
+    Verbdef *v = h->verbdef;
+    Object *o = dbpriv_find_object(oid);
+    Verbdef *vv;
 
-	db_priv_affected_callable_verb_lookup();
+    db_priv_affected_callable_verb_lookup();
 
-	vv = o->verbdefs;
-	if (vv == v)
-		o->verbdefs = v->next;
-	else {
-		while (vv->next != v)
-			vv = vv->next;
-		vv->next = v->next;
-	}
+    vv = o->verbdefs;
+    if (vv == v)
+        o->verbdefs = v->next;
+    else {
+        while (vv->next != v)
+            vv = vv->next;
+        vv->next = v->next;
+    }
 
-	if (v->program)
-		free_program(v->program);
-	if (v->name)
-		free_str(v->name);
-	myfree(v, M_VERBDEF);
+    if (v->program)
+        free_program(v->program);
+    if (v->name)
+        free_str(v->name);
+    myfree(v, M_VERBDEF);
 }
 
-db_verb_handle
-db_find_command_verb(Objid oid, const char *verb,
-		     db_arg_spec dobj, unsigned prep, db_arg_spec iobj)
-{
-	Object         *o;
-	Verbdef        *v;
-	static handle   h;
-	db_verb_handle  vh;
+db_verb_handle db_find_command_verb(Objid oid, const char *verb,
+                                    db_arg_spec dobj, unsigned prep,
+                                    db_arg_spec iobj) {
+    Object *o;
+    Verbdef *v;
+    static handle h;
+    db_verb_handle vh;
 
-	for (o = dbpriv_find_object(oid); o; o = dbpriv_find_object(o->parent))
-		for (v = o->verbdefs; v; v = v->next) {
-			db_arg_spec     vdobj = (v->perms >> DOBJSHIFT) & OBJMASK;
-			db_arg_spec     viobj = (v->perms >> IOBJSHIFT) & OBJMASK;
+    for (o = dbpriv_find_object(oid); o; o = dbpriv_find_object(o->parent))
+        for (v = o->verbdefs; v; v = v->next) {
+            db_arg_spec vdobj = (v->perms >> DOBJSHIFT) & OBJMASK;
+            db_arg_spec viobj = (v->perms >> IOBJSHIFT) & OBJMASK;
 
-			if (verbcasecmp(v->name, verb)
-			    && (vdobj == ASPEC_ANY || vdobj == dobj)
-			    && (v->prep == PREP_ANY || (unsigned) v->prep == prep)
-			    && (viobj == ASPEC_ANY || viobj == iobj)) {
-				h.definer = o->id;
-				h.verbdef = v;
-				vh.ptr = &h;
+            if (verbcasecmp(v->name, verb) &&
+                (vdobj == ASPEC_ANY || vdobj == dobj) &&
+                (v->prep == PREP_ANY || (unsigned)v->prep == prep) &&
+                (viobj == ASPEC_ANY || viobj == iobj)) {
+                h.definer = o->id;
+                h.verbdef = v;
+                vh.ptr = &h;
 
-				return vh;
-			}
-		}
+                return vh;
+            }
+        }
 
-	vh.ptr = 0;
+    vh.ptr = 0;
 
-	return vh;
+    return vh;
 }
 
 #ifdef VERB_CACHE
-int             db_verb_generation = 0;
+int db_verb_generation = 0;
 
-int             verbcache_hit = 0;
-int             verbcache_neg_hit = 0;
-int             verbcache_miss = 0;
+int verbcache_hit = 0;
+int verbcache_neg_hit = 0;
+int verbcache_miss = 0;
 
 typedef struct vc_entry vc_entry;
 
 struct vc_entry {
-	unsigned int    hash;
+    unsigned int hash;
 #ifdef RONG
-	int             generation;
+    int generation;
 #endif
-	Objid           oid_key;/* Note that we proceed up the parent tree
-				 * until we hit an object with verbs on it */
-	char           *verbname;
-	handle          h;
-	struct vc_entry *next;
+    Objid oid_key; /* Note that we proceed up the parent tree
+                    * until we hit an object with verbs on it */
+    char *verbname;
+    handle h;
+    struct vc_entry *next;
 };
 
 static vc_entry **vc_table = NULL;
-static int      vc_size = 0;
+static int vc_size = 0;
 
 #define DEFAULT_VC_SIZE 7507
 
-void
-db_priv_affected_callable_verb_lookup(void)
-{
-	int             i;
-	vc_entry       *vc, *vc_next;
+void db_priv_affected_callable_verb_lookup(void) {
+    int i;
+    vc_entry *vc, *vc_next;
 
-	if (vc_table == NULL)
-		return;
+    if (vc_table == NULL)
+        return;
 
-	db_verb_generation++;
+    db_verb_generation++;
 
-	for (i = 0; i < vc_size; i++) {
-		vc = vc_table[i];
-		while (vc) {
-			vc_next = vc->next;
-			free_str(vc->verbname);
-			myfree(vc, M_VC_ENTRY);
-			vc = vc_next;
-		}
-		vc_table[i] = NULL;
-	}
+    for (i = 0; i < vc_size; i++) {
+        vc = vc_table[i];
+        while (vc) {
+            vc_next = vc->next;
+            free_str(vc->verbname);
+            myfree(vc, M_VC_ENTRY);
+            vc = vc_next;
+        }
+        vc_table[i] = NULL;
+    }
 }
 
-static void
-make_vc_table(int size)
-{
-	int             i;
+static void make_vc_table(int size) {
+    int i;
 
-	vc_size = size;
-	vc_table = mymalloc(size * sizeof(vc_entry *), M_VC_TABLE);
-	for (i = 0; i < size; i++) {
-		vc_table[i] = NULL;
-	}
+    vc_size = size;
+    vc_table = mymalloc(size * sizeof(vc_entry *), M_VC_TABLE);
+    for (i = 0; i < size; i++) {
+        vc_table[i] = NULL;
+    }
 }
 
 #define VC_CACHE_STATS_MAX 16
 
-Var
-db_verb_cache_stats(void)
-{
-	int             i, depth, histogram[VC_CACHE_STATS_MAX + 1];
-	vc_entry       *vc;
-	Var             v, vv;
+Var db_verb_cache_stats(void) {
+    int i, depth, histogram[VC_CACHE_STATS_MAX + 1];
+    vc_entry *vc;
+    Var v, vv;
 
-	for (i = 0; i < VC_CACHE_STATS_MAX + 1; i++) {
-		histogram[i] = 0;
-	}
+    for (i = 0; i < VC_CACHE_STATS_MAX + 1; i++) {
+        histogram[i] = 0;
+    }
 
-	for (i = 0; i < vc_size; i++) {
-		depth = 0;
-		for (vc = vc_table[i]; vc; vc = vc->next)
-			depth++;
-		if (depth > VC_CACHE_STATS_MAX)
-			depth = VC_CACHE_STATS_MAX;
-		histogram[depth]++;
-	}
+    for (i = 0; i < vc_size; i++) {
+        depth = 0;
+        for (vc = vc_table[i]; vc; vc = vc->next)
+            depth++;
+        if (depth > VC_CACHE_STATS_MAX)
+            depth = VC_CACHE_STATS_MAX;
+        histogram[depth]++;
+    }
 
-	v = new_list(5);
-	v.v.list[1].type = TYPE_INT;
-	v.v.list[1].v.num = verbcache_hit;
-	v.v.list[2].type = TYPE_INT;
-	v.v.list[2].v.num = verbcache_neg_hit;
-	v.v.list[3].type = TYPE_INT;
-	v.v.list[3].v.num = verbcache_miss;
-	v.v.list[4].type = TYPE_INT;
-	v.v.list[4].v.num = db_verb_generation;
-	vv = (v.v.list[5] = new_list(VC_CACHE_STATS_MAX + 1));
-	for (i = 0; i < VC_CACHE_STATS_MAX + 1; i++) {
-		vv.v.list[i + 1].type = TYPE_INT;
-		vv.v.list[i + 1].v.num = histogram[i];
-	}
-	return v;
+    v = new_list(5);
+    v.v.list[1].type = TYPE_INT;
+    v.v.list[1].v.num = verbcache_hit;
+    v.v.list[2].type = TYPE_INT;
+    v.v.list[2].v.num = verbcache_neg_hit;
+    v.v.list[3].type = TYPE_INT;
+    v.v.list[3].v.num = verbcache_miss;
+    v.v.list[4].type = TYPE_INT;
+    v.v.list[4].v.num = db_verb_generation;
+    vv = (v.v.list[5] = new_list(VC_CACHE_STATS_MAX + 1));
+    for (i = 0; i < VC_CACHE_STATS_MAX + 1; i++) {
+        vv.v.list[i + 1].type = TYPE_INT;
+        vv.v.list[i + 1].v.num = histogram[i];
+    }
+    return v;
 }
 
-void
-db_log_cache_stats(void)
-{
-	int             i, depth, histogram[VC_CACHE_STATS_MAX + 1];
-	vc_entry       *vc;
+void db_log_cache_stats(void) {
+    int i, depth, histogram[VC_CACHE_STATS_MAX + 1];
+    vc_entry *vc;
 
-	for (i = 0; i < VC_CACHE_STATS_MAX + 1; i++) {
-		histogram[i] = 0;
-	}
+    for (i = 0; i < VC_CACHE_STATS_MAX + 1; i++) {
+        histogram[i] = 0;
+    }
 
-	for (i = 0; i < vc_size; i++) {
-		depth = 0;
-		for (vc = vc_table[i]; vc; vc = vc->next)
-			depth++;
-		if (depth > VC_CACHE_STATS_MAX)
-			depth = VC_CACHE_STATS_MAX;
-		histogram[depth]++;
-	}
+    for (i = 0; i < vc_size; i++) {
+        depth = 0;
+        for (vc = vc_table[i]; vc; vc = vc->next)
+            depth++;
+        if (depth > VC_CACHE_STATS_MAX)
+            depth = VC_CACHE_STATS_MAX;
+        histogram[depth]++;
+    }
 
-	oklog("Verb cache stat summary: %d hits, %d misses, %d generations\n",
-	      verbcache_hit, verbcache_miss, db_verb_generation);
-	oklog("Depth   Count\n");
-	for (i = 0; i < VC_CACHE_STATS_MAX + 1; i++)
-		oklog("%-5d   %-5d\n", i, histogram[i]);
-	oklog("---\n");
+    oklog("Verb cache stat summary: %d hits, %d misses, %d generations\n",
+          verbcache_hit, verbcache_miss, db_verb_generation);
+    oklog("Depth   Count\n");
+    for (i = 0; i < VC_CACHE_STATS_MAX + 1; i++)
+        oklog("%-5d   %-5d\n", i, histogram[i]);
+    oklog("---\n");
 }
 
 #endif
 
-db_verb_handle
-db_find_callable_verb(Objid oid, const char *verb)
-{
-	Object         *o;
-	Verbdef        *v;
+db_verb_handle db_find_callable_verb(Objid oid, const char *verb) {
+    Object *o;
+    Verbdef *v;
 #ifdef VERB_CACHE
-	vc_entry       *new_vc;
+    vc_entry *new_vc;
 #else
-	static handle   h;
+    static handle h;
 #endif
-	db_verb_handle  vh;
+    db_verb_handle vh;
 
 #ifdef VERB_CACHE
-	unsigned int    hash, bucket;
-	Objid           first_parent_with_verbs = oid;
-	vc_entry       *vc;
+    unsigned int hash, bucket;
+    Objid first_parent_with_verbs = oid;
+    vc_entry *vc;
 
-	if (vc_table == NULL)
-		make_vc_table(DEFAULT_VC_SIZE);
+    if (vc_table == NULL)
+        make_vc_table(DEFAULT_VC_SIZE);
 
-	for (o = dbpriv_find_object(oid); o; o = dbpriv_find_object(o->parent)) {
-		if (o->verbdefs != NULL)
-			break;
-	}
+    for (o = dbpriv_find_object(oid); o; o = dbpriv_find_object(o->parent)) {
+        if (o->verbdefs != NULL)
+            break;
+    }
 
-	if (o) {
-		first_parent_with_verbs = o->id;
-	} else {
-		first_parent_with_verbs = NOTHING;
-	}
+    if (o) {
+        first_parent_with_verbs = o->id;
+    } else {
+        first_parent_with_verbs = NOTHING;
+    }
 
-	hash = str_hash(verb) ^ (~first_parent_with_verbs);	/* ewww, but who cares */
-	bucket = hash % vc_size;
+    hash =
+        str_hash(verb) ^ (~first_parent_with_verbs); /* ewww, but who cares */
+    bucket = hash % vc_size;
 
-	for (vc = vc_table[bucket]; vc; vc = vc->next) {
-		if (hash == vc->hash
-		    && first_parent_with_verbs == vc->oid_key
-		    && !mystrcasecmp(verb, vc->verbname)) {
-			/* we haaave a winnaaah */
-			if (vc->h.verbdef) {
-				verbcache_hit++;
-				vh.ptr = &vc->h;
-			} else {
-				verbcache_neg_hit++;
-				vh.ptr = 0;
-			}
-			return vh;
-		}
-	}
+    for (vc = vc_table[bucket]; vc; vc = vc->next) {
+        if (hash == vc->hash && first_parent_with_verbs == vc->oid_key &&
+            !mystrcasecmp(verb, vc->verbname)) {
+            /* we haaave a winnaaah */
+            if (vc->h.verbdef) {
+                verbcache_hit++;
+                vh.ptr = &vc->h;
+            } else {
+                verbcache_neg_hit++;
+                vh.ptr = 0;
+            }
+            return vh;
+        }
+    }
 
-	/* A swing and a miss. */
-	verbcache_miss++;
+    /* A swing and a miss. */
+    verbcache_miss++;
 #else
-	o = dbpriv_find_object(oid);
+    o = dbpriv_find_object(oid);
 #endif
 
 #ifdef VERB_CACHE
-	/*
-         * Add the entry to the verbcache whether we find it or not.  This means
-         * we do "negative caching", keeping track of failed lookups so that
-         * repeated failures hit the cache instead of going through a lookup.
-         */
-	new_vc = mymalloc(sizeof(vc_entry), M_VC_ENTRY);
+    /*
+     * Add the entry to the verbcache whether we find it or not.  This means
+     * we do "negative caching", keeping track of failed lookups so that
+     * repeated failures hit the cache instead of going through a lookup.
+     */
+    new_vc = mymalloc(sizeof(vc_entry), M_VC_ENTRY);
 
-	new_vc->hash = hash;
-	new_vc->oid_key = first_parent_with_verbs;
-	new_vc->verbname = str_dup(verb);
-	new_vc->h.verbdef = NULL;
-	new_vc->next = vc_table[bucket];
-	vc_table[bucket] = new_vc;
+    new_vc->hash = hash;
+    new_vc->oid_key = first_parent_with_verbs;
+    new_vc->verbname = str_dup(verb);
+    new_vc->h.verbdef = NULL;
+    new_vc->next = vc_table[bucket];
+    vc_table[bucket] = new_vc;
 #endif
 
-	for ( /* from above */ ; o; o = dbpriv_find_object(o->parent))
-		if ((v = find_verbdef_by_name(o, verb, 1)) != 0) {
+    for (/* from above */; o; o = dbpriv_find_object(o->parent))
+        if ((v = find_verbdef_by_name(o, verb, 1)) != 0) {
 #ifdef VERB_CACHE
-			new_vc->h.definer = o->id;
-			new_vc->h.verbdef = v;
-			vh.ptr = &new_vc->h;
+            new_vc->h.definer = o->id;
+            new_vc->h.verbdef = v;
+            vh.ptr = &new_vc->h;
 #else
-			h.definer = o->id;
-			h.verbdef = v;
-			vh.ptr = &h;
+            h.definer = o->id;
+            h.verbdef = v;
+            vh.ptr = &h;
 #endif
-			return vh;
-		}
-	/*
-         * note that the verbcache has cleared h.verbdef, so it defaults to a
-         * "miss" cache if the for loop doesn't win
-         */
-	vh.ptr = 0;
+            return vh;
+        }
+    /*
+     * note that the verbcache has cleared h.verbdef, so it defaults to a
+     * "miss" cache if the for loop doesn't win
+     */
+    vh.ptr = 0;
 
-	return vh;
+    return vh;
 }
 
-db_verb_handle
-db_find_defined_verb(Objid oid, const char *vname, int allow_numbers)
-{
-	Object         *o = dbpriv_find_object(oid);
-	Verbdef        *v;
-	char           *p;
-	int             num, i;
-	static handle   h;
-	db_verb_handle  vh;
+db_verb_handle db_find_defined_verb(Objid oid, const char *vname,
+                                    int allow_numbers) {
+    Object *o = dbpriv_find_object(oid);
+    Verbdef *v;
+    char *p;
+    int num, i;
+    static handle h;
+    db_verb_handle vh;
 
-	if (!allow_numbers ||
-	    (num = strtol(vname, &p, 10),
-	     (isspace((int)*vname) || *p != '\0')))
-		num = -1;
+    if (!allow_numbers ||
+        (num = strtol(vname, &p, 10), (isspace((int)*vname) || *p != '\0')))
+        num = -1;
 
-	for (i = 0, v = o->verbdefs; v; v = v->next, i++)
-		if (i == num || verbcasecmp(v->name, vname))
-			break;
+    for (i = 0, v = o->verbdefs; v; v = v->next, i++)
+        if (i == num || verbcasecmp(v->name, vname))
+            break;
 
-	if (v) {
-		h.definer = o->id;
-		h.verbdef = v;
-		vh.ptr = &h;
+    if (v) {
+        h.definer = o->id;
+        h.verbdef = v;
+        vh.ptr = &h;
 
-		return vh;
-	}
-	vh.ptr = 0;
+        return vh;
+    }
+    vh.ptr = 0;
 
-	return vh;
+    return vh;
 }
 
-db_verb_handle
-db_find_indexed_verb(Objid oid, unsigned index)
-{
-	Object         *o = dbpriv_find_object(oid);
-	Verbdef        *v;
-	unsigned        i;
-	static handle   h;
-	db_verb_handle  vh;
+db_verb_handle db_find_indexed_verb(Objid oid, unsigned index) {
+    Object *o = dbpriv_find_object(oid);
+    Verbdef *v;
+    unsigned i;
+    static handle h;
+    db_verb_handle vh;
 
-	for (v = o->verbdefs, i = 0; v; v = v->next)
-		if (++i == index) {
-			h.definer = o->id;
-			h.verbdef = v;
-			vh.ptr = &h;
+    for (v = o->verbdefs, i = 0; v; v = v->next)
+        if (++i == index) {
+            h.definer = o->id;
+            h.verbdef = v;
+            vh.ptr = &h;
 
-			return vh;
-		}
-	vh.ptr = 0;
+            return vh;
+        }
+    vh.ptr = 0;
 
-	return vh;
+    return vh;
 }
 
-Objid
-db_verb_definer(db_verb_handle vh)
-{
-	handle         *h = (handle *) vh.ptr;
+Objid db_verb_definer(db_verb_handle vh) {
+    handle *h = (handle *)vh.ptr;
 
-	if (h)
-		return h->definer;
+    if (h)
+        return h->definer;
 
-	server_panic("DB_VERB_DEFINER: Null handle!");
-	return 0;
+    server_panic("DB_VERB_DEFINER: Null handle!");
+    return 0;
 }
 
-const char     *
-db_verb_names(db_verb_handle vh)
-{
-	handle         *h = (handle *) vh.ptr;
+const char *db_verb_names(db_verb_handle vh) {
+    handle *h = (handle *)vh.ptr;
 
-	if (h)
-		return h->verbdef->name;
+    if (h)
+        return h->verbdef->name;
 
-	server_panic("DB_VERB_NAMES: Null handle!");
-	return 0;
+    server_panic("DB_VERB_NAMES: Null handle!");
+    return 0;
 }
 
-void
-db_set_verb_names(db_verb_handle vh, const char *names)
-{
-	handle         *h = (handle *) vh.ptr;
+void db_set_verb_names(db_verb_handle vh, const char *names) {
+    handle *h = (handle *)vh.ptr;
 
-	db_priv_affected_callable_verb_lookup();
+    db_priv_affected_callable_verb_lookup();
 
-	if (h) {
-		if (h->verbdef->name)
-			free_str(h->verbdef->name);
-		h->verbdef->name = names;
-	} else
-		server_panic("DB_SET_VERB_NAMES: Null handle!");
+    if (h) {
+        if (h->verbdef->name)
+            free_str(h->verbdef->name);
+        h->verbdef->name = names;
+    } else
+        server_panic("DB_SET_VERB_NAMES: Null handle!");
 }
 
-Objid
-db_verb_owner(db_verb_handle vh)
-{
-	handle         *h = (handle *) vh.ptr;
+Objid db_verb_owner(db_verb_handle vh) {
+    handle *h = (handle *)vh.ptr;
 
-	if (h)
-		return h->verbdef->owner;
+    if (h)
+        return h->verbdef->owner;
 
-	server_panic("DB_VERB_OWNER: Null handle!");
-	return 0;
+    server_panic("DB_VERB_OWNER: Null handle!");
+    return 0;
 }
 
-void
-db_set_verb_owner(db_verb_handle vh, Objid owner)
-{
-	handle         *h = (handle *) vh.ptr;
+void db_set_verb_owner(db_verb_handle vh, Objid owner) {
+    handle *h = (handle *)vh.ptr;
 
-	if (h)
-		h->verbdef->owner = owner;
-	else
-		server_panic("DB_SET_VERB_OWNER: Null handle!");
+    if (h)
+        h->verbdef->owner = owner;
+    else
+        server_panic("DB_SET_VERB_OWNER: Null handle!");
 }
 
-unsigned
-db_verb_flags(db_verb_handle vh)
-{
-	handle         *h = (handle *) vh.ptr;
+unsigned db_verb_flags(db_verb_handle vh) {
+    handle *h = (handle *)vh.ptr;
 
-	if (h)
-		return h->verbdef->perms & PERMMASK;
+    if (h)
+        return h->verbdef->perms & PERMMASK;
 
-	server_panic("DB_VERB_FLAGS: Null handle!");
-	return 0;
+    server_panic("DB_VERB_FLAGS: Null handle!");
+    return 0;
 }
 
-void
-db_set_verb_flags(db_verb_handle vh, unsigned flags)
-{
-	handle         *h = (handle *) vh.ptr;
+void db_set_verb_flags(db_verb_handle vh, unsigned flags) {
+    handle *h = (handle *)vh.ptr;
 
-	db_priv_affected_callable_verb_lookup();
+    db_priv_affected_callable_verb_lookup();
 
-	if (h) {
-		h->verbdef->perms &= ~PERMMASK;
-		h->verbdef->perms |= flags;
-	} else
-		server_panic("DB_SET_VERB_FLAGS: Null handle!");
+    if (h) {
+        h->verbdef->perms &= ~PERMMASK;
+        h->verbdef->perms |= flags;
+    } else
+        server_panic("DB_SET_VERB_FLAGS: Null handle!");
 }
 
-Program        *
-db_verb_program(db_verb_handle vh)
-{
-	handle         *h = (handle *) vh.ptr;
+Program *db_verb_program(db_verb_handle vh) {
+    handle *h = (handle *)vh.ptr;
 
-	if (h) {
-		Program        *p = h->verbdef->program;
+    if (h) {
+        Program *p = h->verbdef->program;
 
-		return p ? p : null_program();
-	}
-	server_panic("DB_VERB_PROGRAM: Null handle!");
-	return 0;
+        return p ? p : null_program();
+    }
+    server_panic("DB_VERB_PROGRAM: Null handle!");
+    return 0;
 }
 
-void
-db_set_verb_program(db_verb_handle vh, Program * program)
-{
-	handle         *h = (handle *) vh.ptr;
+void db_set_verb_program(db_verb_handle vh, Program *program) {
+    handle *h = (handle *)vh.ptr;
 
-	/*
-	 * Not necessary, since this was only here to cope with nonprogrammed
-	 * verbs, and that turns out to be handled properly in modern
-	 * servers.
-	 */
+    /*
+     * Not necessary, since this was only here to cope with nonprogrammed
+     * verbs, and that turns out to be handled properly in modern
+     * servers.
+     */
 
-	/* db_priv_affected_callable_verb_lookup(); */
+    /* db_priv_affected_callable_verb_lookup(); */
 
-	if (h) {
-		if (h->verbdef->program)
-			free_program(h->verbdef->program);
-		h->verbdef->program = program;
-	} else
-		server_panic("DB_SET_VERB_PROGRAM: Null handle!");
+    if (h) {
+        if (h->verbdef->program)
+            free_program(h->verbdef->program);
+        h->verbdef->program = program;
+    } else
+        server_panic("DB_SET_VERB_PROGRAM: Null handle!");
 }
 
-void
-db_verb_arg_specs(db_verb_handle vh,
-		db_arg_spec * dobj, db_prep_spec * prep, db_arg_spec * iobj)
-{
-	handle         *h = (handle *) vh.ptr;
+void db_verb_arg_specs(db_verb_handle vh, db_arg_spec *dobj, db_prep_spec *prep,
+                       db_arg_spec *iobj) {
+    handle *h = (handle *)vh.ptr;
 
-	if (h) {
-		*dobj = (h->verbdef->perms >> DOBJSHIFT) & OBJMASK;
-		*prep = h->verbdef->prep;
-		*iobj = (h->verbdef->perms >> IOBJSHIFT) & OBJMASK;
-	} else
-		server_panic("DB_VERB_ARG_SPECS: Null handle!");
+    if (h) {
+        *dobj = (h->verbdef->perms >> DOBJSHIFT) & OBJMASK;
+        *prep = h->verbdef->prep;
+        *iobj = (h->verbdef->perms >> IOBJSHIFT) & OBJMASK;
+    } else
+        server_panic("DB_VERB_ARG_SPECS: Null handle!");
 }
 
-void
-db_set_verb_arg_specs(db_verb_handle vh,
-		      db_arg_spec dobj, db_prep_spec prep, db_arg_spec iobj)
-{
-	handle         *h = (handle *) vh.ptr;
+void db_set_verb_arg_specs(db_verb_handle vh, db_arg_spec dobj,
+                           db_prep_spec prep, db_arg_spec iobj) {
+    handle *h = (handle *)vh.ptr;
 
-	db_priv_affected_callable_verb_lookup();
+    db_priv_affected_callable_verb_lookup();
 
-	if (h) {
-		h->verbdef->perms = ((h->verbdef->perms & PERMMASK)
-				     | (dobj << DOBJSHIFT)
-				     | (iobj << IOBJSHIFT));
-		h->verbdef->prep = prep;
-	} else
-		server_panic("DB_SET_VERB_ARG_SPECS: Null handle!");
+    if (h) {
+        h->verbdef->perms = ((h->verbdef->perms & PERMMASK) |
+                             (dobj << DOBJSHIFT) | (iobj << IOBJSHIFT));
+        h->verbdef->prep = prep;
+    } else
+        server_panic("DB_SET_VERB_ARG_SPECS: Null handle!");
 }
 
-int
-db_verb_allows(db_verb_handle h, Objid progr, db_verb_flag flag)
-{
-	return ((db_verb_flags(h) & flag)
-		|| progr == db_verb_owner(h)
-		|| is_wizard(progr));
+int db_verb_allows(db_verb_handle h, Objid progr, db_verb_flag flag) {
+    return ((db_verb_flags(h) & flag) || progr == db_verb_owner(h) ||
+            is_wizard(progr));
 }

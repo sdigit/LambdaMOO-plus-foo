@@ -49,4 +49,4 @@
 
 extern enum error validate_verb_descriptor(Var desc);
 extern db_verb_handle find_described_verb(Objid oid, Var desc);
-extern int      check_verbs_before_chparent(void *new_parent, Objid oid);
+extern int check_verbs_before_chparent(void *new_parent, Objid oid);

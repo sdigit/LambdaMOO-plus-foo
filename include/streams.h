@@ -50,18 +50,18 @@
 #include "config.h"
 
 typedef struct {
-	char           *buffer;
-	int             buflen;
-	int             current;
-}               Stream;
+    char *buffer;
+    int buflen;
+    int current;
+} Stream;
 
-extern Stream  *new_stream(int size);
-extern void     stream_add_char(Stream *, char);
-extern void     stream_add_string(Stream *, const char *);
-extern void     stream_printf(Stream *, const char *,...);
-extern void     free_stream(Stream *);
-extern char    *stream_contents(Stream *);
-extern char    *reset_stream(Stream *);
-extern int      stream_length(Stream *);
+extern Stream *new_stream(int size);
+extern void stream_add_char(Stream *, char);
+extern void stream_add_string(Stream *, const char *);
+extern void stream_printf(Stream *, const char *, ...);
+extern void free_stream(Stream *);
+extern char *stream_contents(Stream *);
+extern char *reset_stream(Stream *);
+extern int stream_length(Stream *);
 
 #endif

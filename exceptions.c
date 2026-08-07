@@ -64,30 +64,29 @@
 
 #include "exceptions.h"
 
-ES_CtxBlock    *ES_exceptionStack = 0;
+ES_CtxBlock *ES_exceptionStack = 0;
 
-Exception       ANY;
+Exception ANY;
 
-void
-ES_RaiseException(Exception * exception, int value)
-{
-	ES_CtxBlock    *cb, *xb;
-	int             i;
+void ES_RaiseException(Exception *exception, int value) {
+    ES_CtxBlock *cb, *xb;
+    int i;
 
-	for (xb = ES_exceptionStack; xb; xb = xb->link) {
-		for (i = 0; i < xb->nx; i++) {
-			if (xb->array[i] == exception || xb->array[i] == &ANY)
-				goto doneSearching;
-		}
-	}
+    for (xb = ES_exceptionStack; xb; xb = xb->link) {
+        for (i = 0; i < xb->nx; i++) {
+            if (xb->array[i] == exception || xb->array[i] == &ANY)
+                goto doneSearching;
+        }
+    }
 
 doneSearching:
-	if (!xb)
-		server_panic("Unhandled exception!");
+    if (!xb)
+        server_panic("Unhandled exception!");
 
-	for (cb = ES_exceptionStack; cb != xb && !cb->finally; cb = cb->link);
-	ES_exceptionStack = cb;
-	cb->id = exception;
-	cb->value = value;
-	longjmp((void *) cb->jmp, 1);
+    for (cb = ES_exceptionStack; cb != xb && !cb->finally; cb = cb->link)
+        ;
+    ES_exceptionStack = cb;
+    cb->id = exception;
+    cb->value = value;
+    longjmp((void *)cb->jmp, 1);
 }
