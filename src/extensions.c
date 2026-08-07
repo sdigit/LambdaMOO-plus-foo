@@ -3008,67 +3008,6 @@ static package bf_filerename(
     return make_var_pack(ret);
 }
 
-#ifdef INCLUDE_FILECHMOD
-
-static package bf_filechmod(Var arglist, Byte next, void *vdata,
-                            Objid progr) { /* (directory, filename, filemode) */
-    char theRequestedAction[BUF_LEN];
-    char filename[BUF_LEN];
-    char external_files[BUF_LEN];
-    Var ret;
-    struct stat st;
-    mode_t mode;
-    char filemode[BUF_LEN];
-    int r1, r2;
-    int result;
-    result = build_file_name(arglist.v.list[1].v.str, arglist.v.list[2].v.str,
-                             filename, 'w');
-    if (result != E_NONE) {
-        free_var(arglist);
-        return make_error_pack(result);
-    }
-
-    remove_special_characters(arglist.v.list[3].v.str);
-    if (strlen(arglist.v.list[3].v.str) == 0) {
-        free_var(arglist);
-        return make_error_pack(E_INVARG);
-    }
-
-    strcpy(external_files, FUP_SUBDIR);
-    sprintf(theRequestedAction, "chmod %s %s%s/%s\n", arglist.v.list[3].v.str,
-            external_files, arglist.v.list[1].v.str, arglist.v.list[2].v.str);
-
-    if ((system(theRequestedAction)) == 0) {
-        return make_error_pack(E_INVARG);
-    }
-
-    stat(filename, &st);
-    ret.type = TYPE_STR;
-    mode = st.st_mode;
-    if (S_ISREG(st.st_mode))
-        mode = st.st_mode - 32768;
-    if (S_ISDIR(st.st_mode))
-        mode = st.st_mode - 16384;
-    if (S_ISCHR(st.st_mode))
-        mode = st.st_mode - 8192;
-    if (S_ISBLK(st.st_mode))
-        mode = st.st_mode - 24576;
-    if (S_ISSOCK(st.st_mode))
-        mode = st.st_mode - 49152;
-    if (mode != st.st_mode) {
-        r1 = mode / 8;
-        r1 = r1 - ((r1 / 8) * 8);
-        r2 = mode - ((mode / 8) * 8);
-        sprintf(filemode, "%ld%d%d", (long)mode / 64, r1, r2);
-        ret.v.str = str_dup(filemode);
-    } else
-        ret.v.str = str_dup("????");
-    free_var(arglist);
-    return make_var_pack(ret);
-}
-
-#endif
-
 static package
 bf_fileinfo(Var arglist, [[maybe_unused]] Byte next,
             [[maybe_unused]] void *vdata,
@@ -3174,94 +3113,6 @@ bf_fileinfo(Var arglist, [[maybe_unused]] Byte next,
     return make_var_pack(ret);
 }
 
-#ifdef INCLUDE_FILERUN
-
-static package bf_filerun(Var arglist, Byte next, void *vdata,
-                          Objid progr) { /* (filename, arguments) */
-    char theRequestedAction[BUF_LEN];
-    Var ret, theArgs, theline;
-    int i, numOfArgs, result;
-    char fileName[BUF_LEN];
-    char external_bin[BUF_LEN];
-
-    theline.type = TYPE_STR;
-    theArgs.type = TYPE_LIST;
-    theArgs = new_list(0);
-    numOfArgs = arglist.v.list[0].v.num;
-    for (i = 1; i <= numOfArgs; i++) {
-        switch (arglist.v.list[i].type) {
-        case TYPE_STR:
-            theline.v.str = str_dup(arglist.v.list[i].v.str);
-            remove_special_characters(theline.v.str);
-
-            if ((strstr(theline.v.str, "/.")) ||
-                (!strncmp(theline.v.str, ".", 1)) ||
-                (!strncmp(theline.v.str, "/", 1))) {
-                free_var(arglist);
-                free_var(theline);
-                return make_error_pack(E_PERM);
-            }
-
-            theArgs = listappend(theArgs, theline);
-            break;
-        case TYPE_LIST:
-            if (arglist.v.list[i].v.list[0].v.num < 2) {
-                theline.v.str = str_dup("");
-                theArgs = listappend(theArgs, theline);
-            } else {
-                if ((arglist.v.list[i].v.list[1].type != TYPE_STR) ||
-                    (arglist.v.list[i].v.list[2].type != TYPE_STR)) {
-                    free_var(arglist);
-                    free_var(theline);
-                    return make_error_pack(E_TYPE);
-                }
-                result = build_file_name(arglist.v.list[i].v.list[1].v.str,
-                                         arglist.v.list[i].v.list[2].v.str,
-                                         fileName, 'r');
-                theline.v.str = str_dup(fileName);
-                theArgs = listappend(theArgs, theline);
-            }
-            break;
-        default:
-            free_var(arglist);
-            free_var(theline);
-            return make_error_pack(E_INVARG);
-        }
-    }
-
-    numOfArgs = theArgs.v.list[0].v.num;
-    strcpy(external_bin, EXTERN_BIN_DIR);
-    sprintf(theRequestedAction, "%s%s ", external_bin, theArgs.v.list[1].v.str);
-
-    if ((numOfArgs > 1) && (strlen(theArgs.v.list[2].v.str) != 0)) {
-        sprintf(theRequestedAction, "cat %s | %s%s", theArgs.v.list[2].v.str,
-                external_bin, theArgs.v.list[1].v.str);
-    } else {
-        sprintf(theRequestedAction, "%s%s ", external_bin,
-                theArgs.v.list[1].v.str);
-    }
-
-    for (i = 4; i <= numOfArgs; i++) {
-        sprintf(theRequestedAction, "%s %s", theRequestedAction,
-                theArgs.v.list[i].v.str);
-    }
-
-    if ((numOfArgs > 2) && (strlen(theArgs.v.list[3].v.str))) {
-        sprintf(theRequestedAction, "%s > %s", theRequestedAction,
-                theArgs.v.list[3].v.str);
-    }
-
-    sprintf(theRequestedAction, "%s 2>&1", theRequestedAction);
-    system(theRequestedAction);
-
-    ret.type = TYPE_INT;
-    ret.v.num = 1; /* always !! */
-    free_var(arglist);
-    free_var(theline);
-    return make_var_pack(ret);
-}
-#endif
-
 static package bf_filemkdir(
     Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata,
     [[maybe_unused]] Objid
@@ -3361,10 +3212,6 @@ void register_extensions(void) {
                       TYPE_STR);
     register_function("fileappend", 3, 3, bf_fileappend, TYPE_STR, TYPE_STR,
                       TYPE_LIST);
-#ifdef INCLUDE_FILECHMOD
-    register_function("filechmod", 3, 3, bf_filechmod, TYPE_STR, TYPE_STR,
-                      TYPE_STR);
-#endif
     register_function("filedelete", 2, 2, bf_filedelete, TYPE_STR, TYPE_STR);
     register_function("fileerror", 0, 0, bf_fileerror);
     register_function("fileexists", 2, 2, bf_fileexists, TYPE_STR, TYPE_STR);
@@ -3381,10 +3228,6 @@ void register_extensions(void) {
     register_function("filerename", 3, 3, bf_filerename, TYPE_STR, TYPE_STR,
                       TYPE_STR);
     register_function("filermdir", 2, 2, bf_filermdir, TYPE_STR, TYPE_STR);
-#ifdef INCLUDE_FILERUN
-    register_function("filerun", 1, -1, bf_filerun, TYPE_STR, TYPE_LIST,
-                      TYPE_LIST);
-#endif
     register_function("filesize", 2, 2, bf_filesize, TYPE_STR, TYPE_STR);
     register_function("fileversion", 0, 0, bf_fileversion);
     register_function("filewrite", 3, 3, bf_filewrite, TYPE_STR, TYPE_STR,
