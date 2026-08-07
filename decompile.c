@@ -95,6 +95,7 @@ do {				\
     arm_sink = &(temp->next);	\
 } while (0);
 
+#ifdef NO_REALLY_PAVEL
 #define READ_BYTES(n)			\
   (ptr += n,				\
    (n == 1				\
@@ -106,6 +107,19 @@ do {				\
          + ((unsigned) ptr[-3] << 16)	\
          + ((unsigned) ptr[-2] << 8)	\
          + ptr[-1])))
+#endif
+
+#define READ_BYTES(n)                       \
+  (ptr += (n),                              \
+   ((n) == 1                                \
+    ? (unsigned) ptr[-1]                    \
+    : ((n) == 2                             \
+       ? ((unsigned) ptr[-2] << 8)          \
+         + (unsigned) ptr[-1]               \
+       : ((unsigned) ptr[-4] << 24)         \
+         + ((unsigned) ptr[-3] << 16)       \
+         + ((unsigned) ptr[-2] << 8)        \
+         + (unsigned) ptr[-1])))
 
 #define READ_LABEL()	READ_BYTES(bc.numbytes_label)
 #define READ_LITERAL()	program->literals[READ_BYTES(bc.numbytes_literal)]
@@ -849,7 +863,8 @@ decompile(Bytecodes bc, Byte * start, Byte * end, Stmt ** stmt_sink,
 					else
 						s->s.exit = -1;
 					(void)READ_STACK();
-					if (READ_LABEL() < ptr - bc.vector)
+                    unsigned label = READ_LABEL();
+					if (label < ptr - bc.vector)
 						s->kind = STMT_CONTINUE;
 					ADD_STMT(HOT_OP(s));
 					break;
