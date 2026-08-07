@@ -52,6 +52,7 @@
 #include "bf_register.h"
 #include "utils.h"
 #include "network.h"
+#include "ietf/sha.h"
 
 #ifdef WRITEPIDFILE
 
@@ -210,11 +211,249 @@ bf_build_info(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vd
     return make_var_pack(ret);
 }
 
+static char hexmap[] = {'0', '1', '2', '3', '4', '5', '6', '7',
+                        '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
+char *hex(uint8_t *in,
+          const size_t in_len)
+{
+    uint64_t i = 0,
+            n = 0;
+    char *buf;
+
+    buf = calloc(1, (in_len * 2) + 1);
+    if (buf == NULL)
+    {
+        errno = ENOMEM;
+        return NULL;
+    }
+    while (i < in_len)
+    {
+        buf[n] = hexmap[(in[i] & 0xF0) >> 4];
+        buf[n + 1] = hexmap[in[i] & 0x0F];
+        n += 2;
+        i++;
+    }
+    buf[n] = '\0';
+    return buf;
+}
+
+static const char *
+hash_bytes_sha256(const char *input, int length)
+{
+    uint8_t        *result;
+    char           *hex_str;
+    SHA256Context  ctx;
+
+    result = malloc(32);
+
+    SHA256Reset(&ctx);
+    SHA256Input(&ctx, (uint8_t *)input, (unsigned int)length);
+    SHA256Result(&ctx, result);
+    SHA256Reset(&ctx);
+
+    hex_str = hex(result, 32);
+    free(result);
+    return hex_str;
+}
+
+static const char *
+hash_bytes_sha384(const char *input, int length)
+{
+    uint8_t        *result;
+    char           *hex_str;
+    SHA384Context  ctx;
+
+    result = malloc(48);
+
+    SHA384Reset(&ctx);
+    SHA384Input(&ctx, (uint8_t *)input, (unsigned int)length);
+    SHA384Result(&ctx, result);
+    SHA384Reset(&ctx);
+
+    hex_str = hex(result, 48);
+    free(result);
+    return hex_str;
+}
+
+static const char *
+hash_bytes_sha512(const char *input, int length)
+{
+    uint8_t        *result;
+    char           *hex_str;
+    SHA512Context  ctx;
+
+    result = malloc(64);
+
+    SHA512Reset(&ctx);
+    SHA512Input(&ctx, (uint8_t *)input, (unsigned int)length);
+    SHA512Result(&ctx, result);
+    SHA512Reset(&ctx);
+
+    hex_str = hex(result, 64);
+    free(result);
+    return hex_str;
+}
+
+static          package
+bf_string_hash_sha256(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
+{
+    Var             r;
+    const char     *str = arglist.v.list[1].v.str;
+    char           *hexresult;
+
+    r.type = TYPE_STR;
+    hexresult = (char *)hash_bytes_sha256(str, strlen(str));
+    r.v.str = str_dup(hexresult);
+    free(hexresult);
+    free_var(arglist);
+    return make_var_pack(r);
+}
+
+static          package
+bf_string_hash_sha384(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
+{
+    Var             r;
+    const char     *str = arglist.v.list[1].v.str;
+    char           *hexresult;
+
+    r.type = TYPE_STR;
+    hexresult = (char *)hash_bytes_sha384(str, strlen(str));
+    r.v.str = str_dup(hexresult);
+    free(hexresult);
+    free_var(arglist);
+    return make_var_pack(r);
+}
+
+static          package
+bf_string_hash_sha512(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
+{
+    Var             r;
+    const char     *str = arglist.v.list[1].v.str;
+    char           *hexresult;
+
+    r.type = TYPE_STR;
+    hexresult = (char *)hash_bytes_sha512(str, strlen(str));
+    r.v.str = str_dup(hexresult);
+    free(hexresult);
+    free_var(arglist);
+    return make_var_pack(r);
+}
+
+static package
+bf_binary_hash_sha256(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
+{
+        Var             r;
+        int             length;
+        const char     *bytes = binary_to_raw_bytes(arglist.v.list[1].v.str, &length);
+        char            *hexresult;
+        free_var(arglist);
+        if (!bytes)
+                return make_error_pack(E_INVARG);
+        r.type = TYPE_STR;
+        hexresult = (char *)hash_bytes_sha256(bytes, length);
+        r.v.str = str_dup(hexresult);
+        free(hexresult);
+        return make_var_pack(r);
+}
+
+static package
+bf_binary_hash_sha384(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
+{
+        Var             r;
+        int             length;
+        const char     *bytes = binary_to_raw_bytes(arglist.v.list[1].v.str, &length);
+        char            *hexresult;
+
+        free_var(arglist);
+        if (!bytes)
+                return make_error_pack(E_INVARG);
+        r.type = TYPE_STR;
+        hexresult = (char *)hash_bytes_sha384(bytes, length);
+        r.v.str = str_dup(hexresult);
+        free(hexresult);
+        return make_var_pack(r);
+}
+
+static package
+bf_binary_hash_sha512(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
+{
+        Var             r;
+        int             length;
+        const char     *bytes = binary_to_raw_bytes(arglist.v.list[1].v.str, &length);
+        char            *hexresult;
+
+        free_var(arglist);
+        if (!bytes)
+                return make_error_pack(E_INVARG);
+        r.type = TYPE_STR;
+        hexresult = (char *)hash_bytes_sha512(bytes, length);
+        r.v.str = str_dup(hexresult);
+        free(hexresult);
+        return make_var_pack(r);
+}
+
+static          package
+bf_value_hash_sha256(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
+{
+        Var             r;
+        const char     *lit = value_to_literal(arglist.v.list[1]);
+        char            *hexresult;
+
+
+        r.type = TYPE_STR;
+        hexresult = (char *)hash_bytes_sha256(lit, strlen(lit));
+        r.v.str = str_dup(hexresult);
+        free(hexresult);
+        free_var(arglist);
+        return make_var_pack(r);
+}
+
+static          package
+bf_value_hash_sha384(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
+{
+        Var             r;
+        const char     *lit = value_to_literal(arglist.v.list[1]);
+        char            *hexresult;
+
+
+        r.type = TYPE_STR;
+        hexresult = (char *)hash_bytes_sha384(lit, strlen(lit));
+        r.v.str = str_dup(hexresult);
+        free(hexresult);
+        free_var(arglist);
+        return make_var_pack(r);
+}
+
+static          package
+bf_value_hash_sha512(Var arglist, [[maybe_unused]] Byte next, [[maybe_unused]] void *vdata, [[maybe_unused]] Objid progr)
+{
+        Var             r;
+        const char     *lit = value_to_literal(arglist.v.list[1]);
+        char            *hexresult;
+
+
+        r.type = TYPE_STR;
+        hexresult = (char *)hash_bytes_sha512(lit, strlen(lit));
+        r.v.str = str_dup(hexresult);
+        free(hexresult);
+        free_var(arglist);
+        return make_var_pack(r);
+}
 
 void
 register_foomods()
 {
-	register_function("urandom",1,1,bf_urandom,TYPE_INT);
-	register_function("build_info",0,0,bf_build_info);
+    register_function("urandom",1,1,bf_urandom,TYPE_INT);
+    register_function("build_info",0,0,bf_build_info);
+    register_function("string_hash_sha256",1,1,bf_string_hash_sha256,TYPE_STR);
+    register_function("string_hash_sha384",1,1,bf_string_hash_sha384,TYPE_STR);
+    register_function("string_hash_sha512",1,1,bf_string_hash_sha512,TYPE_STR);
+    register_function("value_hash_sha256",1,1,bf_value_hash_sha256,TYPE_ANY);
+    register_function("value_hash_sha384",1,1,bf_value_hash_sha384,TYPE_ANY);
+    register_function("value_hash_sha512",1,1,bf_value_hash_sha512,TYPE_ANY);
+    register_function("binary_hash_sha256",1,1,bf_binary_hash_sha256,TYPE_STR);
+    register_function("binary_hash_sha384",1,1,bf_binary_hash_sha384,TYPE_STR);
+    register_function("binary_hash_sha512",1,1,bf_binary_hash_sha512,TYPE_STR);
 }
 
