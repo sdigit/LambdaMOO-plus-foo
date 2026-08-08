@@ -182,44 +182,6 @@ Var new_float(double d) {
     return v;
 }
 
-#if COERCION_IS_EVER_IMPLEMENTED_AND_DESIRED
-static int to_float(Var v, double *dp) {
-    switch (v.type) {
-    case TYPE_INT:
-        *dp = (double)v.v.num;
-        break;
-    case TYPE_FLOAT:
-        *dp = *v.v.fnum;
-        break;
-    default:
-        return 0;
-    }
-
-    return 1;
-}
-#endif
-
-#if defined(HAVE_MATHERR) && defined(DOMAIN) && defined(SING) &&               \
-    defined(OVERFLOW) && defined(UNDERFLOW)
-/* Required in order to properly handle FP exceptions on SVID3 systems */
-int matherr(struct exception *x) {
-    switch (x->type) {
-    case DOMAIN:
-    case SING:
-        errno = EDOM;
-        /* fall thru to... */
-    case OVERFLOW:
-        x->retval = HUGE_VAL;
-        return 1;
-    case UNDERFLOW:
-        x->retval = 0.0;
-        return 1;
-    default:
-        return 0; /* Take default action */
-    }
-}
-#endif
-
 /**** opcode implementations ****/
 
 /*
