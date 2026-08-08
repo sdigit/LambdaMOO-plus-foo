@@ -84,6 +84,8 @@ Var new_list(int size) {
         /* give the lucky winner a reference */
         addref(emptylist.v.list);
         return emptylist;
+    } else if (size < 0) {
+        server_panic("Cannot allocate a negative-sized list!");
     }
     new.type = TYPE_LIST;
     new.v.list = (Var *)mymalloc((size + 1) * sizeof(Var), M_LIST);
