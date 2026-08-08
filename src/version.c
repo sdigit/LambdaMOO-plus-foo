@@ -72,6 +72,6 @@
 const char *lists_version = "1.5";
 const char *file_package_version = "1.5p1";
 const char *FUP_version = "1.9";
-const char *server_version = "1.8.1+foo-20260808-01";
+const char *server_version = "1.8.1+foo-20260808-02";
 
 int check_version(DB_Version version) { return version < Num_DB_Versions; }

@@ -2101,7 +2101,9 @@ void remove_special_characters(char *theStr) {
 
     cp = theStr;
     cp2 = buf;
-    while ((*cp) && (currlen < BUF_LEN)) {
+    /* Reserve room for the terminating NUL: currlen must stop at
+     * BUF_LEN - 1 so cp2 never writes past buf[BUF_LEN - 1]. */
+    while ((*cp) && (currlen < BUF_LEN - 1)) {
         switch (*cp) {
         case '&':
         case '|':
