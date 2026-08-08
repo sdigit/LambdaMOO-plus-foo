@@ -80,23 +80,6 @@ int find_insert(Var lst, Var key);
 Var value_compare(Var a, Var b);
 void makelowercase(char *string);
 
-int okfile(char *path) {
-    struct stat st;
-    int ret;
-
-    ret = stat(path, &st);
-    if (ret != 0) {
-        if (errno == ENOENT)
-            return 1;
-        else
-            return 0;
-    }
-    if ((st.st_mode & S_IFMT) != S_IFREG)
-        return 0;
-    else
-        return 1;
-}
-
 void InitListToZero(Var list) {
     int i;
     Var z;
@@ -1873,17 +1856,6 @@ static package bf_file_stat(Var arglist, [[maybe_unused]] Byte next,
  * LIST file_list(STR pathname, [ANY detailed])
  */
 
-int file_list_select(const struct dirent *d) {
-    const char *name = d->d_name;
-    int l = strlen(name);
-    if ((l == 1) && (name[0] == '.'))
-        return 0;
-    else if ((l == 2) && (name[0] == '.') && (name[1] == '.'))
-        return 0;
-    else
-        return 1;
-}
-
 static package bf_file_list(Var arglist, [[maybe_unused]] Byte next,
                             [[maybe_unused]] void *vdata, Objid progr) {
     /*
@@ -2122,8 +2094,6 @@ int matches(char *subject, const char *pattern) {
     return result;
 }
 
-void remove_LAST_character(char *theStr) { theStr[strlen(theStr) - 1] = '\0'; }
-
 void remove_special_characters(char *theStr) {
     register char *cp, *cp2;
     char buf[BUF_LEN];
@@ -2131,7 +2101,9 @@ void remove_special_characters(char *theStr) {
 
     cp = theStr;
     cp2 = buf;
-    while ((*cp) && (currlen < BUF_LEN)) {
+    /* Reserve room for the terminating NUL: currlen must stop at
+     * BUF_LEN - 1 so cp2 never writes past buf[BUF_LEN - 1]. */
+    while ((*cp) && (currlen < BUF_LEN - 1)) {
         switch (*cp) {
         case '&':
         case '|':
@@ -2161,11 +2133,14 @@ void remove_special_characters(char *theStr) {
 }
 
 int build_dir_name(const char *thePathStr, char *theDirName, char spec) {
+    /* theDirName must point to a buffer of at least BUF_LEN bytes -
+     * this matches every call site in this file. */
     char external_files[BUF_LEN];
     char localthePathStr[BUF_LEN];
     struct stat st;
+    int n;
 
-    if (strlen(thePathStr) > BUF_LEN)
+    if (strlen(thePathStr) >= sizeof(localthePathStr))
         return E_INVARG;
 
     strcpy(localthePathStr, thePathStr);
@@ -2175,7 +2150,10 @@ int build_dir_name(const char *thePathStr, char *theDirName, char spec) {
         return E_PERM;
     }
     strcpy(external_files, FUP_SUBDIR);
-    sprintf(theDirName, "%s%s", external_files, localthePathStr);
+
+    n = snprintf(theDirName, BUF_LEN, "%s%s", external_files, localthePathStr);
+    if (n < 0 || n >= BUF_LEN)
+        return E_INVARG; /* would have overflowed/truncated */
 
     if (stat(theDirName, &st) != 0)
         return E_INVARG;
@@ -2206,10 +2184,13 @@ int build_dir_name(const char *thePathStr, char *theDirName, char spec) {
 
 int build_file_name(const char *thePathStr, const char *theNameStr,
                     char *theFileName, char spec) {
+    /* theFileName must point to a buffer of at least BUF_LEN bytes -
+     * this matches every call site in this file. */
     char external_files[BUF_LEN];
     char localthePathStr[BUF_LEN];
     char localtheNameStr[BUF_LEN];
     struct stat st;
+    int n;
 
 #ifdef EXTERN_FILES_DIR_READ_ONLY
     if (strlen(thePathStr) == 0) {
@@ -2222,7 +2203,8 @@ int build_file_name(const char *thePathStr, const char *theNameStr,
     }
 #endif
 
-    if ((strlen(thePathStr) > BUF_LEN) || (strlen(theNameStr) > BUF_LEN))
+    if ((strlen(thePathStr) >= sizeof(localthePathStr)) ||
+        (strlen(theNameStr) >= sizeof(localtheNameStr)))
         return E_INVARG;
 
     strcpy(localthePathStr, thePathStr);
@@ -2235,8 +2217,11 @@ int build_file_name(const char *thePathStr, const char *theNameStr,
         return E_PERM;
     }
     strcpy(external_files, FUP_SUBDIR);
-    sprintf(theFileName, "%s%s/%s", external_files, localthePathStr,
-            localtheNameStr);
+
+    n = snprintf(theFileName, BUF_LEN, "%s%s/%s", external_files,
+                 localthePathStr, localtheNameStr);
+    if (n < 0 || n >= BUF_LEN)
+        return E_INVARG; /* would have overflowed/truncated */
 
     if (stat(theFileName, &st) != 0)
         return E_INVARG;

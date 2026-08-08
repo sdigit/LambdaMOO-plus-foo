@@ -54,6 +54,9 @@
 #include "structures.h"
 #include "utils.h"
 
+static const char b64_charset[64] =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./";
+
 #ifdef WRITEPIDFILE
 
 int checkpidfile() {
@@ -136,6 +139,55 @@ int read_urandom(void *buf, size_t len) {
     }
 
     close(fd);
+    return 0;
+}
+
+int read_urandom_str(char *buf, size_t len) {
+    uint8_t *p;
+    size_t need;
+    int fd;
+
+    if (len == 0) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    need = len - 1; /* leave room for NUL */
+    p = (uint8_t *)buf;
+
+    fd = open("/dev/urandom", O_RDONLY);
+    if (fd < 0)
+        return -1;
+
+    while (need > 0) {
+        ssize_t n = read(fd, p, need);
+
+        if (n < 0) {
+            if (errno == EINTR)
+                continue;
+
+            close(fd);
+            return -1;
+        }
+
+        if (n == 0) { /* Should never happen */
+            close(fd);
+            errno = EIO;
+            return -1;
+        }
+
+        p += n;
+        need -= (size_t)n;
+    }
+
+    close(fd);
+
+    /* Coerce raw bytes into the charset in place. */
+    for (size_t i = 0; i < len - 1; i++)
+        buf[i] = b64_charset[((uint8_t *)buf)[i] & 0x3F];
+
+    buf[len - 1] = '\0';
+
     return 0;
 }
 

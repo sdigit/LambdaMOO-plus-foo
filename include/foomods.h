@@ -39,5 +39,5 @@ void writepidfile();
 void unlinkpidfile();
 void unlinkpidfile_server_panic();
 #endif /* WRITEPIDFILE */
-
+int read_urandom_str(char *, size_t);
 void register_foomods(void);

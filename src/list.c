@@ -54,6 +54,7 @@
 #include "bf_register.h"
 #include "config.h"
 #include "exceptions.h"
+#include "foomods.h"
 #include "functions.h"
 #include "list.h"
 #include "log.h"
@@ -83,6 +84,8 @@ Var new_list(int size) {
         /* give the lucky winner a reference */
         addref(emptylist.v.list);
         return emptylist;
+    } else if (size < 0) {
+        server_panic("Cannot allocate a negative-sized list!");
     }
     new.type = TYPE_LIST;
     new.v.list = (Var *)mymalloc((size + 1) * sizeof(Var), M_LIST);
@@ -586,32 +589,28 @@ static package bf_crypt(Var arglist, [[maybe_unused]] Byte next,
     Var r;
 
 #if HAVE_CRYPT
-    char salt[3];
-    const char *saltp;
-    static char saltstuff[] =
-        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./";
-
+    char *salt;
+    r.type = TYPE_STR;
     if (arglist.v.list[0].v.num == 1 || strlen(arglist.v.list[2].v.str) < 2) {
         /*
          * provide a random 2-letter salt, works with old and new
          * crypts
          */
-        salt[0] = saltstuff[RANDOM() % (int)strlen(saltstuff)];
-        salt[1] = saltstuff[RANDOM() % (int)strlen(saltstuff)];
-        salt[2] = '\0';
-        saltp = salt;
+        salt = malloc(3);
+        if (read_urandom_str(salt, 3) != 0) {
+            free(salt);
+            server_panic("Cannot crypt!");
+        }
     } else {
-        /*
-         * return the entire crypted password in the salt, this works
-         * for all crypt versions
-         */
-        saltp = arglist.v.list[2].v.str;
+        size_t saltlen = strlen(arglist.v.list[2].v.str) + 1;
+        salt = malloc(saltlen);
+        strncpy(salt, arglist.v.list[2].v.str, saltlen);
     }
     r.type = TYPE_STR;
-    r.v.str = str_dup(crypt(arglist.v.list[1].v.str, saltp));
+    r.v.str = str_dup(crypt(arglist.v.list[1].v.str, salt));
+    free(salt);
 #else /* !HAVE_CRYPT */
-    r.type = TYPE_STR;
-    r.v.str = str_ref(arglist.v.list[1].v.str);
+    server_panic("Why does your platform not have crypt?");
 #endif
 
     free_var(arglist);
