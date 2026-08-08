@@ -835,9 +835,9 @@ enum error enqueue_forked_task2(activation a, int f_index,
 }
 
 enum error enqueue_suspended_task(vm the_vm, void *data) {
-    int after_seconds = *((int *)data);
-    int now = time(0);
-    int when;
+    unsigned int after_seconds = *((int *)data);
+    unsigned int now = time(0);
+    unsigned int when;
     task *t;
 
     if (check_user_task_limit(progr_of_cur_verb(the_vm))) {
