@@ -52,6 +52,10 @@ else()
     endif()
 endif()
 
+if(NOT HAVE_CRYPT)
+    message(FATAL_ERROR "You really need crypt for this code to work.")
+endif()
+
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.h.in"
     "${CMAKE_CURRENT_BINARY_DIR}/config.h"
