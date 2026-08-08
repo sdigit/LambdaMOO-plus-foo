@@ -45,11 +45,13 @@
  *****************************************************************************/
 
 #include <float.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "config.h"
+#include "exceptions.h"
 #include "log.h"
 #include "storage.h"
 #include "streams.h"
@@ -84,6 +86,9 @@ void stream_add_char(Stream *s, char c) {
 void stream_add_string(Stream *s, const char *string) {
     int len = strlen(string);
 
+    if ((s->current + len + 1) >= (INT_MAX / 2)) {
+        server_panic("Tried to allocate a Stream that could overflow size");
+    }
     if (s->current + len >= s->buflen) {
         int newlen = s->buflen * 2;
 
