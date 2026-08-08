@@ -588,7 +588,6 @@ static package bf_crypt(Var arglist, [[maybe_unused]] Byte next,
                         [[maybe_unused]] Objid progr) { /* (string, [salt]) */
     Var r;
 
-#if HAVE_CRYPT
     char *salt;
     r.type = TYPE_STR;
     if (arglist.v.list[0].v.num == 1 || strlen(arglist.v.list[2].v.str) < 2) {
@@ -609,9 +608,6 @@ static package bf_crypt(Var arglist, [[maybe_unused]] Byte next,
     r.type = TYPE_STR;
     r.v.str = str_dup(crypt(arglist.v.list[1].v.str, salt));
     free(salt);
-#else /* !HAVE_CRYPT */
-    server_panic("Why does your platform not have crypt?");
-#endif
 
     free_var(arglist);
     return make_var_pack(r);
