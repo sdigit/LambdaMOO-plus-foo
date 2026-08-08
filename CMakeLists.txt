@@ -17,23 +17,6 @@ include(CheckLibraryExists)
 
 check_include_file("sys/filio.h" HAVE_FILIO_H)
 
-check_symbol_exists(strftime "time.h" HAVE_STRFTIME)
-check_struct_has_member("struct tm" tm_zone "time.h" HAVE_TM_ZONE)
-check_symbol_exists(tzname "time.h" HAVE_TZNAME)
-
-check_symbol_exists(matherr "math.h" HAVE_MATHERR)
-
-check_symbol_exists(random "stdlib.h" HAVE_RANDOM)
-check_symbol_exists(lrand48 "stdlib.h" HAVE_LRAND48)
-
-check_symbol_exists(waitpid "sys/types.h;sys/wait.h" HAVE_WAITPID)
-check_symbol_exists(wait3 "sys/types.h;sys/wait.h" HAVE_WAIT3)
-check_symbol_exists(wait2 "sys/types.h;sys/wait.h" HAVE_WAIT2)
-
-check_symbol_exists(sigemptyset "signal.h" HAVE_SIGEMPTYSET)
-check_symbol_exists(sigsetmask "signal.h" HAVE_SIGSETMASK)
-check_symbol_exists(sigrelse "signal.h" HAVE_SIGRELSE)
-
 unset(HAVE_CRYPT)
 check_function_exists(crypt HAVE_CRYPT_IN_LIBC)
 if(HAVE_CRYPT_IN_LIBC)

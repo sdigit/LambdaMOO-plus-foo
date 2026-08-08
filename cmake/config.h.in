@@ -4,43 +4,6 @@
 /* sys/filio.h: network.c, #ifdef guard around an extra #include */
 #cmakedefine HAVE_FILIO_H
 
-/* Date/timezone formatting fallback chain in numbers.c: strftime()
- * (preferred) -> struct tm.tm_zone -> extern tzname[] -> hardcoded "XXX" */
-#cmakedefine HAVE_STRFTIME
-#cmakedefine HAVE_TM_ZONE
-#cmakedefine HAVE_TZNAME
-
-/* crypt(): declared locally by list.c itself, so this is a pure link
- * test. See the CMakeLists.txt crypt search for which library (if any)
- * needs linking. */
-#cmakedefine HAVE_CRYPT
-
-/* SVID3 matherr() FP-exception hook, numbers.c. Also gated on
- * DOMAIN/SING/OVERFLOW/UNDERFLOW from math.h, which modern libm no
- * longer defines, so this block is dead on every current target
- * regardless of this macro -- checked anyway for accuracy. */
-#cmakedefine HAVE_MATHERR
-
-/* PRNG selection in random.h: random()/srandom() (preferred) ->
- * lrand48()/srand48() -> rand()/srand() */
-#cmakedefine HAVE_RANDOM
-#cmakedefine HAVE_LRAND48
-
-/* Child-reaping strategy in server.c: waitpid() (preferred) -> wait3() ->
- * wait2() -> blocking wait() */
-#cmakedefine HAVE_WAITPID
-#cmakedefine HAVE_WAIT3
-#cmakedefine HAVE_WAIT2
-
-/* SIGALRM-unblocking strategy in timers.c: POSIX sigemptyset()+
- * sigprocmask() (preferred) -> 4.3BSD sigsetmask() -> SysV sigrelse().
- * Genuinely platform-variable across your fleet: sigsetmask() exists on
- * BSD/macOS libc but not on Linux glibc, where sigemptyset() always
- * wins anyway since it's POSIX-mandated. */
-#cmakedefine HAVE_SIGEMPTYSET
-#cmakedefine HAVE_SIGSETMASK
-#cmakedefine HAVE_SIGRELSE
-
 /* Static on every target this codebase runs on; not worth an autoconf-style
  * probe. */
 #include <limits.h>
