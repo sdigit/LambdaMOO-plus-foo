@@ -117,17 +117,6 @@ typedef struct nlistener {
     const char *name;
 } nlistener;
 
-typedef void (*network_fd_callback)(int, void *);
-
-typedef struct fd_reg_t {
-    int fd;
-    network_fd_callback readable;
-    network_fd_callback writable;
-    void *data;
-    struct fd_reg_t *next;
-} fd_reg;
-
-static fd_reg *reg_fds = 0;
 static nlistener *all_nlisteners = 0;
 static nhandle *all_nhandles = 0;
 static fd_set input, output;
