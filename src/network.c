@@ -77,10 +77,6 @@
 #include "timers.h"
 #include "utils.h"
 
-#ifdef HAVE_FILIO_H
-#include <sys/filio.h>
-#endif
-
 #define EOL_STR "\r\n"
 #define EOL_LEN 2
 

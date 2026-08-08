@@ -15,8 +15,6 @@ include(CheckStructHasMember)
 include(CheckFunctionExists)
 include(CheckLibraryExists)
 
-check_include_file("sys/filio.h" HAVE_FILIO_H)
-
 unset(HAVE_CRYPT)
 check_function_exists(crypt HAVE_CRYPT_IN_LIBC)
 if(HAVE_CRYPT_IN_LIBC)

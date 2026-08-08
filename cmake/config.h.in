@@ -1,9 +1,6 @@
 #ifndef Config_H
 #define Config_H 1
 
-/* sys/filio.h: network.c, #ifdef guard around an extra #include */
-#cmakedefine HAVE_FILIO_H
-
 /* Static on every target this codebase runs on; not worth an autoconf-style
  * probe. */
 #include <limits.h>
