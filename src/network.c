@@ -352,78 +352,6 @@ void close_connection(int read_fd, [[maybe_unused]] int write_fd) {
 
 void close_listener(int fd) { close(fd); }
 
-void network_register_fd(int fd, network_fd_callback readable,
-                         network_fd_callback writable, void *data) {
-    fd_reg *regptr;
-
-    regptr = reg_fds;
-    if (!regptr) {
-        regptr = mymalloc(sizeof(fd_reg), M_NETWORK);
-        regptr->next = NULL;
-        reg_fds = regptr;
-    } else {
-        while (regptr->next != NULL)
-            regptr = regptr->next;
-        regptr->next = mymalloc(sizeof(fd_reg), M_NETWORK);
-        regptr = regptr->next;
-    }
-    regptr->fd = fd;
-    regptr->readable = readable;
-    regptr->writable = writable;
-    regptr->data = data;
-}
-
-void network_unregister_fd(int fd) {
-    fd_reg *ptr;
-    fd_reg *lastptr;
-
-    ptr = reg_fds;
-    if (ptr == NULL)
-        server_panic("[unregister_fd] reg_fds is NULL!");
-    if (ptr->fd == fd) {
-        reg_fds = ptr->next;
-        free(ptr);
-    } else {
-        if (ptr->next == NULL) {
-            free(ptr);
-            return;
-        }
-        while (ptr->next != NULL) {
-            lastptr = ptr;
-            ptr = ptr->next;
-            if (ptr->fd == fd) {
-                lastptr->next = ptr->next;
-                free(ptr);
-            }
-        }
-    }
-}
-
-static void add_registered_fds() {
-    fd_reg *r;
-
-    r = reg_fds;
-    while (r != NULL) {
-        if (r->readable)
-            mplex_add_reader(r->fd);
-        if (r->writable)
-            mplex_add_writer(r->fd);
-        r = r->next;
-    }
-}
-
-static void check_registered_fds() {
-    fd_reg *r;
-    r = reg_fds;
-    while (r != NULL) {
-        if (r->readable && mplex_is_readable(r->fd))
-            (*r->readable)(r->fd, r->data);
-        if (r->writable && mplex_is_writable(r->fd))
-            (*r->writable)(r->fd, r->data);
-        r = r->next;
-    }
-}
-
 static void free_text_block(text_block *b) {
     free(b->buffer);
     free(b);
@@ -730,7 +658,6 @@ int network_process_io(int timeout) {
         if (h->output_head)
             mplex_add_writer(h->wfd);
     }
-    add_registered_fds();
 
     if (mplex_wait(timeout)) {
         return 0;
@@ -746,7 +673,6 @@ int network_process_io(int timeout) {
                 close_nhandle(h);
             }
         }
-        check_registered_fds();
         return 1;
     }
 }
