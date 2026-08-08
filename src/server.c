@@ -340,24 +340,8 @@ static void child_completed_signal(int sig) {
      * (Void *) casts to avoid warnings on systems that mis-declare the
      * argument type.
      */
-#if HAVE_WAITPID
     while (waitpid(-1, (void *)&status, WNOHANG) > 0)
-        ;
-#else
-#if HAVE_WAIT3
-    while (wait3((void *)&status, WNOHANG, 0) >= 0)
-        ;
-#else
-#if HAVE_WAIT2
-    while (wait2((void *)&status, WNOHANG) >= 0)
-        ;
-#else
-    wait((void *)&status);
-#endif
-#endif
-#endif
-
-    signal(sig, child_completed_signal);
+        signal(sig, child_completed_signal);
 
     checkpoint_finished = (status == 0) + 1; /* 1 = failure, 2 =
                                               * success */
@@ -1224,19 +1208,6 @@ int main(int argc, char **argv) {
           virtual_timer_available() ? "server CPU" : "wall-clock");
     oklog("          (Using File Utilities Package version %s)\n", FUP_version);
 
-#if HAVE_RANDOM
-    if (RANDOM == random)
-        oklog("          (Using {,s}random() for random numbers)\n");
-#else
-#if HAFE_LRAND48
-    if (RANDOM == lrand48)
-        oklog("          (Using {l,s}rand48() for random numbers)\n");
-#else
-    if (RANDOM == rand)
-        oklog("          (Using {,s}rand() for random numbers)\n");
-#endif /* HAVE_RANDOM */
-#endif /* HAVE_LRAND48 */
-
     register_bi_functions();
 #ifdef WRITEPIDFILE
     writepidfile();
@@ -1266,14 +1237,18 @@ int main(int argc, char **argv) {
 
     load_server_options();
 
-#if HAVE_RANDOM
     rndstate = (int *)malloc(256);
-    rndseed = (unsigned long)time(0);
+
+    if (read_urandom(rndstate, 256) != 0) {
+        server_panic("Couldn't read urandom!");
+    }
+
+    if (read_urandom(&rndseed, sizeof(unsigned long)) != 0) {
+        server_panic("Couldn't read urandom!");
+    }
+
     (void)initstate(rndseed, (char *)rndstate, 256);
     SRANDOM(rndseed);
-#else
-    SRANDOM(time(0));
-#endif
 
     parent_pid = getpid();
     setup_signals();

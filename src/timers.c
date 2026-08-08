@@ -281,26 +281,9 @@ int cancel_timer(Timer_ID id) {
 }
 
 void reenable_timers(void) {
-#if HAVE_SIGEMPTYSET
     sigset_t sigs;
 
     sigemptyset(&sigs);
     sigaddset(&sigs, SIGALRM);
     sigprocmask(SIG_UNBLOCK, &sigs, 0);
-#else
-#if HAVE_SIGSETMASK
-    int old_mask = sigsetmask(-1); /* block everything, get
-                                    * old mask */
-
-    old_mask &= ~sigmask(SIGALRM); /* clear blocked bit for SIGALRM */
-    sigsetmask(old_mask);          /* reset the signal mask */
-#else
-#if HAVE_SIGRELSE
-    sigrelse(SIGALRM); /* restore previous signal
-                        * action */
-#else
-#error I need some way to stop blocking SIGALRM!
-#endif
-#endif
-#endif
 }

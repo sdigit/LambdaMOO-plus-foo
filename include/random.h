@@ -47,15 +47,5 @@
 #include "config.h"
 #include <stdlib.h>
 
-#if HAVE_RANDOM
 #define RANDOM random
 #define SRANDOM srandom
-#else /* !HAVE_RANDOM */
-#if HAVE_LRAND48
-#define RANDOM lrand48
-#define SRANDOM srand48
-#else /* !HAVE_LRAND48 */
-#define RANDOM rand
-#define SRANDOM srand
-#endif /* HAVE_LRAND48 */
-#endif /* HAVE_RANDOM */
