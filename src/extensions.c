@@ -2131,11 +2131,14 @@ void remove_special_characters(char *theStr) {
 }
 
 int build_dir_name(const char *thePathStr, char *theDirName, char spec) {
+    /* theDirName must point to a buffer of at least BUF_LEN bytes -
+     * this matches every call site in this file. */
     char external_files[BUF_LEN];
     char localthePathStr[BUF_LEN];
     struct stat st;
+    int n;
 
-    if (strlen(thePathStr) >= BUF_LEN)
+    if (strlen(thePathStr) >= sizeof(localthePathStr))
         return E_INVARG;
 
     strcpy(localthePathStr, thePathStr);
@@ -2145,7 +2148,10 @@ int build_dir_name(const char *thePathStr, char *theDirName, char spec) {
         return E_PERM;
     }
     strcpy(external_files, FUP_SUBDIR);
-    sprintf(theDirName, "%s%s", external_files, localthePathStr);
+
+    n = snprintf(theDirName, BUF_LEN, "%s%s", external_files, localthePathStr);
+    if (n < 0 || n >= BUF_LEN)
+        return E_INVARG; /* would have overflowed/truncated */
 
     if (stat(theDirName, &st) != 0)
         return E_INVARG;
@@ -2176,10 +2182,13 @@ int build_dir_name(const char *thePathStr, char *theDirName, char spec) {
 
 int build_file_name(const char *thePathStr, const char *theNameStr,
                     char *theFileName, char spec) {
+    /* theFileName must point to a buffer of at least BUF_LEN bytes -
+     * this matches every call site in this file. */
     char external_files[BUF_LEN];
     char localthePathStr[BUF_LEN];
     char localtheNameStr[BUF_LEN];
     struct stat st;
+    int n;
 
 #ifdef EXTERN_FILES_DIR_READ_ONLY
     if (strlen(thePathStr) == 0) {
@@ -2192,7 +2201,8 @@ int build_file_name(const char *thePathStr, const char *theNameStr,
     }
 #endif
 
-    if ((strlen(thePathStr) > BUF_LEN) || (strlen(theNameStr) > BUF_LEN))
+    if ((strlen(thePathStr) >= sizeof(localthePathStr)) ||
+        (strlen(theNameStr) >= sizeof(localtheNameStr)))
         return E_INVARG;
 
     strcpy(localthePathStr, thePathStr);
@@ -2205,8 +2215,11 @@ int build_file_name(const char *thePathStr, const char *theNameStr,
         return E_PERM;
     }
     strcpy(external_files, FUP_SUBDIR);
-    sprintf(theFileName, "%s%s/%s", external_files, localthePathStr,
-            localtheNameStr);
+
+    n = snprintf(theFileName, BUF_LEN, "%s%s/%s", external_files,
+                 localthePathStr, localtheNameStr);
+    if (n < 0 || n >= BUF_LEN)
+        return E_INVARG; /* would have overflowed/truncated */
 
     if (stat(theFileName, &st) != 0)
         return E_INVARG;
