@@ -199,17 +199,18 @@ static package bf_urandom(Var arglist, [[maybe_unused]] Byte next,
     int i, idx;
     uint8_t *buf;
 
+    free_var(arglist);
+
     if (n < 1 || n > 4096) /* why do you need > 4096 bytes this is MOO lol just
                               do multiple calls */
     {
-        free_var(arglist);
         return make_error_pack(E_INVARG);
     }
 
-    buf = malloc(sizeof(uint8_t) * n);
+    buf = mymalloc(sizeof(uint8_t) * n, M_STRING);
+
     if (read_urandom(buf, n) != 0) {
-        free(buf);
-        free_var(arglist);
+        myfree(buf, M_STRING);
         return make_error_pack(E_RANGE);
     }
     ret = new_list(n);
@@ -218,8 +219,7 @@ static package bf_urandom(Var arglist, [[maybe_unused]] Byte next,
         ret.v.list[i].type = TYPE_INT;
         ret.v.list[i].v.num = buf[idx++];
     }
-    free(buf);
-    free_var(arglist);
+    myfree(buf, M_STRING);
     return make_var_pack(ret);
 }
 
@@ -255,23 +255,16 @@ static package bf_build_info(Var arglist, [[maybe_unused]] Byte next,
 static char hexmap[] = {'0', '1', '2', '3', '4', '5', '6', '7',
                         '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
 
-char *hex(uint8_t *in, const size_t in_len) {
+void hex(char *out, uint8_t *in, const size_t in_len) {
     uint64_t i = 0, n = 0;
-    char *buf;
 
-    buf = calloc(1, (in_len * 2) + 1);
-    if (buf == NULL) {
-        errno = ENOMEM;
-        return NULL;
-    }
     while (i < in_len) {
-        buf[n] = hexmap[(in[i] & 0xF0) >> 4];
-        buf[n + 1] = hexmap[in[i] & 0x0F];
+        out[n] = hexmap[(in[i] & 0xF0) >> 4];
+        out[n + 1] = hexmap[in[i] & 0x0F];
         n += 2;
         i++;
     }
-    buf[n] = '\0';
-    return buf;
+    out[n] = '\0';
 }
 
 static const char *hash_bytes_sha256(const char *input, int length) {
@@ -279,15 +272,17 @@ static const char *hash_bytes_sha256(const char *input, int length) {
     char *hex_str;
     SHA256Context ctx;
 
-    result = malloc(32);
+    result = mymalloc(32, M_STRING);
+    hex_str = mymalloc(64, M_STRING);
 
     SHA256Reset(&ctx);
     SHA256Input(&ctx, (uint8_t *)input, (unsigned int)length);
     SHA256Result(&ctx, result);
     SHA256Reset(&ctx);
 
-    hex_str = hex(result, 32);
-    free(result);
+    hex(hex_str, result, 32);
+
+    myfree(result, M_STRING);
     return hex_str;
 }
 
@@ -296,15 +291,17 @@ static const char *hash_bytes_sha384(const char *input, int length) {
     char *hex_str;
     SHA384Context ctx;
 
-    result = malloc(48);
+    result = mymalloc(48, M_STRING);
+    hex_str = mymalloc(96, M_STRING);
 
     SHA384Reset(&ctx);
     SHA384Input(&ctx, (uint8_t *)input, (unsigned int)length);
     SHA384Result(&ctx, result);
     SHA384Reset(&ctx);
 
-    hex_str = hex(result, 48);
-    free(result);
+    hex(hex_str, result, 48);
+
+    myfree(result, M_STRING);
     return hex_str;
 }
 
@@ -313,15 +310,17 @@ static const char *hash_bytes_sha512(const char *input, int length) {
     char *hex_str;
     SHA512Context ctx;
 
-    result = malloc(64);
+    result = mymalloc(64, M_STRING);
+    hex_str = mymalloc(128, M_STRING);
 
     SHA512Reset(&ctx);
     SHA512Input(&ctx, (uint8_t *)input, (unsigned int)length);
     SHA512Result(&ctx, result);
     SHA512Reset(&ctx);
 
-    hex_str = hex(result, 64);
-    free(result);
+    hex(hex_str, result, 64);
+
+    myfree(result, M_STRING);
     return hex_str;
 }
 
@@ -330,13 +329,14 @@ static package bf_string_hash_sha256(Var arglist, [[maybe_unused]] Byte next,
                                      [[maybe_unused]] Objid progr) {
     Var r;
     const char *str = arglist.v.list[1].v.str;
-    char *hexresult;
+    size_t len = strlen(str);
 
-    r.type = TYPE_STR;
-    hexresult = (char *)hash_bytes_sha256(str, strlen(str));
-    r.v.str = str_dup(hexresult);
-    free(hexresult);
     free_var(arglist);
+    if (len >= INT_MAX) {
+        server_panic("Improbably large string passed to bf_string_hash_sha256");
+    }
+    r.type = TYPE_STR;
+    r.v.str = hash_bytes_sha256(str, len);
     return make_var_pack(r);
 }
 
@@ -345,13 +345,14 @@ static package bf_string_hash_sha384(Var arglist, [[maybe_unused]] Byte next,
                                      [[maybe_unused]] Objid progr) {
     Var r;
     const char *str = arglist.v.list[1].v.str;
-    char *hexresult;
+    size_t len = strlen(str);
 
-    r.type = TYPE_STR;
-    hexresult = (char *)hash_bytes_sha384(str, strlen(str));
-    r.v.str = str_dup(hexresult);
-    free(hexresult);
     free_var(arglist);
+    if (len >= INT_MAX) {
+        server_panic("Improbably large string passed to bf_string_hash_sha384");
+    }
+    r.type = TYPE_STR;
+    r.v.str = hash_bytes_sha384(str, len);
     return make_var_pack(r);
 }
 
@@ -360,13 +361,14 @@ static package bf_string_hash_sha512(Var arglist, [[maybe_unused]] Byte next,
                                      [[maybe_unused]] Objid progr) {
     Var r;
     const char *str = arglist.v.list[1].v.str;
-    char *hexresult;
+    size_t len = strlen(str);
 
-    r.type = TYPE_STR;
-    hexresult = (char *)hash_bytes_sha512(str, strlen(str));
-    r.v.str = str_dup(hexresult);
-    free(hexresult);
     free_var(arglist);
+    if (len >= INT_MAX) {
+        server_panic("Improbably large string passed to bf_string_hash_sha512");
+    }
+    r.type = TYPE_STR;
+    r.v.str = hash_bytes_sha512(str, len);
     return make_var_pack(r);
 }
 
@@ -376,14 +378,12 @@ static package bf_binary_hash_sha256(Var arglist, [[maybe_unused]] Byte next,
     Var r;
     int length;
     const char *bytes = binary_to_raw_bytes(arglist.v.list[1].v.str, &length);
-    char *hexresult;
+
     free_var(arglist);
     if (!bytes)
         return make_error_pack(E_INVARG);
     r.type = TYPE_STR;
-    hexresult = (char *)hash_bytes_sha256(bytes, length);
-    r.v.str = str_dup(hexresult);
-    free(hexresult);
+    r.v.str = hash_bytes_sha256(bytes, length);
     return make_var_pack(r);
 }
 
@@ -393,15 +393,12 @@ static package bf_binary_hash_sha384(Var arglist, [[maybe_unused]] Byte next,
     Var r;
     int length;
     const char *bytes = binary_to_raw_bytes(arglist.v.list[1].v.str, &length);
-    char *hexresult;
 
     free_var(arglist);
     if (!bytes)
         return make_error_pack(E_INVARG);
     r.type = TYPE_STR;
-    hexresult = (char *)hash_bytes_sha384(bytes, length);
-    r.v.str = str_dup(hexresult);
-    free(hexresult);
+    r.v.str = hash_bytes_sha384(bytes, length);
     return make_var_pack(r);
 }
 
@@ -411,15 +408,12 @@ static package bf_binary_hash_sha512(Var arglist, [[maybe_unused]] Byte next,
     Var r;
     int length;
     const char *bytes = binary_to_raw_bytes(arglist.v.list[1].v.str, &length);
-    char *hexresult;
 
     free_var(arglist);
     if (!bytes)
         return make_error_pack(E_INVARG);
     r.type = TYPE_STR;
-    hexresult = (char *)hash_bytes_sha512(bytes, length);
-    r.v.str = str_dup(hexresult);
-    free(hexresult);
+    r.v.str = hash_bytes_sha512(bytes, length);
     return make_var_pack(r);
 }
 
@@ -428,13 +422,14 @@ static package bf_value_hash_sha256(Var arglist, [[maybe_unused]] Byte next,
                                     [[maybe_unused]] Objid progr) {
     Var r;
     const char *lit = value_to_literal(arglist.v.list[1]);
-    char *hexresult;
+    size_t len = strlen(lit);
 
-    r.type = TYPE_STR;
-    hexresult = (char *)hash_bytes_sha256(lit, strlen(lit));
-    r.v.str = str_dup(hexresult);
-    free(hexresult);
     free_var(arglist);
+    if (len >= INT_MAX) {
+        server_panic("Improbably large value passed to bf_value_hash_sha256");
+    }
+    r.type = TYPE_STR;
+    r.v.str = hash_bytes_sha256(lit, len);
     return make_var_pack(r);
 }
 
@@ -443,13 +438,14 @@ static package bf_value_hash_sha384(Var arglist, [[maybe_unused]] Byte next,
                                     [[maybe_unused]] Objid progr) {
     Var r;
     const char *lit = value_to_literal(arglist.v.list[1]);
-    char *hexresult;
+    size_t len = strlen(lit);
 
-    r.type = TYPE_STR;
-    hexresult = (char *)hash_bytes_sha384(lit, strlen(lit));
-    r.v.str = str_dup(hexresult);
-    free(hexresult);
     free_var(arglist);
+    if (len >= INT_MAX) {
+        server_panic("Improbably large value passed to bf_value_hash_sha384");
+    }
+    r.type = TYPE_STR;
+    r.v.str = hash_bytes_sha384(lit, len);
     return make_var_pack(r);
 }
 
@@ -458,13 +454,14 @@ static package bf_value_hash_sha512(Var arglist, [[maybe_unused]] Byte next,
                                     [[maybe_unused]] Objid progr) {
     Var r;
     const char *lit = value_to_literal(arglist.v.list[1]);
-    char *hexresult;
+    size_t len = strlen(lit);
 
-    r.type = TYPE_STR;
-    hexresult = (char *)hash_bytes_sha512(lit, strlen(lit));
-    r.v.str = str_dup(hexresult);
-    free(hexresult);
     free_var(arglist);
+    if (len >= INT_MAX) {
+        server_panic("Improbably large value passed to bf_value_hash_sha512");
+    }
+    r.type = TYPE_STR;
+    r.v.str = hash_bytes_sha512(lit, len);
     return make_var_pack(r);
 }
 
