@@ -54,7 +54,7 @@
 #include "structures.h"
 #include "utils.h"
 
-static const char b64_charset[64] =
+static const char b64_charset[65] =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./";
 
 #ifdef WRITEPIDFILE
