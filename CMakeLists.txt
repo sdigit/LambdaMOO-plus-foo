@@ -81,6 +81,8 @@ add_custom_command(
 
 string(TIMESTAMP BUILT_AT "%Y%m%d-%H:%M:%S")
 
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+
 add_executable(moo
     "${CMAKE_CURRENT_SOURCE_DIR}/include/ast.h"
     src/ast.c
@@ -152,7 +154,7 @@ endif()
 
 target_compile_options(moo PRIVATE
     $<$<CONFIG:Debug>: -O0 -g -Wall -Wextra >
-    $<$<CONFIG:Build>: -O3 >
+    $<$<CONFIG:Build>: -O3 -Wformat -Wformat-security -fstack-protector=strong >
     $<$<CONFIG:Release>: -O3 >
 )
 
