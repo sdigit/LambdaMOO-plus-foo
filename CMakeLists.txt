@@ -201,8 +201,20 @@ add_executable(moo
 )
 
 if(MOO_IPO_SUPPORTED)
-    set_property(TARGET moo PROPERTY INTERPROCEDURAL_OPTIMIZATION_BUILD ON)
-    set_property(TARGET moo PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+    # Multi-config generators (Xcode, Ninja Multi-Config) pick the config at
+    # build time, so use the per-config override property for them.
+    set_target_properties(moo PROPERTIES
+        INTERPROCEDURAL_OPTIMIZATION_BUILD   TRUE
+        INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
+    )
+    # Single-config generators (Makefiles/Ninja -- what this project
+    # actually builds with) already know CMAKE_BUILD_TYPE at configure
+    # time, and it's the *base* INTERPROCEDURAL_OPTIMIZATION property that
+    # gets checked for them, not the per-config one above. Gate it here so
+    # Debug still builds without LTO.
+    if(CMAKE_BUILD_TYPE STREQUAL "Build" OR CMAKE_BUILD_TYPE STREQUAL "Release")
+        set_target_properties(moo PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+    endif()
 endif()
 
 add_dependencies(moo UpdateGitHeader)
