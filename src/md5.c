@@ -176,7 +176,7 @@ static void md5_Decode(uint32 *output, uint8 *input, int len) {
 /*
  * MD5 basic transformation. Transforms state based on block.
  */
-static void md5_Transform(uint32 state[4], uint8 block[64]) {
+static void md5_Transform(uint32 state[4], uint8 *block) {
     uint32 a = state[0], b = state[1], c = state[2], d = state[3], x[16];
 
     md5_Decode(x, block, 64);
@@ -299,7 +299,6 @@ void md5_Update(md5ctx_t *context, uint8 *buf, int len) {
 
         for (i = partLen; i + 63 < (unsigned int)len; i += 64)
             md5_Transform(context->state, &buf[i]);
-
         index = 0;
     } else {
         i = 0;

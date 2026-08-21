@@ -273,7 +273,7 @@ static const char *hash_bytes_sha256(const char *input, int length) {
     SHA256Context ctx;
 
     result = mymalloc(32, M_STRING);
-    hex_str = mymalloc(64, M_STRING);
+    hex_str = mymalloc(65, M_STRING);
 
     SHA256Reset(&ctx);
     SHA256Input(&ctx, (uint8_t *)input, (unsigned int)length);
@@ -292,7 +292,7 @@ static const char *hash_bytes_sha384(const char *input, int length) {
     SHA384Context ctx;
 
     result = mymalloc(48, M_STRING);
-    hex_str = mymalloc(96, M_STRING);
+    hex_str = mymalloc(97, M_STRING);
 
     SHA384Reset(&ctx);
     SHA384Input(&ctx, (uint8_t *)input, (unsigned int)length);
@@ -311,7 +311,7 @@ static const char *hash_bytes_sha512(const char *input, int length) {
     SHA512Context ctx;
 
     result = mymalloc(64, M_STRING);
-    hex_str = mymalloc(128, M_STRING);
+    hex_str = mymalloc(129, M_STRING);
 
     SHA512Reset(&ctx);
     SHA512Input(&ctx, (uint8_t *)input, (unsigned int)length);
