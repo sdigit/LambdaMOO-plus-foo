@@ -52,8 +52,28 @@ configure_file(
 # from the -o basename (parser.c -> parser.h), NOT y.tab.h. Force the
 # header name explicitly with --defines so this doesn't silently break
 # on a bison invoked as "yacc".
+
 find_program(YACC_EXECUTABLE NAMES bison REQUIRED)
-find_program(GPERF_EXECUTABLE NAMES gperf REQUIRED)
+find_program(GPERF_EXECUTABLE NAMES gperf
+    HINTS "/opt/homebrew/bin" "/usr/local/bin" "/opt/local/bin"
+    REQUIRED
+)
+
+execute_process(
+    COMMAND ${GPERF_EXECUTABLE} --version
+    OUTPUT_VARIABLE GPERF_VERSION_OUTPUT
+)
+
+if(GPERF_VERSION_OUTPUT MATCHES "gperf ([0-9]+\\.[0-9]+)")
+    set(GPERF_VERSION "${CMAKE_MATCH_1}")
+endif()
+
+if(GPERF_VERSION VERSION_LESS "3.1")
+    message(FATAL_ERROR
+        "Found ancient gperf version ${GPERF_VERSION} at ${GPERF_EXECUTABLE}.\n"
+        "Please install modern GNU gperf: 'brew install gperf'"
+    )
+endif()
 
 set(GENERATED_PARSER_C  "${CMAKE_CURRENT_BINARY_DIR}/parser.c")
 set(GENERATED_YTAB_H    "${CMAKE_CURRENT_BINARY_DIR}/y.tab.h")
