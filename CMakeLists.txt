@@ -53,7 +53,34 @@ configure_file(
 # header name explicitly with --defines so this doesn't silently break
 # on a bison invoked as "yacc".
 
-find_program(YACC_EXECUTABLE NAMES bison REQUIRED)
+# Locate GNU Bison and enforce a minimum version of 3.8.2
+find_program(BISON_EXECUTABLE
+    NAMES bison
+    HINTS /opt/homebrew/bin /usr/local/bin /opt/local/bin
+)
+
+if(NOT BISON_EXECUTABLE)
+    message(FATAL_ERROR "bison not found: GNU Bison >= 3.8.2 is required")
+endif()
+
+execute_process(
+    COMMAND "${BISON_EXECUTABLE}" --version
+    OUTPUT_VARIABLE BISON_VERSION_RAW
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+string(REGEX MATCH "([0-9]+)\\.([0-9]+)(\\.([0-9]+))?" BISON_VERSION_STRING "${BISON_VERSION_RAW}")
+
+if(NOT BISON_VERSION_STRING)
+    message(FATAL_ERROR "Unable to determine bison version from: ${BISON_VERSION_RAW}")
+endif()
+
+if(BISON_VERSION_STRING VERSION_LESS "3.8.2")
+    message(FATAL_ERROR "bison version ${BISON_VERSION_STRING} found, but >= 3.8.2 is required")
+endif()
+
+message(STATUS "Found bison: ${BISON_EXECUTABLE} (version ${BISON_VERSION_STRING})")
+
 find_program(GPERF_EXECUTABLE NAMES gperf
     HINTS "/opt/homebrew/bin" "/usr/local/bin" "/opt/local/bin"
     REQUIRED
@@ -75,13 +102,15 @@ if(GPERF_VERSION VERSION_LESS "3.1")
     )
 endif()
 
+message(STATUS "Found gperf: ${GPERF_EXECUTABLE} (version ${GPERF_VERSION})")
+
 set(GENERATED_PARSER_C  "${CMAKE_CURRENT_BINARY_DIR}/parser.c")
 set(GENERATED_YTAB_H    "${CMAKE_CURRENT_BINARY_DIR}/y.tab.h")
 set(GENERATED_KEYWORDS_C "${CMAKE_CURRENT_BINARY_DIR}/keywords.c")
 
 add_custom_command(
     OUTPUT ${GENERATED_PARSER_C} ${GENERATED_YTAB_H}
-    COMMAND ${YACC_EXECUTABLE} -d "${CMAKE_CURRENT_SOURCE_DIR}/templates/parser.y"
+    COMMAND ${BISON_EXECUTABLE} -d "${CMAKE_CURRENT_SOURCE_DIR}/templates/parser.y"
             -o ${GENERATED_PARSER_C} --defines=${GENERATED_YTAB_H}
     DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/templates/parser.y"
     COMMENT "Generating parser.c and y.tab.h"
