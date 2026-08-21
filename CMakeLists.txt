@@ -1,5 +1,16 @@
 cmake_minimum_required(VERSION 3.23)
 project(LambdaMOO-plus-foo C)
+
+# Single-config generators (Makefiles, Ninja) leave CMAKE_BUILD_TYPE empty
+# unless set explicitly. An empty CONFIG matches none of the
+# $<CONFIG:Debug/Build/Release> branches below, which silently produced an
+# unoptimized, unhardened, warning-free build. Default to Build (our
+# hardened dev/CI config) and restrict/document the allowed values.
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Build CACHE STRING "Build type" FORCE)
+endif()
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Build Release)
+
 set(GENERATED_GIT_HEADER "${CMAKE_CURRENT_BINARY_DIR}/gitinfo.h")
 
 add_custom_target(UpdateGitHeader ALL
@@ -130,7 +141,15 @@ add_custom_command(
 
 string(TIMESTAMP BUILT_AT "%Y%m%d-%H:%M:%S")
 
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+# LTO isn't universally available (older cross toolchains, some
+# NetBSD/sparc64 base-system compilers lack a working LTO plugin), and it
+# actively hurts Debug (inlining destroys stack traces). Check support and
+# enable only for Build/Release, on the target rather than globally.
+include(CheckIPOSupported)
+check_ipo_supported(RESULT MOO_IPO_SUPPORTED OUTPUT MOO_IPO_ERROR)
+if(NOT MOO_IPO_SUPPORTED)
+    message(STATUS "IPO/LTO not supported by this toolchain: ${MOO_IPO_ERROR}")
+endif()
 
 add_executable(moo
     "${CMAKE_CURRENT_SOURCE_DIR}/include/ast.h"
@@ -181,6 +200,11 @@ add_executable(moo
     src/version.c
 )
 
+if(MOO_IPO_SUPPORTED)
+    set_property(TARGET moo PROPERTY INTERPROCEDURAL_OPTIMIZATION_BUILD ON)
+    set_property(TARGET moo PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+endif()
+
 add_dependencies(moo UpdateGitHeader)
 
 # Listing GENERATED_YTAB_H as an (otherwise-unused) source is the standard
@@ -202,9 +226,16 @@ if(MOO_CRYPT_LIBRARY)
 endif()
 
 target_compile_options(moo PRIVATE
-    $<$<CONFIG:Debug>: -O0 -g -Wall -Wextra >
-    $<$<CONFIG:Build>: -O3 -Wformat -Wformat-security -fstack-protector=strong >
-    $<$<CONFIG:Release>: -O3 >
+    -Wall -Wextra
+    $<$<CONFIG:Debug>: -O0 -g >
+    $<$<CONFIG:Build>:
+        -O3 -D_FORTIFY_SOURCE=2 -fstack-protector-strong
+        -Wformat -Wformat-security
+    >
+    $<$<CONFIG:Release>:
+        -O3 -D_FORTIFY_SOURCE=2 -fstack-protector-strong
+        -Wformat -Wformat-security
+    >
 )
 
 target_compile_definitions(moo PRIVATE
