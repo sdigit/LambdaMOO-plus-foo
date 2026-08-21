@@ -70,7 +70,7 @@ add_custom_command(
 
 add_custom_command(
     OUTPUT ${GENERATED_KEYWORDS_C}
-    COMMAND ${GPERF_EXECUTABLE} -aCIptT -k1,3,\$ "${CMAKE_CURRENT_SOURCE_DIR}/templates/keywords.gperf" --output-file=${GENERATED_KEYWORDS_C}
+    COMMAND ${GPERF_EXECUTABLE} -CIptT -k1,3,\$ "${CMAKE_CURRENT_SOURCE_DIR}/templates/keywords.gperf" --output-file=${GENERATED_KEYWORDS_C}
     # Not a real gperf input, but keywords.c's *compile* needs y.tab.h to
     # exist (via tokens.h), so we order this after it, mirroring the old
     # `keywords.c: keywords.gperf parser.o` Makefile.in hack.
