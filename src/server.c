@@ -625,7 +625,9 @@ static char *read_stdin_line() {
         s = new_stream(100);
 
     do { /* Read even a very long line of input */
-        fgets(buffer, sizeof(buffer), stdin);
+        if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
+            server_panic("fgets returned NULL");
+        }
         buflen = strlen(buffer);
         if (buflen == 0)
             return 0;
