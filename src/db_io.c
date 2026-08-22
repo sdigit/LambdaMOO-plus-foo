@@ -75,7 +75,11 @@ static FILE *input;
 
 void dbpriv_set_dbio_input(FILE *f) { input = f; }
 
-void dbio_read_line(char *s, int n) { fgets(s, n, input); }
+void dbio_read_line(char *s, int n) {
+    if (fgets(s, n, input) == NULL) {
+        server_panic("fgets returned NULL");
+    }
+}
 
 int dbio_scanf(const char *format, ...) {
     va_list args;
@@ -152,7 +156,9 @@ int dbio_read_num(void) {
     char *p;
     int i;
 
-    fgets(s, 20, input);
+    if (fgets(s, 20, input) == NULL) {
+        server_panic("fgets returned NULL");
+    }
     i = strtol(s, &p, 10);
     if (isspace((int)*s) || *p != '\n')
         errlog("DBIO_READ_NUM: Bad number: \"%s\" at file pos. %ld\n", s,
@@ -165,7 +171,9 @@ double dbio_read_float(void) {
     char *p;
     double d;
 
-    fgets(s, 40, input);
+    if (fgets(s, 40, input) == NULL) {
+        server_panic("fgets returned NULL");
+    }
     d = strtod(s, &p);
     if (isspace((int)*s) || *p != '\n')
         errlog("DBIO_READ_FLOAT: Bad number: \"%s\" at file pos. %ld\n", s,
@@ -184,7 +192,9 @@ const char *dbio_read_string(void) {
         str = new_stream(1024);
 
 try_again:
-    fgets(buffer, sizeof(buffer), input);
+    if (fgets(buffer, sizeof(buffer), input) == NULL) {
+        server_panic("fgets returned NULL");
+    }
     len = strlen(buffer);
     if (len == sizeof(buffer) - 1 && buffer[len - 1] != '\n') {
         stream_add_string(str, buffer);

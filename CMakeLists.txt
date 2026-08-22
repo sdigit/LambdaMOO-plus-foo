@@ -1,5 +1,16 @@
 cmake_minimum_required(VERSION 3.23)
 project(LambdaMOO-plus-foo C)
+
+# Single-config generators (Makefiles, Ninja) leave CMAKE_BUILD_TYPE empty
+# unless set explicitly. An empty CONFIG matches none of the
+# $<CONFIG:Debug/Build/Release> branches below, which silently produced an
+# unoptimized, unhardened, warning-free build. Default to Build (our
+# hardened dev/CI config) and restrict/document the allowed values.
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Build CACHE STRING "Build type" FORCE)
+endif()
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Build Release)
+
 set(GENERATED_GIT_HEADER "${CMAKE_CURRENT_BINARY_DIR}/gitinfo.h")
 
 add_custom_target(UpdateGitHeader ALL
@@ -52,8 +63,57 @@ configure_file(
 # from the -o basename (parser.c -> parser.h), NOT y.tab.h. Force the
 # header name explicitly with --defines so this doesn't silently break
 # on a bison invoked as "yacc".
-find_program(YACC_EXECUTABLE NAMES bison REQUIRED)
-find_program(GPERF_EXECUTABLE NAMES gperf REQUIRED)
+
+# Locate GNU Bison and enforce a minimum version of 3.8.2
+find_program(BISON_EXECUTABLE
+    NAMES bison
+    HINTS /opt/homebrew/bin /usr/local/bin /opt/local/bin
+)
+
+if(NOT BISON_EXECUTABLE)
+    message(FATAL_ERROR "bison not found: GNU Bison >= 3.8.2 is required")
+endif()
+
+execute_process(
+    COMMAND "${BISON_EXECUTABLE}" --version
+    OUTPUT_VARIABLE BISON_VERSION_RAW
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+string(REGEX MATCH "([0-9]+)\\.([0-9]+)(\\.([0-9]+))?" BISON_VERSION_STRING "${BISON_VERSION_RAW}")
+
+if(NOT BISON_VERSION_STRING)
+    message(FATAL_ERROR "Unable to determine bison version from: ${BISON_VERSION_RAW}")
+endif()
+
+if(BISON_VERSION_STRING VERSION_LESS "3.8.2")
+    message(FATAL_ERROR "bison version ${BISON_VERSION_STRING} found, but >= 3.8.2 is required")
+endif()
+
+message(STATUS "Found bison: ${BISON_EXECUTABLE} (version ${BISON_VERSION_STRING})")
+
+find_program(GPERF_EXECUTABLE NAMES gperf
+    HINTS "/opt/homebrew/bin" "/usr/local/bin" "/opt/local/bin"
+    REQUIRED
+)
+
+execute_process(
+    COMMAND ${GPERF_EXECUTABLE} --version
+    OUTPUT_VARIABLE GPERF_VERSION_OUTPUT
+)
+
+if(GPERF_VERSION_OUTPUT MATCHES "gperf ([0-9]+\\.[0-9]+)")
+    set(GPERF_VERSION "${CMAKE_MATCH_1}")
+endif()
+
+if(GPERF_VERSION VERSION_LESS "3.1")
+    message(FATAL_ERROR
+        "Found ancient gperf version ${GPERF_VERSION} at ${GPERF_EXECUTABLE}.\n"
+        "Please install modern GNU gperf: 'brew install gperf'"
+    )
+endif()
+
+message(STATUS "Found gperf: ${GPERF_EXECUTABLE} (version ${GPERF_VERSION})")
 
 set(GENERATED_PARSER_C  "${CMAKE_CURRENT_BINARY_DIR}/parser.c")
 set(GENERATED_YTAB_H    "${CMAKE_CURRENT_BINARY_DIR}/y.tab.h")
@@ -61,7 +121,7 @@ set(GENERATED_KEYWORDS_C "${CMAKE_CURRENT_BINARY_DIR}/keywords.c")
 
 add_custom_command(
     OUTPUT ${GENERATED_PARSER_C} ${GENERATED_YTAB_H}
-    COMMAND ${YACC_EXECUTABLE} -d "${CMAKE_CURRENT_SOURCE_DIR}/templates/parser.y"
+    COMMAND ${BISON_EXECUTABLE} -d "${CMAKE_CURRENT_SOURCE_DIR}/templates/parser.y"
             -o ${GENERATED_PARSER_C} --defines=${GENERATED_YTAB_H}
     DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/templates/parser.y"
     COMMENT "Generating parser.c and y.tab.h"
@@ -70,7 +130,7 @@ add_custom_command(
 
 add_custom_command(
     OUTPUT ${GENERATED_KEYWORDS_C}
-    COMMAND ${GPERF_EXECUTABLE} -aCIptT -k1,3,\$ "${CMAKE_CURRENT_SOURCE_DIR}/templates/keywords.gperf" --output-file=${GENERATED_KEYWORDS_C}
+    COMMAND ${GPERF_EXECUTABLE} -CIptT -k1,3,\$ "${CMAKE_CURRENT_SOURCE_DIR}/templates/keywords.gperf" --output-file=${GENERATED_KEYWORDS_C}
     # Not a real gperf input, but keywords.c's *compile* needs y.tab.h to
     # exist (via tokens.h), so we order this after it, mirroring the old
     # `keywords.c: keywords.gperf parser.o` Makefile.in hack.
@@ -81,7 +141,15 @@ add_custom_command(
 
 string(TIMESTAMP BUILT_AT "%Y%m%d-%H:%M:%S")
 
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+# LTO isn't universally available (older cross toolchains, some
+# NetBSD/sparc64 base-system compilers lack a working LTO plugin), and it
+# actively hurts Debug (inlining destroys stack traces). Check support and
+# enable only for Build/Release, on the target rather than globally.
+include(CheckIPOSupported)
+check_ipo_supported(RESULT MOO_IPO_SUPPORTED OUTPUT MOO_IPO_ERROR)
+if(NOT MOO_IPO_SUPPORTED)
+    message(STATUS "IPO/LTO not supported by this toolchain: ${MOO_IPO_ERROR}")
+endif()
 
 add_executable(moo
     "${CMAKE_CURRENT_SOURCE_DIR}/include/ast.h"
@@ -132,6 +200,23 @@ add_executable(moo
     src/version.c
 )
 
+if(MOO_IPO_SUPPORTED)
+    # Multi-config generators (Xcode, Ninja Multi-Config) pick the config at
+    # build time, so use the per-config override property for them.
+    set_target_properties(moo PROPERTIES
+        INTERPROCEDURAL_OPTIMIZATION_BUILD   TRUE
+        INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
+    )
+    # Single-config generators (Makefiles/Ninja -- what this project
+    # actually builds with) already know CMAKE_BUILD_TYPE at configure
+    # time, and it's the *base* INTERPROCEDURAL_OPTIMIZATION property that
+    # gets checked for them, not the per-config one above. Gate it here so
+    # Debug still builds without LTO.
+    if(CMAKE_BUILD_TYPE STREQUAL "Build" OR CMAKE_BUILD_TYPE STREQUAL "Release")
+        set_target_properties(moo PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+    endif()
+endif()
+
 add_dependencies(moo UpdateGitHeader)
 
 # Listing GENERATED_YTAB_H as an (otherwise-unused) source is the standard
@@ -153,9 +238,16 @@ if(MOO_CRYPT_LIBRARY)
 endif()
 
 target_compile_options(moo PRIVATE
-    $<$<CONFIG:Debug>: -O0 -g -Wall -Wextra >
-    $<$<CONFIG:Build>: -O3 -Wformat -Wformat-security -fstack-protector=strong >
-    $<$<CONFIG:Release>: -O3 >
+    -Wall -Wextra
+    $<$<CONFIG:Debug>: -O0 -g >
+    $<$<CONFIG:Build>:
+        -O3 -D_FORTIFY_SOURCE=2 -fstack-protector-strong
+        -Wformat -Wformat-security
+    >
+    $<$<CONFIG:Release>:
+        -O3 -D_FORTIFY_SOURCE=2 -fstack-protector-strong
+        -Wformat -Wformat-security
+    >
 )
 
 target_compile_definitions(moo PRIVATE
