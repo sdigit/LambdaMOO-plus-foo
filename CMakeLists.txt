@@ -231,7 +231,8 @@ target_include_directories(moo PRIVATE
     "${CMAKE_CURRENT_BINARY_DIR}"
 )
 
-target_link_libraries(moo PUBLIC m)
+find_package(Threads REQUIRED)
+target_link_libraries(moo PUBLIC m Threads::Threads)
 
 if(MOO_CRYPT_LIBRARY)
     target_link_libraries(moo PUBLIC ${MOO_CRYPT_LIBRARY})

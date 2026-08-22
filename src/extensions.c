@@ -1108,6 +1108,13 @@ static package bf_file_openmode(Var arglist, [[maybe_unused]] Byte next,
     return r;
 }
 
+/* yeehaw */
+void wrapped_fgets(char *str, int size, FILE *stream) {
+    if (fgets(str, size, stream) == NULL) {
+        server_panic("fgets returned NULL");
+    }
+}
+
 /**********************************************************
  * string (line-based) i/o
  **********************************************************/
@@ -2366,12 +2373,12 @@ bf_filewrite(Var arglist, [[maybe_unused]] Byte next,
     index = 1;
     if (inFile) {
         while ((index < start_line) && (!feof(inFile))) {
-            fgets(buffer, BUF_LEN, inFile);
+            wrapped_fgets(buffer, BUF_LEN, inFile);
             fputs(buffer, outFile);
             index++;
         }
         while ((index <= end_line) && (!feof(inFile))) {
-            fgets(buffer, BUF_LEN, inFile);
+            wrapped_fgets(buffer, BUF_LEN, inFile);
             index++;
         }
     }
@@ -2405,7 +2412,7 @@ bf_filewrite(Var arglist, [[maybe_unused]] Byte next,
 
     if (inFile) {
         while (!feof(inFile)) {
-            fgets(buffer, BUF_LEN, inFile);
+            wrapped_fgets(buffer, BUF_LEN, inFile);
             if (!feof(inFile)) {
                 fputs(buffer, outFile);
             }
@@ -2459,12 +2466,12 @@ static package bf_fileread(
 
     index = 1;
     while ((index < start_line) && (!feof(f))) {
-        fgets(buffer, BUF_LEN, f);
+        wrapped_fgets(buffer, BUF_LEN, f);
         index++;
     }
 
     while ((index <= end_line) && (!feof(f))) {
-        fgets(buffer, BUF_LEN, f);
+        wrapped_fgets(buffer, BUF_LEN, f);
         if (!feof(f)) {
             buffer[strlen(buffer) - 1] = '\0';
             theline.v.str = str_dup(buffer);
@@ -2583,7 +2590,7 @@ bf_fileinsert(Var arglist, [[maybe_unused]] Byte next,
     index = 1;
     if (inFile) {
         while ((index < start_line) && (!feof(inFile))) {
-            fgets(buffer, BUF_LEN, inFile);
+            wrapped_fgets(buffer, BUF_LEN, inFile);
             fputs(buffer, outFile);
             index++;
         }
@@ -2618,7 +2625,7 @@ bf_fileinsert(Var arglist, [[maybe_unused]] Byte next,
 
     if (inFile) {
         while (!feof(inFile)) {
-            fgets(buffer, BUF_LEN, inFile);
+            wrapped_fgets(buffer, BUF_LEN, inFile);
             if (!feof(inFile)) {
                 fputs(buffer, outFile);
             }
@@ -2680,19 +2687,19 @@ static package bf_filecut(
     index = 1;
     if (inFile) {
         while ((index < start_line) && (!feof(inFile))) {
-            fgets(buffer, BUF_LEN, inFile);
+            wrapped_fgets(buffer, BUF_LEN, inFile);
             fputs(buffer, outFile);
             index++;
         }
         while ((index <= end_line) && (!feof(inFile))) {
-            fgets(buffer, BUF_LEN, inFile);
+            wrapped_fgets(buffer, BUF_LEN, inFile);
             index++;
         }
     }
 
     if (inFile) {
         while (!feof(inFile)) {
-            fgets(buffer, BUF_LEN, inFile);
+            wrapped_fgets(buffer, BUF_LEN, inFile);
             if (!feof(inFile)) {
                 fputs(buffer, outFile);
             }
@@ -2842,7 +2849,7 @@ bf_filegrep(Var arglist, [[maybe_unused]] Byte next,
     theline.type = TYPE_STR;
     anum.type = TYPE_INT;
     while (!feof(f)) {
-        fgets(buffer, BUF_LEN, f);
+        wrapped_fgets(buffer, BUF_LEN, f);
         line_num++;
 
         if (matches(buffer, arglist.v.list[3].v.str) == showfound) {
@@ -2914,7 +2921,7 @@ static package bf_fileextract(
     endLine.type = TYPE_INT;
 
     while (!feof(f)) {
-        fgets(buffer, BUF_LEN, f);
+        wrapped_fgets(buffer, BUF_LEN, f);
         numOfLine++;
 
         if (status == 1) {

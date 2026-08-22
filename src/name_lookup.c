@@ -45,323 +45,285 @@
  *****************************************************************************/
 
 /*
- * This module provides IP host name lookup with timeouts.  Because longjmps
- * out of name lookups corrupt some UNIX name lookup modules, this module
- * uses a subprocess to do the name lookup.  On any failure, the subprocess
- * is restarted.
+ * This module provides IP host name lookup with timeouts.
+ *
+ * Historically this ran the actual gethostbyname()/gethostbyaddr() calls in
+ * a forked subprocess, because longjmp'ing out of those calls (which is
+ * what happens here if a lookup exceeds its timeout -- see timers.h) can
+ * corrupt the static/global state some resolver libraries keep internally.
+ * A subprocess made that safe: worst case, you longjmp'd out of a *pipe
+ * read*, which is fine, and the possibly-wedged child got SIGKILLed.
+ *
+ * That hazard is specific to gethostbyname()/gethostbyaddr(), which POSIX
+ * explicitly permits to be non-reentrant. Their replacements, getaddrinfo()
+ * and getnameinfo(), are required to be reentrant/thread-safe: they return
+ * heap-allocated results and keep no shared static state. That means the
+ * blocking call itself can safely run on a plain detached pthread instead
+ * of in a forked child -- the caller never longjmps out of the call, it
+ * just stops waiting on a condition variable, and the thread is free to
+ * finish (or not) on its own time.
+ *
+ * IMPORTANT: because that worker thread runs concurrently with the rest of
+ * this single-threaded, cooperatively-scheduled server, it must NEVER call
+ * back into any other MOO subsystem. In particular: no mymalloc()/myfree()
+ * (storage.c's alloc_num[] counters are plain globals, not atomics), no
+ * oklog()/errlog()/log_perror() (log.c is not reentrant either), and no
+ * timers.c or exceptions.c. The worker touches only its own stack, the
+ * resolver, and plain libc malloc/free/strdup.
  */
 
 #include "options.h"
 
 #include <arpa/inet.h> /* inet_addr() */
 #include <errno.h>
-#include <netdb.h>      /* struct hostent, gethostbyaddr() */
+#include <netdb.h>      /* struct addrinfo, getaddrinfo(), getnameinfo() */
 #include <netinet/in.h> /* struct sockaddr_in, INADDR_ANY, htons(),
-				 * htonl(), ntohl(), struct in_addr */
-#include <signal.h>
+			 * htonl(), ntohl(), struct in_addr */
+#include <pthread.h>
+#include <stdatomic.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h> /* AF_INET */
-#include <sys/wait.h>
-#include <unistd.h>
+#include <time.h>
 
 #include "config.h"
 #include "log.h"
-#include "server.h"
 #include "storage.h"
-#include "timers.h"
 
 /******************************************************************************
- * Utilities
+ * Bookkeeping shared between the caller and a lookup's worker thread.
+ *
+ * A lookup_ctx is refcounted rather than owned outright by either side,
+ * because the caller may give up and move on (on timeout) before the
+ * worker thread -- which cannot be safely killed mid-resolver-call any
+ * more than the old subprocess's child could be, without reintroducing
+ * the exact hazard this rewrite exists to avoid -- has actually finished.
+ * Whichever side (caller giving up, or worker completing) drops the last
+ * reference is the one that frees it.
  *****************************************************************************/
 
-static pid_t spawn_pipe(void (*child_proc)(int to_parent, int from_parent),
-                        int *to_child, int *from_child) {
-    int pipe_to_child[2], pipe_from_child[2];
-    pid_t pid;
+enum request_kind { REQ_NAME_FROM_ADDR, REQ_ADDR_FROM_NAME };
 
-    if (pipe(pipe_to_child) < 0) {
-        log_perror("SPAWNING: Couldn't create first pipe");
-    } else if (pipe(pipe_from_child) < 0) {
-        log_perror("SPAWNING: Couldn't create second pipe");
-        close(pipe_to_child[0]);
-        close(pipe_to_child[1]);
-    } else if ((pid = fork()) < 0) {
-        log_perror("SPAWNING: Couldn't fork middleman");
-        close(pipe_to_child[0]);
-        close(pipe_to_child[1]);
-        close(pipe_from_child[0]);
-        close(pipe_from_child[1]);
-    } else if (pid != 0) { /* parent */
-        int status;
+struct lookup_ctx {
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+    int refcount; /* protected by mutex; starts at 2 */
+    int done;     /* protected by mutex */
 
-        close(pipe_to_child[0]);
-        close(pipe_from_child[1]);
-        *to_child = pipe_to_child[1];
-        *from_child = pipe_from_child[0];
+    enum request_kind kind;
+
+    /* Request, for REQ_ADDR_FROM_NAME. */
+    char *name; /* strdup()'d */
+
+    /* Request, for REQ_NAME_FROM_ADDR. */
+    struct sockaddr_in address;
+
+    /* Result, for REQ_ADDR_FROM_NAME: 0 on failure. */
+    unsigned32 addr_result;
+
+    /* Result, for REQ_NAME_FROM_ADDR: strdup()'d, or NULL on failure. */
+    char *name_result;
+};
+
+/*
+ * Bound the number of concurrently outstanding lookup threads. Nothing
+ * forcibly reclaims a thread stuck on a hung/blackholed resolver -- same as
+ * before, a stuck lookup is abandoned rather than killed -- so without a
+ * cap, a flood of connections during a DNS outage could accumulate
+ * unbounded threads. When the cap is hit we fail the lookup immediately,
+ * same as the old "lookup dead and wouldn't restart" fallback.
+ */
+#define MAX_OUTSTANDING_LOOKUPS 128
+static atomic_int outstanding_lookups = 0;
+
+static struct lookup_ctx *new_ctx(enum request_kind kind) {
+    struct lookup_ctx *ctx = malloc(sizeof *ctx);
+
+    if (!ctx)
+        return 0;
+    pthread_mutex_init(&ctx->mutex, 0);
+    pthread_cond_init(&ctx->cond, 0);
+    ctx->refcount = 2; /* one for the caller, one for the worker */
+    ctx->done = 0;
+    ctx->kind = kind;
+    ctx->name = 0;
+    ctx->addr_result = 0;
+    ctx->name_result = 0;
+    return ctx;
+}
+
+static void free_ctx(struct lookup_ctx *ctx) {
+    pthread_mutex_destroy(&ctx->mutex);
+    pthread_cond_destroy(&ctx->cond);
+    free(ctx->name);
+    free(ctx->name_result);
+    free(ctx);
+}
+
+static void release_ctx(struct lookup_ctx *ctx) {
+    /* Caller must hold no lock; this acquires and releases ctx->mutex. */
+    int last;
+
+    pthread_mutex_lock(&ctx->mutex);
+    last = (--ctx->refcount == 0);
+    pthread_mutex_unlock(&ctx->mutex);
+
+    if (last)
+        free_ctx(ctx);
+}
+
+/******************************************************************************
+ * Code that runs on the worker thread. MUST NOT touch anything but its own
+ * stack, the resolver, and plain libc malloc/free/strdup -- see the note
+ * at the top of this file.
+ *****************************************************************************/
+
+static void *lookup_worker(void *arg) {
+    struct lookup_ctx *ctx = arg;
+
+    if (ctx->kind == REQ_ADDR_FROM_NAME) {
+        struct addrinfo hints, *res = 0;
+
+        memset(&hints, 0, sizeof hints);
+        hints.ai_family = AF_INET;
+        hints.ai_socktype = SOCK_STREAM;
+        if (getaddrinfo(ctx->name, 0, &hints, &res) == 0 && res) {
+            /*
+             * Raw network-byte-order bits out of the sockaddr_in, same as
+             * the old code's h_addr_list[0]/inet_addr() copy: this is
+             * meant to be stored straight into a sockaddr_in.sin_addr,
+             * not byte-swapped.
+             */
+            ctx->addr_result =
+                ((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr;
+            freeaddrinfo(res);
+        }
+    } else {
+        char host[NI_MAXHOST];
 
         /*
-         * Cast to (void *) to avoid warnings on systems that
-         * misdeclare the argument.
+         * NI_NAMEREQD: fail rather than fall back to a numeric string, so
+         * "no PTR record" comes back as failure here (matching the old
+         * gethostbyaddr()-returned-NULL case) and the caller's existing
+         * dotted-decimal fallback is what actually produces the numeric
+         * form.
          */
-        wait((void *)&status); /* wait for middleman to die */
-        if (status != 0) {
-            errlog("SPAWNING: Middleman died with status %d!\n", status);
-            close(pipe_to_child[1]);
-            close(pipe_from_child[0]);
-        } else if (read(*from_child, &pid, sizeof(pid)) != sizeof(pid)) {
-            errlog("SPAWNING: Bad read() for pid\n");
-            close(pipe_to_child[1]);
-            close(pipe_from_child[0]);
-        } else {
-            return pid;
-        }
-    } else { /* middleman */
-        close(pipe_to_child[1]);
-        close(pipe_from_child[0]);
-        if ((pid = fork()) < 0) {
-            log_perror("SPAWNING: Couldn't fork child");
-            exit(1);
-        } else if (pid != 0) { /* still the middleman */
-            write(pipe_from_child[1], &pid, sizeof(pid));
-            exit(0);
-        } else { /* finally, the child */
-            (*child_proc)(pipe_from_child[1], pipe_to_child[0]);
-            exit(0);
-        }
+        if (getnameinfo((struct sockaddr *)&ctx->address, sizeof ctx->address,
+                        host, sizeof host, 0, 0, NI_NAMEREQD) == 0)
+            ctx->name_result = strdup(host);
     }
 
+    pthread_mutex_lock(&ctx->mutex);
+    ctx->done = 1;
+    pthread_cond_signal(&ctx->cond);
+    pthread_mutex_unlock(&ctx->mutex);
+
+    atomic_fetch_sub(&outstanding_lookups, 1);
+    release_ctx(ctx);
     return 0;
 }
 
-static void ensure_buffer(char **buffer, int *buflen, int len) {
-    if (len > *buflen) {
-        if (*buffer)
-            myfree(*buffer, M_STRING);
-        *buflen = len;
-        *buffer = mymalloc(len, M_STRING);
+/*
+ * Spawn a detached worker for ctx and wait up to `timeout' seconds for it
+ * to finish. Returns true iff it finished in time, in which case the
+ * result fields in ctx are valid.
+ *
+ * Contract: ctx arrives with refcount == 2, nominally one for the caller
+ * and one for "whoever ends up running the lookup". run_lookup() always
+ * consumes exactly that second one itself -- releasing it immediately if
+ * the thread never gets spawned, or handing it to the thread to release
+ * on completion if it does. Either way, ctx is guaranteed to still be
+ * alive (held by the caller's own reference) when run_lookup() returns,
+ * and the caller must release_ctx() it exactly once, regardless of the
+ * return value, once it's done reading any result fields it needs.
+ */
+static int run_lookup(struct lookup_ctx *ctx, unsigned timeout) {
+    pthread_t tid;
+    pthread_attr_t attr;
+    struct timespec deadline;
+    int finished;
+
+    if (atomic_fetch_add(&outstanding_lookups, 1) >= MAX_OUTSTANDING_LOOKUPS) {
+        atomic_fetch_sub(&outstanding_lookups, 1);
+        errlog("NAME_LOOKUP: Too many outstanding lookups; skipping\n");
+        release_ctx(ctx);
+        return 0;
     }
-}
 
-static int robust_read(int fd, void *buffer, int len) {
-    int count;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    if (pthread_create(&tid, &attr, lookup_worker, ctx) != 0) {
+        pthread_attr_destroy(&attr);
+        atomic_fetch_sub(&outstanding_lookups, 1);
+        log_perror("NAME_LOOKUP: pthread_create() failed");
+        release_ctx(ctx);
+        return 0;
+    }
+    pthread_attr_destroy(&attr);
+    /* Thread spawned: it now owns the reference it was given and will
+     * release_ctx() it itself when done. */
 
-    do {
-        count = read(fd, buffer, len);
-    } while (count == -1 && errno == EINTR);
+    clock_gettime(CLOCK_REALTIME, &deadline);
+    deadline.tv_sec += timeout;
 
-    return count;
-}
+    pthread_mutex_lock(&ctx->mutex);
+    while (!ctx->done) {
+        if (pthread_cond_timedwait(&ctx->cond, &ctx->mutex, &deadline) ==
+            ETIMEDOUT)
+            break;
+    }
+    finished = ctx->done;
+    pthread_mutex_unlock(&ctx->mutex);
 
-/******************************************************************************
- * Data structures and types used by more than one process.
- *****************************************************************************/
+    if (!finished)
+        oklog("NAME_LOOKUP: Timed out; abandoning lookup in background\n");
 
-struct request {
-    enum { REQ_NAME_FROM_ADDR, REQ_ADDR_FROM_NAME } kind;
-    unsigned timeout;
-    union {
-        unsigned length;
-        struct sockaddr_in address;
-    } u;
-};
-
-/******************************************************************************
- * Code that runs in the lookup process.
- *****************************************************************************/
-
-static void timeout_proc([[maybe_unused]] Timer_ID id,
-                         [[maybe_unused]] Timer_Data data) {
-    _exit(1);
-}
-
-static void lookup(int to_intermediary, int from_intermediary) {
-    struct request req;
-    static char *buffer = 0;
-    static int buflen = 0;
-    Timer_ID id;
-    struct hostent *e;
-
-    set_server_cmdline("(MOO name-lookup worker)");
     /*
-     * Read requests and do them.  Before each, we set a timer.  If it
-     * expires, we exit (in timeout_proc, above).  The intermediary will
-     * restart us in that event.
+     * If finished, the worker's writes to ctx's result fields happened
+     * before it took the mutex to set ctx->done, and we've since taken
+     * that same mutex ourselves, so it's safe for the caller to read them
+     * now, before releasing its reference.
      */
-    for (;;) {
-        if (robust_read(from_intermediary, &req, sizeof(req)) != sizeof(req))
-            _exit(1);
-        if (req.kind == REQ_ADDR_FROM_NAME) {
-            ensure_buffer(&buffer, &buflen, req.u.length + 1);
-            if (robust_read(from_intermediary, buffer, req.u.length) !=
-                (int)req.u.length)
-                _exit(1);
-            buffer[req.u.length] = 0;
-            id = set_timer(req.timeout, timeout_proc, 0);
-            /*
-             * This cast is to work around systems like NeXT that
-             * declare gethostbyname() to take a non-const string
-             * pointer.
-             */
-            e = gethostbyname((void *)buffer);
-            cancel_timer(id);
-            if (e && e->h_length == sizeof(unsigned32))
-                write(to_intermediary, e->h_addr_list[0], e->h_length);
-            else {
-                unsigned32 addr;
-
-                /*
-                 * This cast is for the same reason as the
-                 * one above...
-                 */
-                addr = inet_addr((void *)buffer);
-                write(to_intermediary, &addr, sizeof(addr));
-            }
-        } else {
-            const char *host_name;
-            int length;
-            id = set_timer(req.timeout, timeout_proc, 0);
-            e = gethostbyaddr((void *)&req.u.address.sin_addr,
-                              sizeof(req.u.address.sin_addr), AF_INET);
-            cancel_timer(id);
-            host_name = e ? e->h_name : "";
-            length = strlen(host_name);
-            write(to_intermediary, &length, sizeof(length));
-            write(to_intermediary, host_name, length);
-        }
-    }
+    return finished;
 }
 
 /******************************************************************************
- * Code that runs in the intermediary process.
+ * Public API. Same signatures as the old subprocess-based implementation,
+ * so callers (network.c) need no changes.
  *****************************************************************************/
-
-static int to_lookup, from_lookup;
-static pid_t lookup_pid;
-
-static void restart_lookup(void) {
-    if (lookup_pid) {
-        kill(lookup_pid, SIGKILL);
-        close(to_lookup);
-        close(from_lookup);
-        oklog("NAME_LOOKUP: Killing old lookup process ...\n");
-    }
-    lookup_pid = spawn_pipe(lookup, &to_lookup, &from_lookup);
-    if (lookup_pid)
-        oklog("NAME_LOOKUP: Started new lookup process\n");
-    else
-        errlog("NAME_LOOKUP: Can't spawn lookup process; "
-               "will try again later...\n");
-}
-
-static void intermediary(int to_server, int from_server) {
-    struct request req;
-    static char *buffer = 0;
-    static int buflen = 0;
-    int len;
-    unsigned32 addr;
-
-    set_server_cmdline("(MOO name-lookup)");
-    signal(SIGPIPE, SIG_IGN);
-    restart_lookup();
-    for (;;) {
-        if (robust_read(from_server, &req, sizeof(req)) != sizeof(req))
-            _exit(1);
-        if (req.kind == REQ_ADDR_FROM_NAME) {
-            ensure_buffer(&buffer, &buflen, req.u.length);
-            if (robust_read(from_server, buffer, req.u.length) !=
-                (int)req.u.length)
-                _exit(1);
-        }
-        if (!lookup_pid) /* Restart lookup if it's died */
-            restart_lookup();
-        if (lookup_pid) { /* Only try to deal with lookup if
-                           * alive */
-            write(to_lookup, &req, sizeof(req));
-            if (req.kind == REQ_ADDR_FROM_NAME) {
-                write(to_lookup, buffer, req.u.length);
-                if (robust_read(from_lookup, &addr, sizeof(addr)) !=
-                    sizeof(addr)) {
-                    restart_lookup();
-                    addr = 0;
-                }
-                write(to_server, &addr, sizeof(addr));
-            } else {
-                if (robust_read(from_lookup, &len, sizeof(len)) !=
-                    sizeof(len)) {
-                    restart_lookup();
-                    len = 0;
-                } else {
-                    ensure_buffer(&buffer, &buflen, len);
-                    if (len > 0 &&
-                        robust_read(from_lookup, buffer, len) != len) {
-                        restart_lookup();
-                        len = 0;
-                    }
-                }
-                write(to_server, &len, sizeof(len));
-                if (len > 0)
-                    write(to_server, buffer, len);
-            }
-        } else { /* Lookup dead and wouldn't restart ... */
-            int failure = 0;
-
-            write(to_server, &failure, sizeof(failure));
-        }
-    }
-}
-
-/******************************************************************************
- * Code that runs in the server process.
- *****************************************************************************/
-
-static int to_intermediary, from_intermediary;
-static int dead_intermediary = 0;
 
 int initialize_name_lookup(void) {
-    return spawn_pipe(intermediary, &to_intermediary, &from_intermediary);
-}
-
-static void abandon_intermediary(const char *prefix) {
-    errlog("LOOKUP_NAME: %s; presumed dead...\n", prefix);
-    dead_intermediary = 1;
-    close(to_intermediary);
-    close(from_intermediary);
+    /* Nothing to set up: each lookup is entirely self-contained. */
+    return 1;
 }
 
 const char *lookup_name_from_addr(struct sockaddr_in *addr, unsigned timeout,
                                   int name_lookup) {
-    struct request req;
     static char *buffer = 0;
-    static int buflen = 0;
-    int len;
 
-    if (name_lookup && !dead_intermediary) {
-        req.kind = REQ_NAME_FROM_ADDR;
-        req.timeout = timeout;
-        req.u.address = *addr;
-        if (write(to_intermediary, &req, sizeof(req)) != sizeof(req))
-            abandon_intermediary("LOOKUP_NAME: Write to intermediary failed");
-        else if (robust_read(from_intermediary, &len, sizeof(len)) !=
-                 sizeof(len))
-            abandon_intermediary("LOOKUP_NAME: Read from intermediary failed");
-        else if (len != 0) {
-            ensure_buffer(&buffer, &buflen, len + 1);
-            if (robust_read(from_intermediary, buffer, len) != len)
-                abandon_intermediary("LOOKUP_NAME: "
-                                     "Data-read from intermediary failed");
-            else {
-                buffer[len] = '\0';
-                return buffer;
+    if (name_lookup) {
+        struct lookup_ctx *ctx = new_ctx(REQ_NAME_FROM_ADDR);
+
+        if (ctx) {
+            int got_result;
+
+            ctx->address = *addr;
+            got_result = run_lookup(ctx, timeout) && ctx->name_result;
+            if (got_result) {
+                free(buffer);
+                buffer = strdup(ctx->name_result);
             }
+            release_ctx(ctx);
+            if (got_result && buffer)
+                return buffer;
         }
     }
-    /*
-     * Either the intermediary is presumed dead, or else it failed to
-     * produce a name; in either case, we must fall back on a the
-     * default, dotted- decimal notation.
-     */
 
+    /*
+     * Either name_lookup was false, the lookup failed or timed out, or we
+     * couldn't even start it (allocation failure); fall back to the
+     * default, dotted-decimal notation.
+     */
     {
         static char decimal[20];
         unsigned32 a = ntohl(addr->sin_addr.s_addr);
@@ -374,23 +336,28 @@ const char *lookup_name_from_addr(struct sockaddr_in *addr, unsigned timeout,
 }
 
 unsigned32 lookup_addr_from_name(const char *name, unsigned timeout) {
-    struct request req;
+    struct lookup_ctx *ctx = new_ctx(REQ_ADDR_FROM_NAME);
     unsigned32 addr = 0;
+    int got_result = 0;
 
-    if (dead_intermediary) {
-        /* Numeric addresses should always work... */
-        addr = inet_addr((void *)name);
-    } else {
-        req.kind = REQ_ADDR_FROM_NAME;
-        req.timeout = timeout;
-        req.u.length = strlen(name);
-        if (write(to_intermediary, &req, sizeof(req)) != sizeof(req) ||
-            write(to_intermediary, name, req.u.length) != req.u.length)
-            abandon_intermediary("LOOKUP_ADDR: Write to intermediary failed");
-        else if (robust_read(from_intermediary, &addr, sizeof(addr)) !=
-                 sizeof(addr))
-            abandon_intermediary("LOOKUP_ADDR: Read from intermediary failed");
+    if (ctx)
+        ctx->name = strdup(name);
+
+    if (ctx && ctx->name) {
+        got_result = run_lookup(ctx, timeout);
+        if (got_result)
+            addr = ctx->addr_result;
+        release_ctx(ctx); /* always exactly one release after run_lookup */
+    } else if (ctx) {
+        /* strdup() failed before we ever handed ctx to run_lookup(), so
+         * both of its references are still ours to drop. */
+        free_ctx(ctx);
     }
+
+    if (!got_result)
+        /* Allocation failure, resolution failure, or timeout: numeric
+         * addresses should still work without any of the above. */
+        addr = inet_addr((void *)name);
 
     return addr == 0xffffffff ? 0 : addr;
 }
