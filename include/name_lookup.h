@@ -48,6 +48,14 @@
  * This module provides IP host name lookup with timeouts.  Because
  * many DNS servers are flaky and the normal UNIX name-lookup facilities just
  * hang in such situations, this interface comes in very handy.
+ *
+ * Implementation note: lookups run on detached worker threads (see
+ * name_lookup.c) rather than in a forked subprocess.  getaddrinfo() and
+ * getnameinfo() are reentrant/thread-safe (unlike gethostbyname() and
+ * gethostbyaddr(), which older platforms permit to use shared static
+ * storage), so the historical longjmp-corruption hazard that originally
+ * justified the subprocess design does not apply to a worker thread that
+ * touches nothing but its own stack, the resolver, and libc's malloc.
  */
 
 #ifndef Name_Lookup_H
@@ -62,9 +70,10 @@ extern int initialize_name_lookup(void);
 
 extern unsigned32 lookup_addr_from_name(const char *name, unsigned timeout);
 /*
- * Translate a host name to a 32-bit internet address in host byte order.  If
- * anything goes wrong, return 0.  Dotted decimal address are translated
- * properly.
+ * Translate a host name to a 32-bit internet address, in the same
+ * (network) byte order as struct in_addr.sin_addr.s_addr, ready to store
+ * directly into a sockaddr_in.  If anything goes wrong, return 0.  Dotted
+ * decimal addresses are translated properly.
  */
 
 extern const char *lookup_name_from_addr(struct sockaddr_in *addr,
