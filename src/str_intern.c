@@ -19,14 +19,15 @@
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -39,235 +40,189 @@
 
 struct intern_entry {
     const char *s;
+    size_t len;
     unsigned hash;
-    struct intern_entry *next;
 };
 
 /*
- * If we're using the intern table during db load, we have a stunning
- * opportunity to fragment memory with little intern_entry structures.  So,
- * the inevitable suballocator.
- *
- * On Linux (at least) malloc() calls past a certain size are converted to
- * mmap() allocations.  That's really nice since we don't bloat sbrk() with
- * memory we'll never use past db load. That makes us look better in
- * /usr/bin/top.
+ * Open addressing is a good fit here because entries are never removed
+ * individually: the entire table is discarded when database loading ends.
+ * Keeping entries directly in the table also eliminates the separate entry
+ * allocation/hunk allocator and avoids pointer chasing during lookup.
  */
+static struct intern_entry *intern_table;
+static size_t intern_table_size;
+static size_t intern_table_count;
 
-struct intern_entry_hunk {
-    int size;
-    int handout;
-    struct intern_entry *contents;
-    struct intern_entry_hunk *next;
-};
-
-static struct intern_entry_hunk *intern_alloc = NULL;
-
-static struct intern_entry_hunk *new_intern_entry_hunk(int size) {
-    struct intern_entry_hunk *new;
-
-    new = mymalloc(sizeof(struct intern_entry_hunk), M_INTERN_HUNK);
-    new->size = size;
-    new->handout = 0;
-    new->contents =
-        mymalloc(sizeof(struct intern_entry) * size, M_INTERN_ENTRY);
-    new->next = NULL;
-
-    return new;
-}
-
-/*
- * Chosen large enough to trigger the mmap() semantics of linux malloc.
- */
-#define INTERN_ENTRY_HUNK_SIZE 100000
-
-static struct intern_entry *allocate_intern_entry(void) {
-    if (intern_alloc == NULL) {
-        intern_alloc = new_intern_entry_hunk(INTERN_ENTRY_HUNK_SIZE);
-    }
-    if (intern_alloc->handout < intern_alloc->size) {
-        struct intern_entry *e;
-
-        e = &(intern_alloc->contents[intern_alloc->handout]);
-        intern_alloc->handout++;
-
-        return e;
-    } else {
-        struct intern_entry_hunk *new_hunk =
-            new_intern_entry_hunk(INTERN_ENTRY_HUNK_SIZE);
-
-        new_hunk->next = intern_alloc;
-        intern_alloc = new_hunk;
-        return allocate_intern_entry();
-    }
-}
-
-static void free_intern_entry_hunks(void) {
-    struct intern_entry_hunk *h, *next;
-
-    for (h = intern_alloc; h; h = next) {
-        next = h->next;
-        myfree(h->contents, M_INTERN_ENTRY);
-        myfree(h, M_INTERN_HUNK);
-    }
-
-    intern_alloc = NULL;
-}
-
-/**********************/
-
-static struct intern_entry **intern_table;
-static int intern_table_size = 0;
-static int intern_table_count = 0;
-
-static int intern_bytes_saved = 0;
-static int intern_allocations_saved = 0;
+static size_t intern_bytes_saved;
+static size_t intern_allocations_saved;
 
 #define INTERN_TABLE_SIZE_INITIAL 10007
+#define INTERN_LOAD_NUMERATOR 3
+#define INTERN_LOAD_DENOMINATOR 4
 
-static struct intern_entry **make_intern_table(int size) {
-    struct intern_entry **table;
-    int i;
+static size_t normalize_table_size(size_t requested)
+{
+    size_t size = 16;
 
-    table = mymalloc(sizeof(struct intern_entry *) * size, M_INTERN_POINTER);
-    for (i = 0; i < size; i++) {
-        table[i] = NULL;
-    }
+    while (size < requested && size <= SIZE_MAX / 2)
+        size <<= 1;
 
+    return size;
+}
+
+static struct intern_entry *make_intern_table(size_t size)
+{
+    struct intern_entry *table;
+
+    table = mymalloc(sizeof(*table) * size, M_INTERN_ENTRY);
+    memset(table, 0, sizeof(*table) * size);
     return table;
 }
 
-void str_intern_open(int table_size) {
-    if (table_size == 0) {
-        table_size = INTERN_TABLE_SIZE_INITIAL;
-    }
-    intern_table = make_intern_table(table_size);
-    intern_table_size = table_size;
+static size_t intern_index(unsigned hash, size_t table_size)
+{
+    return (size_t)hash & (table_size - 1);
+}
 
+static void insert_intern_entry(struct intern_entry *table,
+                                size_t table_size,
+                                const struct intern_entry *entry)
+{
+    size_t index = intern_index(entry->hash, table_size);
+
+    for (;;) {
+        struct intern_entry *slot = &table[index];
+
+        if (slot->s == NULL) {
+            *slot = *entry;
+            return;
+        }
+
+        index = (index + 1) & (table_size - 1);
+    }
+}
+
+static struct intern_entry *find_interned_string(const char *s,
+                                                  size_t len,
+                                                  unsigned hash)
+{
+    size_t index = intern_index(hash, intern_table_size);
+
+    for (;;) {
+        struct intern_entry *entry = &intern_table[index];
+
+        if (entry->s == NULL)
+            return NULL;
+
+        if (entry->hash == hash && entry->len == len &&
+            memcmp(s, entry->s, len) == 0)
+            return entry;
+
+        index = (index + 1) & (intern_table_size - 1);
+    }
+}
+
+static void intern_rehash(size_t new_size)
+{
+    struct intern_entry *old_table = intern_table;
+    size_t old_size = intern_table_size;
+    size_t i;
+
+    intern_table = make_intern_table(new_size);
+    intern_table_size = new_size;
+
+    for (i = 0; i < old_size; i++) {
+        if (old_table[i].s != NULL)
+            insert_intern_entry(intern_table, intern_table_size,
+                                &old_table[i]);
+    }
+
+    myfree(old_table, M_INTERN_ENTRY);
+}
+
+void str_intern_open(int table_size)
+{
+    size_t size;
+
+    if (table_size == 0)
+        table_size = INTERN_TABLE_SIZE_INITIAL;
+
+    size = normalize_table_size((size_t)table_size);
+    intern_table = make_intern_table(size);
+    intern_table_size = size;
+    intern_table_count = 0;
     intern_bytes_saved = 0;
     intern_allocations_saved = 0;
 }
 
-void str_intern_close(void) {
-    int i;
-    struct intern_entry *e, *next;
+void str_intern_close(void)
+{
+    size_t i;
+    size_t final_count = intern_table_count;
+    size_t final_size = intern_table_size;
 
     for (i = 0; i < intern_table_size; i++) {
-        for (e = intern_table[i]; e; e = next) {
-            next = e->next;
-
-            free_str(e->s);
-
-            /* myfree(e, M_INTERN_ENTRY); */
-        }
+        if (intern_table[i].s != NULL)
+            free_str(intern_table[i].s);
     }
 
-    myfree(intern_table, M_INTERN_POINTER);
+    myfree(intern_table, M_INTERN_ENTRY);
     intern_table = NULL;
+    intern_table_size = 0;
+    intern_table_count = 0;
 
-    free_intern_entry_hunks();
-
-    oklog("INTERN: %d allocations saved, %d bytes\n", intern_allocations_saved,
-          intern_bytes_saved);
-    oklog("INTERN: at end, %d entries in a %d bucket hash table.\n",
-          intern_table_count, intern_table_size);
-}
-
-static struct intern_entry *find_interned_string(const char *s, unsigned hash) {
-    int bucket = hash % intern_table_size;
-    struct intern_entry *p;
-
-    for (p = intern_table[bucket]; p; p = p->next) {
-        if (hash == p->hash) {
-            if (!strcmp(s, p->s)) {
-                return p;
-            }
-        }
-    }
-
-    return NULL;
-}
-
-/* Caller must retain s */
-
-static void add_interned_string(const char *s, unsigned hash) {
-    int bucket = hash % intern_table_size;
-    struct intern_entry *p;
-
-    /* p = mymalloc(sizeof(struct intern_entry), M_INTERN_ENTRY); */
-    p = allocate_intern_entry();
-    p->s = s;
-    p->hash = hash;
-    p->next = intern_table[bucket];
-
-    intern_table[bucket] = p;
-
-    intern_table_count++;
-}
-
-static void intern_rehash(int new_size) {
-    struct intern_entry **new_table;
-    int i, count;
-    struct intern_entry *e, *next;
-
-    count = 0;
-    new_table = make_intern_table(new_size);
-
-    for (i = 0; i < intern_table_size; i++) {
-        for (e = intern_table[i]; e; e = next) {
-            int new_bucket = e->hash % new_size;
-            /* Keep the next pointer, since we're gonna nuke it. */
-            next = e->next;
-
-            e->next = new_table[new_bucket];
-            new_table[new_bucket] = e;
-
-            count++;
-        }
-    }
-
-    if (count != intern_table_count) {
-        errlog("counted %d entries in intern hash table, but "
-               "intern_table_count says %d!\n",
-               count, intern_table_count);
-    }
-    intern_table_size = new_size;
-
-    myfree(intern_table, M_INTERN_POINTER);
-    intern_table = new_table;
+    oklog("INTERN: %zu allocations saved, %zu bytes\n",
+          intern_allocations_saved, intern_bytes_saved);
+    oklog("INTERN: at end, %zu entries in a %zu bucket hash table.\n",
+          final_count, final_size);
 }
 
 /*
  * Make an immutable copy of s.  If there's an intern table open, possibly
  * share storage.
  */
-const char *str_intern(const char *s) {
-    struct intern_entry *e;
+const char *str_intern(const char *s)
+{
+    struct intern_entry *entry;
     unsigned hash;
     const char *r;
+    size_t len;
 
     if (s == NULL || *s == '\0') {
         /* str_dup already has a canonical empty string */
         return str_dup(s);
     }
-    if (intern_table == NULL) {
+    if (intern_table == NULL)
         return str_dup(s);
-    }
+
+    len = strlen(s);
     hash = str_hash(s);
 
-    e = find_interned_string(s, hash);
-
-    if (e != NULL) {
+    entry = find_interned_string(s, len, hash);
+    if (entry != NULL) {
         intern_allocations_saved++;
-        intern_bytes_saved += strlen(s);
-        return str_ref(e->s);
+        intern_bytes_saved += len;
+        return str_ref(entry->s);
     }
-    if (intern_table_count > intern_table_size) {
+
+    if (intern_table_count >=
+        (intern_table_size * INTERN_LOAD_NUMERATOR) /
+            INTERN_LOAD_DENOMINATOR)
         intern_rehash(intern_table_size * 2);
-    }
+
     r = str_dup(s);
-    r = str_ref(r);
-    add_interned_string(r, hash);
+    r = str_ref(r); /* one reference for the intern table */
+
+    {
+        struct intern_entry new_entry = {
+            .s = r,
+            .len = len,
+            .hash = hash,
+        };
+        insert_intern_entry(intern_table, intern_table_size, &new_entry);
+    }
+    intern_table_count++;
 
     return r;
 }
