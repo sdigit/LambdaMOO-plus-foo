@@ -27,9 +27,14 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * I did not write this, ChatGPT did :)
+ * -dive @ 20260825
+ */
+
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 
 #include "config.h"
 #include "exceptions.h"
