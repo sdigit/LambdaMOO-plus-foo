@@ -144,13 +144,26 @@ int verbcasecmp(const char *verb, const char *word) {
     return 0;
 }
 
-unsigned str_hash(const char *s) {
-    register unsigned ans = 0;
+uint32_t str_hash_len(const char *s, size_t *len)
+{
+    uint32_t ans = 0;
+    size_t n = 0;
 
     while (*s) {
-        ans = (ans << 3) + (ans >> 28) + cmap[(unsigned char)*s++];
+        ans = (ans << 3) + (ans >> 28) +
+              cmap[(unsigned char)*s++];
+        n++;
     }
+
+    if (len != NULL)
+        *len = n;
+
     return ans;
+}
+
+uint32_t str_hash(const char *s)
+{
+    return str_hash_len(s, NULL);
 }
 
 void complex_free_var(Var v) {

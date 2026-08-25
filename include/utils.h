@@ -47,6 +47,8 @@
 #ifndef Utils_h
 #define Utils_h 1
 
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 
 #include "config.h"
@@ -64,7 +66,8 @@ extern int mystrncasecmp(const char *, const char *, int);
 
 extern int verbcasecmp(const char *verb, const char *word);
 
-extern unsigned str_hash(const char *);
+extern uint32_t str_hash(const char *);
+extern uint32_t str_hash_len(const char *, size_t *);
 
 extern void complex_free_var(Var);
 extern Var complex_var_ref(Var);

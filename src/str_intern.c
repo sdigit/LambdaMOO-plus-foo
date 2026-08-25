@@ -41,7 +41,7 @@
 struct intern_entry {
     const char *s;
     size_t len;
-    unsigned hash;
+    uint32_t hash;
 };
 
 /*
@@ -80,7 +80,7 @@ static struct intern_entry *make_intern_table(size_t size)
     return table;
 }
 
-static size_t intern_index(unsigned hash, size_t table_size)
+static size_t intern_index(uint32_t hash, size_t table_size)
 {
     return (size_t)hash & (table_size - 1);
 }
@@ -105,7 +105,7 @@ static void insert_intern_entry(struct intern_entry *table,
 
 static struct intern_entry *find_interned_string(const char *s,
                                                   size_t len,
-                                                  unsigned hash)
+                                                  uint32_t hash)
 {
     size_t index = intern_index(hash, intern_table_size);
 
@@ -185,7 +185,7 @@ void str_intern_close(void)
 const char *str_intern(const char *s)
 {
     struct intern_entry *entry;
-    unsigned hash;
+    uint32_t hash;
     const char *r;
     size_t len;
 
@@ -196,8 +196,7 @@ const char *str_intern(const char *s)
     if (intern_table == NULL)
         return str_dup(s);
 
-    len = strlen(s);
-    hash = str_hash(s);
+    hash = str_hash_len(s, &len);
 
     entry = find_interned_string(s, len, hash);
     if (entry != NULL) {
