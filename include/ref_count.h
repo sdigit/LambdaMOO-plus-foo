@@ -44,6 +44,11 @@
     Pavel@Xerox.Com
  *****************************************************************************/
 
+/*
+ * I did not write this, ChatGPT did :)
+ * -dive @ 20260825
+ */
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
