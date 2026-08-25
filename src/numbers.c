@@ -176,7 +176,7 @@ Var new_float(double d) {
     Var v;
 
     v.type = TYPE_FLOAT;
-    v.v.fnum = mymalloc(sizeof(double), M_FLOAT);
+    v.v.fnum = rc_alloc(sizeof(double));
     *v.v.fnum = d;
 
     return v;

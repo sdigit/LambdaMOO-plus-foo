@@ -45,6 +45,11 @@
  *****************************************************************************/
 
 /*
+ * This code was refactored by Claude in 2026 to use a thread instead of a
+ * process.
+ */
+
+/*
  * This module provides IP host name lookup with timeouts.
  *
  * Historically this ran the actual gethostbyname()/gethostbyaddr() calls in

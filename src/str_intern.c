@@ -188,7 +188,7 @@ static struct intern_entry *find_interned_string(const char *s, unsigned hash) {
     return NULL;
 }
 
-/* Caller must addref s */
+/* Caller must retain s */
 
 static void add_interned_string(const char *s, unsigned hash) {
     int bucket = hash % intern_table_size;

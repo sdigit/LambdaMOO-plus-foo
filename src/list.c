@@ -77,18 +77,18 @@ Var new_list(int size) {
 
         if (emptylist.v.list == 0) {
             emptylist.type = TYPE_LIST;
-            emptylist.v.list = mymalloc(1 * sizeof(Var), M_LIST);
+            emptylist.v.list = rc_alloc(1 * sizeof(Var));
             emptylist.v.list[0].type = TYPE_INT;
             emptylist.v.list[0].v.num = 0;
         }
         /* give the lucky winner a reference */
-        addref(emptylist.v.list);
+        rc_retain(emptylist.v.list);
         return emptylist;
     } else if (size < 0) {
         server_panic("Cannot allocate a negative-sized list!");
     }
     new.type = TYPE_LIST;
-    new.v.list = (Var *)mymalloc((size + 1) * sizeof(Var), M_LIST);
+    new.v.list = (Var *)rc_alloc((size + 1) * sizeof(Var));
     new.v.list[0].type = TYPE_INT;
     new.v.list[0].v.num = size;
     return new;
@@ -136,7 +136,7 @@ static Var doinsert(Var list, Var value, int pos) {
 
     if (var_refcount(list) == 1 && pos == size) {
         list.v.list =
-            (Var *)myrealloc(list.v.list, (size + 1) * sizeof(Var), M_LIST);
+            (Var *)rc_realloc(list.v.list, (size + 1) * sizeof(Var));
         list.v.list[0].v.num = size;
         list.v.list[pos] = value;
         return list;
@@ -353,7 +353,7 @@ Var strrangeset(Var base, int from, int to, Var value) {
     char *s;
 
     ans.type = TYPE_STR;
-    s = mymalloc(sizeof(char) * (newsize + 1), M_STRING);
+    s = str_alloc(newsize + 1);
 
     for (index = 0; index < lenleft; index++)
         s[offset++] = base.v.str[index];
@@ -376,7 +376,7 @@ Var substr(Var str, int lower, int upper) {
         r.v.str = str_dup("");
     else {
         int loop, index = 0;
-        char *s = mymalloc(upper - lower + 2, M_STRING);
+        char *s = str_alloc(upper - lower + 2);
 
         for (loop = lower - 1; loop < upper; loop++)
             s[index++] = str.v.str[loop];

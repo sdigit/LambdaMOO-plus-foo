@@ -1162,9 +1162,7 @@ static enum outcome run(char raise, enum error resumption_error,
             else if (lhs.type == TYPE_STR && rhs.type == TYPE_STR) {
                 char *str;
 
-                str = mymalloc((strlen(rhs.v.str) + strlen(lhs.v.str) + 1) *
-                                   sizeof(char),
-                               M_STRING);
+                str = str_alloc(strlen(rhs.v.str) + strlen(lhs.v.str) + 1);
                 sprintf(str, "%s%s", lhs.v.str, rhs.v.str);
                 ans.type = TYPE_STR;
                 ans.v.str = str;

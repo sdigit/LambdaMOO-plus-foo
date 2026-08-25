@@ -44,8 +44,24 @@
     Pavel@Xerox.Com
  *****************************************************************************/
 
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
 #include "config.h"
 
-#define addref(X) (++((int *)(X))[-1])
-#define delref(X) (--((int *)(X))[-1])
-#define refcount(X) (((int *)(X))[-1])
+/*
+ * Reference-counted allocations are deliberately separate from the generic
+ * storage allocator.  The returned pointer refers to the object, while a
+ * small private header immediately precedes it.
+ *
+ * rc_release() only drops the reference.  It returns true when the caller
+ * must destroy the object with rc_free().  This allows callers such as list
+ * destruction to run their object-specific destructor before freeing memory.
+ */
+void *rc_alloc(size_t size);
+void *rc_realloc(void *ptr, size_t size);
+void rc_retain(const void *ptr);
+bool rc_release(const void *ptr);
+void rc_free(void *ptr);
+uint32_t rc_count(const void *ptr);

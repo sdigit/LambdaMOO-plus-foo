@@ -47,6 +47,7 @@
 #ifndef Storage_h
 #define Storage_h 1
 
+#include <stddef.h>
 #include "config.h"
 #include "ref_count.h"
 #include "structures.h"
@@ -97,18 +98,18 @@ typedef enum Memory_Type {
 
 } Memory_Type;
 
+extern char *str_alloc(size_t);
 extern char *str_dup(const char *);
 extern const char *str_ref(const char *);
 extern Var memory_usage(void);
 
 extern void myfree(void *where, Memory_Type type);
-extern void *mymalloc(unsigned size, Memory_Type type);
-extern void *myrealloc(void *where, unsigned size, Memory_Type type);
+extern void *mymalloc(size_t size, Memory_Type type);
+extern void *myrealloc(void *where, size_t size, Memory_Type type);
 
-static inline void /* XXX was extern, fix for non-gcc compilers */
-free_str(const char *s) {
-    if (delref(s) == 0)
-        myfree((void *)s, M_STRING);
+static inline void free_str(const char *s) {
+    if (s != NULL && rc_release(s))
+        rc_free((void *)s);
 }
 
 #endif /* Storage_h */
