@@ -66,88 +66,78 @@
 
 static unsigned alloc_num[Sizeof_Memory_Type];
 
-static inline int refcount_overhead(Memory_Type type) {
-    /*
-     * These are the only allocation types that are addref()'d. As long
-     * as we're living on the wild side, avoid getting the refcount slot
-     * for allocations that won't need it.
-     */
-    switch (type) {
-    case M_FLOAT:
-        /* for systems with picky double alignment */
-        return MAX(sizeof(int), sizeof(double));
-    case M_STRING:
-        return sizeof(int);
-    case M_LIST:
-        /* for systems with picky pointer alignment */
-        return MAX(sizeof(int), sizeof(Var *));
-    default:
-        return 0;
-    }
-}
+/*
+ * Generic allocations carry no interpreter-specific header.  In particular,
+ * Memory_Type is accounting/debugging information only; it does not change
+ * the layout of the allocation.
+ */
+void *mymalloc(size_t size, Memory_Type type) {
+    char msg[128];
 
-void *mymalloc(unsigned size, Memory_Type type) {
-    char *memptr;
-    char msg[100];
-    int offs;
-    if (size == 0) /* For queasy systems */
+    if (size == 0)
         size = 1;
 
-    offs = refcount_overhead(type);
-
-    memptr = (char *)malloc(size + offs);
-    if (!memptr) {
-        sprintf(msg, "memory allocation (size %u) failed!", size);
+    void *ptr = malloc(size);
+    if (!ptr) {
+        snprintf(msg, sizeof(msg), "memory allocation (size %zu) failed!", size);
         server_panic(msg);
     }
-    alloc_num[type]++;
 
-    if (offs) {
-        memptr += offs;
-        ((int *)memptr)[-1] = 1;
+    alloc_num[type]++;
+    return ptr;
+}
+
+void *myrealloc(void *ptr, size_t size, Memory_Type type) {
+    char msg[128];
+
+    if (size == 0)
+        size = 1;
+
+    void *newptr = realloc(ptr, size);
+    if (!newptr) {
+        snprintf(msg, sizeof(msg),
+                 "memory re-allocation (size %zu) failed!", size);
+        server_panic(msg);
     }
-    return memptr;
+
+    /* A realloc does not change the number of live allocations. */
+    (void)type;
+    return newptr;
+}
+
+void myfree(void *ptr, Memory_Type type) {
+    if (ptr == NULL)
+        return;
+
+    alloc_num[type]--;
+    free(ptr);
+}
+
+char *str_alloc(size_t size) {
+    return (char *)rc_alloc(size);
 }
 
 const char *str_ref(const char *s) {
-    addref(s);
+    rc_retain(s);
     return s;
 }
 
 char *str_dup(const char *s) {
-    char *r;
-
-    if (s == 0 || *s == '\0') {
+    if (s == NULL || *s == '\0') {
         static char *emptystring;
 
         if (!emptystring) {
-            emptystring = (char *)mymalloc(1, M_STRING);
+            emptystring = (char *)rc_alloc(1);
             *emptystring = '\0';
         }
-        addref(emptystring);
+        rc_retain(emptystring);
         return emptystring;
-    } else {
-        r = (char *)mymalloc(strlen(s) + 1, M_STRING);
-        strcpy(r, s);
     }
+
+    size_t len = strlen(s) + 1;
+    char *r = (char *)rc_alloc(len);
+    memcpy(r, s, len);
     return r;
-}
-
-void *myrealloc(void *ptr, unsigned size, Memory_Type type) {
-    int offs = refcount_overhead(type);
-    static char msg[100];
-
-    ptr = realloc((char *)ptr - offs, size + offs);
-    if (!ptr) {
-        sprintf(msg, "memory re-allocation (size %u) failed!", size);
-        server_panic(msg);
-    }
-    return (char *)ptr + offs;
-}
-
-void myfree(void *ptr, Memory_Type type) {
-    alloc_num[type]--;
-    free((char *)ptr - refcount_overhead(type));
 }
 
 #if defined(__linux__)
@@ -220,7 +210,7 @@ Var memory_usage(void) {
     Var r;
     size_t rss = get_server_rss();
     r.type = TYPE_FLOAT;
-    r.v.fnum = mymalloc(sizeof(double), M_FLOAT);
+    r.v.fnum = rc_alloc(sizeof(double));
     *r.v.fnum = (double)rss;
     return r;
 }

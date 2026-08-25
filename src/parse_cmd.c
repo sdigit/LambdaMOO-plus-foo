@@ -116,7 +116,7 @@ static char *build_string(int argc, char *argv[]) {
     for (i = 1; i < argc; i++)
         len += 1 + strlen(argv[i]);
 
-    str = (char *)mymalloc(len + 1, M_STRING);
+    str = str_alloc(len + 1);
 
     strcpy(str, argv[0]);
     for (i = 1; i < argc; i++) {
@@ -171,7 +171,7 @@ Parsed_Command *parse_command(const char *command, Objid user) {
 
     finish_specials:
         argstr = command + 1;
-        buf = (char *)mymalloc(strlen(argstr) + strlen(verb) + 2, M_STRING);
+        buf = str_alloc(strlen(argstr) + strlen(verb) + 2);
         strcpy(buf, verb);
         strcat(buf, " ");
         strcat(buf, argstr);

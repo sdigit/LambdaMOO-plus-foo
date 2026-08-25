@@ -64,6 +64,8 @@ struct entry {
 static int pool_size, next_pool_slot;
 static struct entry *pool;
 
+static void deallocate(void *ptr);
+
 void begin_code_allocation() {
     pool_size = 10;
     next_pool_slot = 0;
@@ -76,13 +78,15 @@ void end_code_allocation(int aborted) {
 
         for (i = 0; i < next_pool_slot; i++) {
             if (pool[i].ptr != 0)
-                myfree(pool[i].ptr, pool[i].type);
+                deallocate(pool[i].ptr);
         }
     }
     myfree(pool, M_AST_POOL);
 }
 
 static void *allocate(int size, Memory_Type type) {
+    void *ptr;
+
     if (next_pool_slot >= pool_size) { /* enlarge the pool */
         struct entry *new_pool;
         int i;
@@ -96,7 +100,12 @@ static void *allocate(int size, Memory_Type type) {
         pool = new_pool;
     }
     pool[next_pool_slot].type = type;
-    return pool[next_pool_slot++].ptr = mymalloc(size, type);
+    if (type == M_STRING || type == M_FLOAT)
+        ptr = rc_alloc((size_t)size);
+    else
+        ptr = mymalloc((size_t)size, type);
+    pool[next_pool_slot++].ptr = ptr;
+    return ptr;
 }
 
 static void deallocate(void *ptr) {
@@ -104,7 +113,12 @@ static void deallocate(void *ptr) {
 
     for (i = 0; i < next_pool_slot; i++) {
         if (ptr == pool[i].ptr) {
-            myfree(ptr, pool[i].type);
+            if (pool[i].type == M_STRING || pool[i].type == M_FLOAT) {
+                if (rc_release(ptr))
+                    rc_free(ptr);
+            } else {
+                myfree(ptr, pool[i].type);
+            }
             pool[i].ptr = 0;
             return;
         }

@@ -162,17 +162,17 @@ void complex_free_var(Var v) {
             free_str(v.v.str);
         break;
     case TYPE_LIST:
-        if (delref(v.v.list) == 0) {
+        if (rc_release(v.v.list)) {
             Var *pv;
 
             for (i = v.v.list[0].v.num, pv = v.v.list + 1; i > 0; i--, pv++)
                 free_var(*pv);
-            myfree(v.v.list, M_LIST);
+            rc_free(v.v.list);
         }
         break;
     case TYPE_FLOAT:
-        if (delref(v.v.fnum) == 0)
-            myfree(v.v.fnum, M_FLOAT);
+        if (rc_release(v.v.fnum))
+            rc_free(v.v.fnum);
         break;
     }
 }
@@ -180,13 +180,13 @@ void complex_free_var(Var v) {
 Var complex_var_ref(Var v) {
     switch ((int)v.type) {
     case TYPE_STR:
-        addref(v.v.str);
+        rc_retain(v.v.str);
         break;
     case TYPE_LIST:
-        addref(v.v.list);
+        rc_retain(v.v.list);
         break;
     case TYPE_FLOAT:
-        addref(v.v.fnum);
+        rc_retain(v.v.fnum);
         break;
     }
     return v;
@@ -221,13 +221,13 @@ Var complex_var_dup(Var v) {
 int var_refcount(Var v) {
     switch ((int)v.type) {
     case TYPE_STR:
-        return refcount(v.v.str);
+        return rc_count(v.v.str);
         break;
     case TYPE_LIST:
-        return refcount(v.v.list);
+        return rc_count(v.v.list);
         break;
     case TYPE_FLOAT:
-        return refcount(v.v.fnum);
+        return rc_count(v.v.fnum);
         break;
     }
     return 1;

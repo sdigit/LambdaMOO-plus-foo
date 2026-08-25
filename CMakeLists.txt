@@ -185,6 +185,7 @@ add_executable(moo
     src/property.c
     src/quota.c
     src/regexpr.c
+    src/ref_count.c
     src/server.c
     src/sha256.c
     src/sha384-512.c

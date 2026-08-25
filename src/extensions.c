@@ -511,7 +511,7 @@ static package bf_chr(Var arglist, [[maybe_unused]] Byte next,
         return make_raise_pack(E_INVARG, "Invalid argument", zero);
     }
     v.type = TYPE_STR;
-    v.v.str = (char *)mymalloc(2, M_STRING);
+    v.v.str = str_alloc(2);
     ((char *)v.v.str)[0] = arglist.v.list[1].v.num;
     ((char *)v.v.str)[1] = 0;
     free_var(arglist);
