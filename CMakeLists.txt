@@ -1,5 +1,27 @@
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 4.3)
+
 project(LambdaMOO-plus-foo C)
+
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "NetBSD")
+    message(STATUS "NetBSD detected: Enforcing LTO manually via system toolchain")
+    add_compile_options(-flto=auto -fno-fat-lto-objects)
+    add_link_options(-flto=auto -fno-fat-lto-objects)
+    set(CMAKE_C_ARCHIVE_CREATE "<CMAKE_AR> qc --plugin /usr/libexec/liblto_plugin.so <TARGET> <LINK_FLAGS> <OBJECTS>")
+    set(CMAKE_C_ARCHIVE_APPEND "<CMAKE_AR> q  --plugin /usr/libexec/liblto_plugin.so <TARGET> <LINK_FLAGS> <OBJECTS>")
+    set(CMAKE_C_ARCHIVE_FINISH "<CMAKE_RANLIB> --plugin /usr/libexec/liblto_plugin.so <TARGET>")
+    set(CMAKE_CXX_ARCHIVE_CREATE "<CMAKE_AR> qc --plugin /usr/libexec/liblto_plugin.so <TARGET> <LINK_FLAGS> <OBJECTS>")
+    set(CMAKE_CXX_ARCHIVE_APPEND "<CMAKE_AR> q  --plugin /usr/libexec/liblto_plugin.so <TARGET> <LINK_FLAGS> <OBJECTS>")
+    set(CMAKE_CXX_ARCHIVE_FINISH "<CMAKE_RANLIB> --plugin /usr/libexec/liblto_plugin.so <TARGET>")
+else()
+    # Standard, platform-agnostic fallback for non-NetBSD OS environments
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT lto_supported OUTPUT error)
+    if(lto_supported)
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+    else()
+        message(STATUS "LTO not supported: ${error}")
+    endif()
+endif()
 
 # Single-config generators (Makefiles, Ninja) leave CMAKE_BUILD_TYPE empty
 # unless set explicitly. An empty CONFIG matches none of the
@@ -140,16 +162,6 @@ add_custom_command(
 )
 
 string(TIMESTAMP BUILT_AT "%Y%m%d-%H:%M:%S")
-
-# LTO isn't universally available (older cross toolchains, some
-# NetBSD/sparc64 base-system compilers lack a working LTO plugin), and it
-# actively hurts Debug (inlining destroys stack traces). Check support and
-# enable only for Build/Release, on the target rather than globally.
-include(CheckIPOSupported)
-check_ipo_supported(RESULT MOO_IPO_SUPPORTED OUTPUT MOO_IPO_ERROR)
-if(NOT MOO_IPO_SUPPORTED)
-    message(STATUS "IPO/LTO not supported by this toolchain: ${MOO_IPO_ERROR}")
-endif()
 
 add_executable(moo
     "${CMAKE_CURRENT_SOURCE_DIR}/include/ast.h"
