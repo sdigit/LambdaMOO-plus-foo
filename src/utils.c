@@ -64,63 +64,55 @@
 #include "utils.h"
 
 /*
- * These versions of strcasecmp() and strncasecmp() depend on ASCII.
- * We implement them here because neither one is in the ANSI standard.
+ * These versions of strcasecmp() and strncasecmp() use ASCII-only case
+ * folding.  This preserves the historical LambdaMOO semantics without
+ * requiring a locale-dependent libc implementation or a 256-byte lookup
+ * table.
  */
 
-static const char cmap[] =
-    "\000\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017"
-    "\020\021\022\023\024\025\026\027\030\031\032\033\034\035\036\037"
-    "\040\041\042\043\044\045\046\047\050\051\052\053\054\055\056\057"
-    "\060\061\062\063\064\065\066\067\070\071\072\073\074\075\076\077"
-    "\100\141\142\143\144\145\146\147\150\151\152\153\154\155\156\157"
-    "\160\161\162\163\164\165\166\167\170\171\172\133\134\135\136\137"
-    "\140\141\142\143\144\145\146\147\150\151\152\153\154\155\156\157"
-    "\160\161\162\163\164\165\166\167\170\171\172\173\174\175\176\177"
-    "\200\201\202\203\204\205\206\207\210\211\212\213\214\215\216\217"
-    "\220\221\222\223\224\225\226\227\230\231\232\233\234\235\236\237"
-    "\240\241\242\243\244\245\246\247\250\251\252\253\254\255\256\257"
-    "\260\261\262\263\264\265\266\267\270\271\272\273\274\275\276\277"
-    "\300\301\302\303\304\305\306\307\310\311\312\313\314\315\316\317"
-    "\320\321\322\323\324\325\326\327\330\331\332\333\334\335\336\337"
-    "\340\341\342\343\344\345\346\347\350\351\352\353\354\355\356\357"
-    "\360\361\362\363\364\365\366\367\370\371\372\373\374\375\376\377";
-
-int mystrcasecmp(const char *ss, const char *tt) {
-    register const unsigned char *s = (const unsigned char *)ss;
-    register const unsigned char *t = (const unsigned char *)tt;
-
-    if (ss == tt) {
-        return 0;
-    }
-    while (cmap[*s] == cmap[*t++]) {
-        if (!*s++)
-            return 0;
-    }
-    return (cmap[*s] - cmap[*--t]);
-}
-
-int mystrncasecmp(const char *ss, const char *tt, int n) {
+int mystrcasecmp(const char *ss, const char *tt)
+{
     const unsigned char *s = (const unsigned char *)ss;
     const unsigned char *t = (const unsigned char *)tt;
+    unsigned char a, b;
 
-    if (!n || ss == tt)
+    if (ss == tt)
         return 0;
-    while (cmap[*s] == cmap[*t++]) {
-        if (!*s++ || !--n)
-            return 0;
-    }
-    return (cmap[*s] - cmap[*--t]);
+
+    do {
+        a = ascii_tolower(*s++);
+        b = ascii_tolower(*t++);
+    } while (a == b && a != '\0');
+
+    return (int)a - (int)b;
 }
 
-int verbcasecmp(const char *verb, const char *word) {
+int mystrncasecmp(const char *ss, const char *tt, size_t n)
+{
+    const unsigned char *s = (const unsigned char *)ss;
+    const unsigned char *t = (const unsigned char *)tt;
+    unsigned char a, b;
+
+    if (n == 0 || ss == tt)
+        return 0;
+
+    do {
+        a = ascii_tolower(*s++);
+        b = ascii_tolower(*t++);
+    } while (--n != 0 && a == b && a != '\0');
+
+    return (int)a - (int)b;
+}
+
+int verbcasecmp(const char *verb, const char *word)
+{
     const unsigned char *w;
     const unsigned char *v = (const unsigned char *)verb;
     enum { none, inner, end } star;
 
-    if (verb == word) {
+    if (verb == word)
         return 1;
-    }
+
     while (*v) {
         w = (const unsigned char *)word;
         star = none;
@@ -129,7 +121,8 @@ int verbcasecmp(const char *verb, const char *word) {
                 v++;
                 star = (!*v || *v == ' ') ? end : inner;
             }
-            if (!*v || *v == ' ' || !*w || cmap[*w] != cmap[*v])
+            if (!*v || *v == ' ' || !*w ||
+                ascii_tolower(*w) != ascii_tolower(*v))
                 break;
             w++;
             v++;
@@ -151,7 +144,7 @@ uint32_t str_hash_len(const char *s, size_t *len)
 
     while (*s) {
         ans = (ans << 3) + (ans >> 28) +
-              cmap[(unsigned char)*s++];
+              ascii_tolower((unsigned char)*s++);
         n++;
     }
 

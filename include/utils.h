@@ -61,8 +61,14 @@
 
 #define Arraysize(x) (sizeof(x) / sizeof(*x))
 
+static inline unsigned char
+ascii_tolower(unsigned char c)
+{
+    return (c >= 'A' && c <= 'Z') ? (unsigned char)(c + ('a' - 'A')) : c;
+}
+
 extern int mystrcasecmp(const char *, const char *);
-extern int mystrncasecmp(const char *, const char *, int);
+extern int mystrncasecmp(const char *, const char *, size_t);
 
 extern int verbcasecmp(const char *verb, const char *word);
 
