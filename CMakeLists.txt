@@ -1,22 +1,28 @@
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 4.3)
+
 project(LambdaMOO-plus-foo C)
 
-# Handle missing gcc-ar / gcc-ranlib on NetBSD for LTO/IPO checks
-if(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
-    if(NOT CMAKE_C_COMPILER_AR OR CMAKE_C_COMPILER_AR MATCHES "NOTFOUND")
-        find_program(NETBSD_AR NAMES gcc-ar gar ar PATHS /usr/pkg/bin /usr/bin)
-        if(NETBSD_AR)
-            set(CMAKE_C_COMPILER_AR "${NETBSD_AR}" CACHE FILEPATH "C compiler archiver" FORCE)
-        endif()
-    endif()
-
-    if(NOT CMAKE_C_COMPILER_RANLIB OR CMAKE_C_COMPILER_RANLIB MATCHES "NOTFOUND")
-        find_program(NETBSD_RANLIB NAMES gcc-ranlib granlib ranlib PATHS /usr/pkg/bin /usr/bin)
-        if(NETBSD_RANLIB)
-            set(CMAKE_C_COMPILER_RANLIB "${NETBSD_RANLIB}" CACHE FILEPATH "C compiler ranlib" FORCE)
-        endif()
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "NetBSD")
+    message(STATUS "NetBSD detected: Enforcing LTO manually via system toolchain")
+    add_compile_options(-flto=auto -fno-fat-lto-objects)
+    add_link_options(-flto=auto -fno-fat-lto-objects)
+    set(CMAKE_C_ARCHIVE_CREATE "<CMAKE_AR> qc --plugin /usr/libexec/liblto_plugin.so <TARGET> <LINK_FLAGS> <OBJECTS>")
+    set(CMAKE_C_ARCHIVE_APPEND "<CMAKE_AR> q  --plugin /usr/libexec/liblto_plugin.so <TARGET> <LINK_FLAGS> <OBJECTS>")
+    set(CMAKE_C_ARCHIVE_FINISH "<CMAKE_RANLIB> --plugin /usr/libexec/liblto_plugin.so <TARGET>")
+    set(CMAKE_CXX_ARCHIVE_CREATE "<CMAKE_AR> qc --plugin /usr/libexec/liblto_plugin.so <TARGET> <LINK_FLAGS> <OBJECTS>")
+    set(CMAKE_CXX_ARCHIVE_APPEND "<CMAKE_AR> q  --plugin /usr/libexec/liblto_plugin.so <TARGET> <LINK_FLAGS> <OBJECTS>")
+    set(CMAKE_CXX_ARCHIVE_FINISH "<CMAKE_RANLIB> --plugin /usr/libexec/liblto_plugin.so <TARGET>")
+else()
+    # Standard, platform-agnostic fallback for non-NetBSD OS environments
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT lto_supported OUTPUT error)
+    if(lto_supported)
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+    else()
+        message(STATUS "LTO not supported: ${error}")
     endif()
 endif()
+
 # Single-config generators (Makefiles, Ninja) leave CMAKE_BUILD_TYPE empty
 # unless set explicitly. An empty CONFIG matches none of the
 # $<CONFIG:Debug/Build/Release> branches below, which silently produced an
@@ -156,16 +162,6 @@ add_custom_command(
 )
 
 string(TIMESTAMP BUILT_AT "%Y%m%d-%H:%M:%S")
-
-# LTO isn't universally available (older cross toolchains, some
-# NetBSD/sparc64 base-system compilers lack a working LTO plugin), and it
-# actively hurts Debug (inlining destroys stack traces). Check support and
-# enable only for Build/Release, on the target rather than globally.
-include(CheckIPOSupported)
-check_ipo_supported(RESULT MOO_IPO_SUPPORTED OUTPUT MOO_IPO_ERROR)
-if(NOT MOO_IPO_SUPPORTED)
-    message(STATUS "IPO/LTO not supported by this toolchain: ${MOO_IPO_ERROR}")
-endif()
 
 add_executable(moo
     "${CMAKE_CURRENT_SOURCE_DIR}/include/ast.h"
