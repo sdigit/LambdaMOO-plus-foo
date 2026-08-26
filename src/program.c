@@ -62,6 +62,7 @@ Program *new_program(void) {
     p->first_lineno = 1;
     p->cached_lineno = 1;
     p->cached_lineno_pc = 0;
+    p->cached_lineno_vec = MAIN_VECTOR;
     return p;
 }
 

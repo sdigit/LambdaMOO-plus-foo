@@ -47,6 +47,8 @@
 #ifndef Utils_h
 #define Utils_h 1
 
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 
 #include "config.h"
@@ -59,12 +61,19 @@
 
 #define Arraysize(x) (sizeof(x) / sizeof(*x))
 
+static inline unsigned char
+ascii_tolower(unsigned char c)
+{
+    return (c >= 'A' && c <= 'Z') ? (unsigned char)(c + ('a' - 'A')) : c;
+}
+
 extern int mystrcasecmp(const char *, const char *);
-extern int mystrncasecmp(const char *, const char *, int);
+extern int mystrncasecmp(const char *, const char *, size_t);
 
 extern int verbcasecmp(const char *verb, const char *word);
 
-extern unsigned str_hash(const char *);
+extern uint32_t str_hash(const char *);
+extern uint32_t str_hash_len(const char *, size_t *);
 
 extern void complex_free_var(Var);
 extern Var complex_var_ref(Var);
