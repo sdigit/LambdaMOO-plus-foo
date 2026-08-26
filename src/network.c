@@ -420,7 +420,7 @@ static int pull_input(nhandle *h) {
 static nhandle *new_nhandle(int rfd, int wfd, const char *local_name,
                             const char *remote_name, int outbound) {
     nhandle *h;
-    static Stream *s = 0;
+    Stream *s;
 
     s = new_stream(100);
     if (!network_set_nonblocking(rfd) ||
@@ -446,6 +446,7 @@ static nhandle *new_nhandle(int rfd, int wfd, const char *local_name,
     stream_printf(s, "%s %s %s", local_name, outbound ? "to" : "from",
                   remote_name);
     h->name = str_dup(reset_stream(s));
+    free_stream(s);
     return h;
 }
 

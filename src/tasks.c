@@ -1190,7 +1190,7 @@ int read_task_queue(void) {
         Program *program;
         Var *rt_env, *old_rt_env;
         const char **old_names;
-        activation a;
+        activation a = {0};
 
         if (dbio_scanf("%d %d %d %d%c", &dummy, &first_lineno, &st, &id, &c) !=
                 5 ||
